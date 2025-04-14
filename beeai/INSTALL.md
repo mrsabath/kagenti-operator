@@ -19,35 +19,28 @@ Before installing the `kagenti-operator`, ensure you have the following prerequi
 
 ## Installation
 
-###   1. Install the operator
-Clone this project:
-
-```shell
-git clone https://github.ibm.com/aiplatform/kagenti-operator.git
-```
-
-### 2. Create a k8s secret for GitHub repository containing your agent code
+### 1. Create a k8s secret for GitHub repository containing your agent code
 
 ```shell
 PASSWORD="your-github-token"
 kubectl create secret generic github-token-secret --from-literal=token="$PASSWORD"
 ```
 
-### 3. Start Ollama
+### 2. Start Ollama
 
 In a new terminal, run:
 
 ```shell
 ollama run llama3.2:1b-instruct-fp16 --keepalive 60m
 ```
-### 4. Start Kagenti operator
+### 3. Start Kagenti operator
 In a new terminal, run:
 
 ```shell
-/scripts/install.sh
+curl -sSL https://raw.githubusercontent.com/kagenti/kagenti-operator/main/beeai/scripts/install.sh | bash
 ```
 
-### 5. Usage 
+### 4. Usage 
 
 This section explains how to create and use the `AgentBuild` custom resource, which is the primary way to interact with the `kagenti-operator`.
 
