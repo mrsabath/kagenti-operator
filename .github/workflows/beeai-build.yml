@@ -45,4 +45,4 @@ jobs:
       with:
         context: beeai
         push: true
-        tags: ghcr.io/kagenti/kagenti-operator/beeai-operator:${{ github.sha }} 
+        tags: ghcr.io/kagenti/kagenti-operator/beeai-operator:latest
