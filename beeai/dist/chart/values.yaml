@@ -3,7 +3,7 @@ controllerManager:
   replicas: 1
   container:
     image:
-      repository: controller
+      repository: ghcr.io/kagenti/kagenti-operator/beeai-operator
       tag: latest
     args:
       - "--leader-elect"
