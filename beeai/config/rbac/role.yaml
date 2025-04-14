@@ -1,0 +1,118 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - beeai.beeai.dev
+  resources:
+  - agents
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - beeai.beeai.dev
+  resources:
+  - agents/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - beeai.beeai.dev
+  resources:
+  - agents/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - beeai.dev
+  resources:
+  - agentbuilds
+  - agents
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - beeai.dev
+  resources:
+  - agentbuilds/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - beeai.dev
+  resources:
+  - agentbuilds/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - tekton.dev
+  resources:
+  - pipelineruns
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tekton.dev
+  resources:
+  - taskruns
+  verbs:
+  - get
+  - list
+  - watch

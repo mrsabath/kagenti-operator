@@ -1,0 +1,15 @@
+{
+    "makefile.configureOnOpen": false
+}
+,
+{
+    "tcp.proxy": {
+        "9000": {
+            "autoStart": true,
+            "name": "My HTTP proxy",
+            "description": "A proxy for my HTTP server",
+            "to": 8002,
+            "outputFormat": "http"
+        }
+    }
+}

@@ -1,0 +1,49 @@
+apiVersion: beeai.beeai.dev/v1
+kind: AgentBuild
+metadata:
+  labels:
+    app.kubernetes.io/name: kagenti-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: research-agent
+spec:
+  # Source code resource
+  repoUrl: "github.com/cwiklik/ollama-researcher.git"
+  repoUser: cwiklik
+  # branch 
+  revision: "main"
+  # image name to build 
+  image: "research-agent" 
+  imageTag: "v0.0.2"
+  # repo url to receive the image built by Tekton
+  imageRegistry: "ghcr.io/cwiklik" 
+  env:
+    - name: "SOURCE_REPO_SECRET"
+      valueFrom:
+        secretKeyRef:
+          name: "github-token-secret" 
+          key: "token"
+  # auto deploy the agent when pipeline succeeds       
+  deployAfterBuild: true 
+  # define the agent configuration to deploy
+  agent: 
+    name: "research-agent" 
+    description: "Test agent" 
+    env: 
+      - name: LLM_API_BASE
+        value: "http://host.docker.internal:11434/v1"
+      - name: LLM_API_KEY
+        value: "dummy"  
+      - name: LLM_MODEL
+        value: "llama3.2:3b-instruct-fp16"
+      # Agent's port        
+      - name: PORT
+        value: "8000"  
+      - name: PRODUCTION_MODE
+        value: "false"  
+    resources: 
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"

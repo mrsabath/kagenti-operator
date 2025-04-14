@@ -1,0 +1,19 @@
+apiVersion: beeai.beeai.dev/v1
+kind: Agent
+metadata:
+  name: sample-agent
+spec:
+  description: "A sample BeeAI agent for demonstration"
+  image: "lg-agent:latest"
+  env:
+    - name: LLM_MODEL
+      value: "llama3.2:1b-instruct-fp16"
+    - name: LLM_URL
+      value: "http://localhost:11434"
+  resources:
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
