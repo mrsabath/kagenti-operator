@@ -169,6 +169,7 @@ func (r *AgentReconciler) createDeploymentForAgent(agent *beeaiv1.Agent) *appsv1
 		"app":        agent.Name,
 		"controller": "agent-operator",
 	}
+
 	imageRepoSecretName := ""
 	for _, envVar := range agent.Spec.Env {
 		if envVar.Name == "IMAGE_REPO_SECRET" {
