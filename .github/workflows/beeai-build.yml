@@ -58,7 +58,7 @@ jobs:
 
     - name: Package and push beeai chart
       run: |
-        chartVersion=$(echo ${{ github.ref_name }} | cut -c 2-)
+        chartVersion=0.0.1
         helm package ${{ env.CHARTS_PATH }}/beeai-operator --destination . --version ${chartVersion} --app-version ${chartVersion}
         ls -l # List files to check the generated filename
         echo "Chart version: ${chartVersion}"
