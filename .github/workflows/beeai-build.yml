@@ -58,10 +58,10 @@ jobs:
 
     - name: Package and push beeai chart
       run: |
-        chartVersion=0.0.1
-        repoName=${{ github.event.repository.name }}
+        chartVersion=0.0.1   
         chartPackageName="kagenti-beeai-operator-chart-${chartVersion}.tgz"
         cd ${{ env.CHARTS_PATH }}/beeai-operator 
         helm package . --destination . --version ${chartVersion} --app-version ${chartVersion}
         ls -l # List files to check the generated filename
-        echo "Chart version: ${chartVersion}" ${repoName}
+        echo "Chart version: ${chartVersion}" 
+       
