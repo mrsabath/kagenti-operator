@@ -61,8 +61,7 @@ jobs:
         chartVersion=0.0.1
         repoName=${{ github.event.repository.name }}
         chartPackageName="kagenti-beeai-operator-chart-${chartVersion}.tgz"
-        helm package ${{ env.CHARTS_PATH }}/beeai-operator --destination . --version ${chartVersion} --app-version ${chartVersion}
-        mv kagenti-operator-${chartVersion}.tgz ${chartPackageName} 
+        cd ${{ env.CHARTS_PATH }}/beeai-operator 
+        helm package . --destination . --version ${chartVersion} --app-version ${chartVersion}
         ls -l # List files to check the generated filename
-        echo "Chart version: ${chartVersion}"
-        helm push "./${chartPackageName}" oci://${{ env.REGISTRY }}/${{ env.REPO }}
+        echo "Chart version: ${chartVersion}" ${repoName}
