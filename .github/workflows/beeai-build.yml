@@ -1,5 +1,14 @@
 name: Build Beeai Operator Docker Image (GHCR)
 
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  REPO: kagenti/kagenti-operator
+  CHARTS_PATH: ./charts
+
 on:
   push:
     branches:
@@ -46,3 +55,10 @@ jobs:
         context: beeai
         push: true
         tags: ghcr.io/kagenti/kagenti-operator/beeai-operator:latest
+
+    - name: Package and push beeai chart
+      run: |
+        chartVersion=$(echo ${{ github.ref_name }} | cut -c 2-)
+        cd beeai && make build-image && cd - # Build Docker image
+        helm package charts/beeai-operator --destination . --version ${chartVersion} --app-version ${chartVersion}
+        helm push ./beeai-operator-${chartVersion}.tgz oci://${{ env.REGISTRY }}/${{ env.REPO }}
