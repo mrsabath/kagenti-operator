@@ -54,6 +54,7 @@ jobs:
       with:
         context: beeai
         push: true
+        platforms: linux/amd64,linux/arm64
         tags: ghcr.io/kagenti/kagenti-operator/beeai-operator:latest
 
     - name: Package and push beeai chart
