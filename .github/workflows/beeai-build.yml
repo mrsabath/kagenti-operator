@@ -64,4 +64,4 @@ jobs:
         helm package . --destination . --version ${chartVersion} --app-version ${chartVersion}
         ls -l # List files to check the generated filename
         echo "Chart version: ${chartVersion}" 
-       
+        helm push "./${chartPackageName}" oci://${{ env.REGISTRY }}/${{ env.REPO }}
