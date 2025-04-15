@@ -277,6 +277,7 @@ func (r *AgentReconciler) createServiceForAgent(agent *beeaiv1.Agent) *corev1.Se
 		},
 	}
 }
+
 func (r *AgentReconciler) handleDeletion(ctx context.Context, agent *beeaiv1.Agent, logger logr.Logger) (ctrl.Result, error) {
 	if controllerutil.ContainsFinalizer(agent, agentFinalizer) {
 		// Delete Deployment and associated Service objects
