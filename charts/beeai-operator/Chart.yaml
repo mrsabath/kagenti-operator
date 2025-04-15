@@ -1,5 +1,5 @@
 apiVersion: v2
-name: kagenti-operator
+name: kagenti-beeai-operator-chart
 description: A Helm chart to distribute the project kagenti-operator
 type: application
 version: 0.1.0
