@@ -8,7 +8,7 @@ OPERATOR_NAMESPACE="default"
 echo "--- Installing Tekton Pipelines ---"
 kubectl apply --filename "https://storage.googleapis.com/tekton-releases/pipeline/previous/${TEKTON_VERSION}/release.yaml"
 
-echo "--- Installing the operator ---"
+echo "--- Installing the beeai operator ---"
 helm upgrade --install kagenti dist/chart
 
 echo "--- Installation complete ---"
