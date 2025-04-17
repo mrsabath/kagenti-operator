@@ -39,7 +39,7 @@ curl -sSL https://raw.githubusercontent.com/kagenti/kagenti-operator/main/beeai/
 ### Testing the Operator with a BeeAI Agent Example
 
 To test the `kagenti-operator` with a BeeAI agent example, we will leverage the `ollama-deep-researcher` example agent. Its source code
-can be found in [ https://github.com/i-am-bee/beeai-platform.git]( https://github.com/i-am-bee/beeai-platform.git) repo under beeai folder. 
+can be found in [https://github.com/kagenti/agent-examples](https://github.com/kagenti/agent-examples) repo under beeai folder. 
 
 **Alternatively, if you have your own BeeAI agent code already hosted in a GitHub repository, you can directly use that repository's URL in your `AgentBuild` configuration.**
 
