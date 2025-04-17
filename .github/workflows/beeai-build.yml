@@ -55,11 +55,11 @@ jobs:
         context: beeai
         push: true
         platforms: linux/amd64,linux/arm64
-        tags: ghcr.io/kagenti/kagenti-operator/beeai-operator:v0.0.1
+        tags: ghcr.io/kagenti/kagenti-operator/beeai-operator:latest
 
     - name: Package and push beeai chart
       run: |
-        chartVersion=0.0.2
+        chartVersion=0.0.1
         chartPackageName="kagenti-beeai-operator-chart-${chartVersion}.tgz"
         cd ${{ env.CHARTS_PATH }}/beeai-operator 
         helm package . --destination . --version ${chartVersion} --app-version ${chartVersion}
