@@ -39,9 +39,9 @@ curl -sSL https://raw.githubusercontent.com/kagenti/kagenti-operator/main/beeai/
 ### Testing the Operator with a BeeAI Agent Example
 
 To test the `kagenti-operator` with a BeeAI agent example, we will leverage the `ollama-deep-researcher` example agent. Its source code
-can be found in [github.com/kagenti/agent-examples.git](github.com/kagenti/agent-examples.git) repo under beeai folder. 
+can be found in [ https://github.com/i-am-bee/beeai-platform.git]( https://github.com/i-am-bee/beeai-platform.git) repo under beeai folder. 
 
-**Alternatively, if you have your own BeeAI agent code already hosted in a GitHub repository, you can directly use that repository's URL in your `AgentBuild` configuration and skip the steps for cloning, creating a new repository, and pushing.**
+**Alternatively, if you have your own BeeAI agent code already hosted in a GitHub repository, you can directly use that repository's URL in your `AgentBuild` configuration.**
 
 You can proceed to create an `AgentBuild` custom resource in your Kubernetes cluster, referencing the appropriate repository URL to test the `kagenti-operator`'s build and deployment capabilities.
 
@@ -131,7 +131,7 @@ research-agent-build-18345b6e-git-clone-pod      0/1     Completed   0          
 research-agent-f4877984b-9prhs                   1/1     Running     0          10s
 ```
 
-`Important:` Take note of the pod name that starts with `research-agent`. In the example above, it is research-agent-f4877984b-9prhs. This is the name of your running agent and will be used in subsequent commands to interact with it.
+`Important:` Take note of the pod name that starts with `research-agent-`. In the example above, it is research-agent-f4877984b-9prhs. The `research-agent` is the name of your running agent and will be used in subsequent commands to interact with it.
 
 If your configured agent pod to expose port 8000 (env var PORT value), port-forward to the agent's k8s service as follows:
 
@@ -142,8 +142,8 @@ kubectl port-forward svc/"your-agent-name" 8000:8000
 
 Run BeeAI client, making sure to use correct agent name as noted above. In our case, the agent name is `research-agent`:
 
-`Important:` To run the beeai client code below, you must first clone beeai source code and cd to beeai directory. This is an inconvenience
-that we are working to resolve in a near future.
+`Important:` To run the beeai client code below, you must first clone beeai source code and cd to beeai directory. `This is an inconvenience
+that we are working to resolve in a near future.`
 
 ```
 git clone https://github.com/i-am-bee/beeai-platform.git
