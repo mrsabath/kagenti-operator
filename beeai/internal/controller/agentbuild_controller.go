@@ -270,9 +270,7 @@ func (r *AgentBuildReconciler) createPipelineRun(ctx context.Context, agentBuild
 	}
 
 	// Define the subfolder we want to build from
-	subFolder := "" // "beeai/ollama-deep-researcher"
-
-	// You might want to make this configurable through AgentBuild.Spec
+	subFolder := ""
 	if agentBuild.Spec.SourceSubfolder != "" {
 		subFolder = agentBuild.Spec.SourceSubfolder
 	}
@@ -374,7 +372,7 @@ func (r *AgentBuildReconciler) createPipelineRun(ctx context.Context, agentBuild
 
 					{
 						Name:     buildTaskName,
-						RunAfter: []string{pullTaskName},
+						RunAfter: []string{"check-subfolder"},
 						TaskSpec: &tektonv1.EmbeddedTask{
 							TaskSpec: tektonv1.TaskSpec{
 								Steps: []tektonv1.Step{
