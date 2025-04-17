@@ -4,7 +4,7 @@ controllerManager:
   container:
     image:
       repository: ghcr.io/kagenti/kagenti-operator/beeai-operator
-      tag: latest
+      tag: v0.0.1
     args:
       - "--leader-elect"
       - "--metrics-bind-address=:8443"
