@@ -40,6 +40,7 @@ var _ = Describe("AgentBuild Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
+
 		agentbuild := &beeaiv1.AgentBuild{}
 
 		BeforeEach(func() {
