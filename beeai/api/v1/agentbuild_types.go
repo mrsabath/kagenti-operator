@@ -27,6 +27,11 @@ type AgentBuildSpec struct {
 	// +kubebuilder:validation:Required
 	RepoURL string `json:"repoUrl"`
 
+	// Name of subfolder containing the agent source code. Supports a repo with
+	// many agents, each isolated in a dedicated folder
+	// +optional
+	SourceSubfolder string `json:"sourceSubfolder"`
+
 	// RepoUser is the username in the Git repository containing the agent source code
 	// +kubebuilder:validation:Required
 	RepoUser string `json:"repoUser"`

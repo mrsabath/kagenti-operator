@@ -269,6 +269,13 @@ func (r *AgentBuildReconciler) createPipelineRun(ctx context.Context, agentBuild
 		return ctrl.Result{}, err
 	}
 
+	// Define the subfolder we want to build from
+	subFolder := "" // "beeai/ollama-deep-researcher"
+
+	// You might want to make this configurable through AgentBuild.Spec
+	if agentBuild.Spec.SourceSubfolder != "" {
+		subFolder = agentBuild.Spec.SourceSubfolder
+	}
 	pipelineRun := &tektonv1.PipelineRun{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PipelineRun",
@@ -309,6 +316,7 @@ func (r *AgentBuildReconciler) createPipelineRun(ctx context.Context, agentBuild
 											fmt.Sprintf("https://%s@%s", "$(params.GITHUB_TOKEN)", agentBuild.Spec.RepoURL),
 											"-revision",
 											agentBuild.Spec.Revision,
+
 											"-path",
 											"/workspace/source",
 										},
@@ -330,6 +338,40 @@ func (r *AgentBuildReconciler) createPipelineRun(ctx context.Context, agentBuild
 							},
 						},
 					},
+
+					{
+						Name:     "check-subfolder",
+						RunAfter: []string{pullTaskName},
+						TaskSpec: &tektonv1.EmbeddedTask{
+							TaskSpec: tektonv1.TaskSpec{
+								Steps: []tektonv1.Step{
+									{
+										Name:  "check-dir",
+										Image: "alpine:latest",
+										Command: []string{
+											"sh", "-c",
+										},
+										Args: []string{
+											fmt.Sprintf("if [ ! -d \"$(workspaces.source.path)/%s\" ]; then echo \"Subfolder %s not found\"; exit 1; else echo \"Subfolder %s exists\"; fi",
+												subFolder, subFolder, subFolder),
+										},
+									},
+								},
+								Workspaces: []tektonv1.WorkspaceDeclaration{
+									{
+										Name: "source",
+									},
+								},
+							},
+						},
+						Workspaces: []tektonv1.WorkspacePipelineTaskBinding{
+							{
+								Name:      "source",
+								Workspace: "source-workspace",
+							},
+						},
+					},
+
 					{
 						Name:     buildTaskName,
 						RunAfter: []string{pullTaskName},
@@ -342,10 +384,9 @@ func (r *AgentBuildReconciler) createPipelineRun(ctx context.Context, agentBuild
 
 										Args: []string{
 											"--dockerfile=$(params.DOCKERFILE)",
-											"--context=$(workspaces.source.path)",
+											fmt.Sprintf("--context=$(workspaces.source.path)/%s", subFolder),
 											"--destination=$(params.IMAGE)",
 											"--skip-tls-verify=$(params.SKIP_TLS_VERIFY)",
-											//"--no-push",
 											"--verbosity=trace",
 										},
 										Env: []corev1.EnvVar{

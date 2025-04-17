@@ -389,6 +389,11 @@ spec:
                 description: Revision is the Git revision to checkout (branch, tag,
                   commit SHA)
                 type: string
+              sourceSubfolder:
+                description: |-
+                  Name of subfolder containing the agent source code. Supports a repo with
+                  many agents, each isolated in a dedicated folder
+                type: string
             required:
             - image
             - imageRegistry

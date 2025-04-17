@@ -6,8 +6,12 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: research-agent
 spec:
-  # Source code resource
-  repoUrl: "github.com/cwiklik/ollama-researcher.git"
+  # Repository containing agent source code
+  repoUrl: "github.com/kagenti/agent-examples.git"
+
+  # subfolder containing specific agent source code
+  sourceSubfolder: beeai/ollama-deep-researcher
+  
   repoUser: cwiklik
   # branch 
   revision: "main"
