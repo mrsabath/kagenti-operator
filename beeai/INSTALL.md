@@ -33,6 +33,13 @@ In a new terminal, run:
 ```shell
 curl -sSL https://raw.githubusercontent.com/kagenti/kagenti-operator/main/beeai/scripts/install.sh | bash
 ```
+### 3. Create k8s secret containing your github repo token
+Github token is required to push the agent docker image (built by the operator) to your ghcr.io image repo.
+In a new terminal, run:
+```
+export PASSWORD=<your github token>
+kubectl create secret generic github-token-secret --from-literal=token="$PASSWORD"
+```
 
 ### 4. Usage 
 
