@@ -1,14 +1,8 @@
-{{- if .Values.crd.enable }}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  labels:
-    {{- include "chart.labels" . | nindent 4 }}
   annotations:
-    {{- if .Values.crd.keep }}
-    "helm.sh/resource-policy": keep
-    {{- end }}
     controller-gen.kubebuilder.io/version: v0.17.1
   name: agentbuilds.beeai.beeai.dev
 spec:
@@ -395,6 +389,11 @@ spec:
                 description: Revision is the Git revision to checkout (branch, tag,
                   commit SHA)
                 type: string
+              sourceSubfolder:
+                description: |-
+                  Name of subfolder containing the agent source code. Supports a repo with
+                  many agents, each isolated in a dedicated folder
+                type: string
             required:
             - image
             - imageRegistry
@@ -501,4 +500,3 @@ spec:
     storage: true
     subresources:
       status: {}
-{{- end -}}
