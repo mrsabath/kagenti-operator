@@ -192,7 +192,7 @@ cd beeai
     ```bash
      env BEEAI__HOST=http://localhost:8000 \
         BEEAI__MCP_SSE_PATH='/sse' \
-        uv run beeai agent run "ollama-deep-researcher" 'hello'
+        uv run beeai agent run ollama-deep-researcher "llamas vs alpacas main differences"
     ```
 
     **Important:** Ensure you replace `"ollama-deep-researcher"` in the command above with the actual agent name you found in the pod's logs.
@@ -260,7 +260,7 @@ existing-research-agent-c7cc5f568-73ff21                         1/1     Running
 
 ``Verifying Deployment``
 
-`Important:` Take note of the pod name that starts with `existing-research-agent-`. In the example above, it is existing-research-agent-c7cc5f568-73ff21 . The `existing-research-agent` is the name of your running agent and will be used in subsequent commands to interact with it.
+Follow the same steps as outlined in section `Finding the BeeAI Agent's Internal Name` above to discover internal agent's name.
 
 If your configured agent pod to expose port 8000 (env var PORT value), port-forward to the agent's k8s service as follows:
 
@@ -268,8 +268,7 @@ If your configured agent pod to expose port 8000 (env var PORT value), port-forw
 kubectl port-forward svc/"existing-research-agent" 8000:8000
 ```
 
-
-Run BeeAI client, making sure to use correct agent name as noted above. In our case, the agent name is `research-agent`:
+Run BeeAI client, making sure to use correct agent name as noted above. In our case, the agent name is `ollama-deep-researcher`:
 
 `Important:` To run the beeai client code below, you must first clone beeai source code and cd to beeai directory. `This is an inconvenience
 that we are working on to resolve in a near future.`
