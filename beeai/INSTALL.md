@@ -170,7 +170,7 @@ The name you'll use with the BeeAI CLI to interact with your agent may be differ
     If you configured agent pod to expose port 8000 (env var PORT value), port-forward to the agent's k8s service. The operator creates the service using the same name as the agent pod name defined in AgentBuild CR. 
 
 ```shell
-kubectl port-forward svc/"research-agent" 8000:8000
+kubectl port-forward svc/research-agent 8000:8000
 ```
 5. **Clone BeeAI Repository:** 
 To run the beeai client code below, you must first clone beeai source code and cd to beeai directory. `This is an inconvenience
@@ -262,7 +262,7 @@ Follow the same steps as outlined in section `Finding the BeeAI Agent's Internal
 If your configured agent pod to expose port 8000 (env var PORT value), port-forward to the agent's k8s service as follows:
 
 ```shell
-kubectl port-forward svc/"existing-research-agent" 8000:8000
+kubectl port-forward svc/existing-research-agent 8000:8000
 ```
 
 Run BeeAI client, making sure to use correct agent name as noted above. In our case, the agent name is `ollama-deep-researcher`:
