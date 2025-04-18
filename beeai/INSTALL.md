@@ -56,7 +56,7 @@ This section explains how to create and use the `AgentBuild` custom resource, wh
 
 ###   Example `AgentBuild` Custom Resource
 
-Here's an example YAML file for creating an `AgentBuild` custom resource. 
+Here's an example YAML file (call it: research-agent-build.yaml) for creating an `AgentBuild` custom resource. 
 
 ```yaml
 apiVersion: beeai.beeai.dev/v1
