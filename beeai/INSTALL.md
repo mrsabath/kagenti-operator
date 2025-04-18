@@ -151,7 +151,7 @@ kubectl port-forward svc/"your-agent-name" 8000:8000
 Run BeeAI client, making sure to use correct agent name as noted above. In our case, the agent name is `research-agent`:
 
 `Important:` To run the beeai client code below, you must first clone beeai source code and cd to beeai directory. `This is an inconvenience
-that we are working to resolve in a near future.`
+that we are working on to resolve in a near future.`
 
 ```
 git clone https://github.com/i-am-bee/beeai-platform.git
