@@ -1,0 +1,39 @@
+{{- if .Values.rbac.enable }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+  name: k8gentai-manager-role
+rules:
+- apiGroups: ["aiplatform.aiplatform.io"]
+  resources: ["componentdefinitions", "k8gentais"]
+  verbs: ["*"]
+- apiGroups: ["aiplatform.aiplatform.io"]
+  resources: ["componentdefinitions/status", "k8gentais/status"]
+  verbs: ["update", "patch"]  
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["*"]    
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["*"] 
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["*"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["*"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets"]
+  verbs: ["*"]    
+{{- end -}}

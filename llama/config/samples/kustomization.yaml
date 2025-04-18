@@ -1,0 +1,5 @@
+## Append samples of your project ##
+resources:
+- aiplatform_v1alpha1_k8gentai.yaml
+- aiplatform_v1alpha1_componentdefinition.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

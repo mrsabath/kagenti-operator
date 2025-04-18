@@ -1,0 +1,21 @@
+apiVersion: aiplatform.aiplatform.io/v1alpha1
+kind: K8gentai
+metadata:
+  labels:
+    app.kubernetes.io/name: k8gentai
+    app.kubernetes.io/managed-by: kustomize
+  name: k8gentai-sample
+spec:
+  components:
+  - definitionName: postgresql
+    name: postgresql
+    namespace: default
+  - definitionName: redis
+    name: redis
+    namespace: default
+  - definitionName: llama-stack-dispatcher
+    name: llama-stack-dispatcher
+    namespace: default
+  - definitionName: llama-stack-worker
+    name: llama-stack-worker
+    namespace: default

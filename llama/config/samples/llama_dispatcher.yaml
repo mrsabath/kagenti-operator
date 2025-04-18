@@ -1,0 +1,20 @@
+apiVersion: aiplatform.aiplatform.io/v1alpha1
+kind: ComponentDefinition
+metadata:
+  labels:
+    app.kubernetes.io/name: k8gentai
+    app.kubernetes.io/managed-by: kustomize
+  name: llama-stack-dispatcher
+spec:
+    definitionName: llama-stack-dispatcher
+    name: llama-stack-dispatcher
+    namespace: default
+    type: app
+    installer: deployment
+    defaultParameters:
+      image: "llama-stack-ollama:new"	
+      args: "llama stack run --image-name stack /app/llama_stack/providers/inline/agents/meta_reference_dispatcher/run.yaml"	
+      model: "llama3.2:3b-instruct-fp16"
+      llm-url: "http://host.docker.internal:11434"
+      port: "8321"  # llama stack port        
+    dependsOn: [redis, postgresql]  

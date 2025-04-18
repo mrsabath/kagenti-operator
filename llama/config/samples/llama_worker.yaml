@@ -1,0 +1,20 @@
+apiVersion: aiplatform.aiplatform.io/v1alpha1
+kind: ComponentDefinition
+metadata:
+  labels:
+    app.kubernetes.io/name: k8gentai
+    app.kubernetes.io/managed-by: kustomize
+  name: llama-stack-worker
+spec:
+    definitionName: llama-stack-worker
+    name: llama-stack-worker
+    namespace: default
+    type: app
+    installer: deployment
+    defaultParameters:
+      image: "llama-stack-ollama:new"	
+      args: "python -m llama_stack.providers.remote.agents.queue-worker.main"	
+      model: "llama3.2:3b-instruct-fp16"
+      llm-url: "http://host.docker.internal:11434"
+      port: "8321"  # llama stack port	        
+    dependsOn: [redis, postgresql]  
