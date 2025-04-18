@@ -1,5 +1,5 @@
 apiVersion: v2
-name: k8gentai
+name: kagenti-llama-operator-chart
 description: A Helm chart to distribute the project k8gentai
 type: application
 version: 0.1.0
