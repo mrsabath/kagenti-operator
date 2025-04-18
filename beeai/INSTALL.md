@@ -25,7 +25,7 @@ Before installing the `kagenti-operator`, ensure you have the following prerequi
 In a new terminal, run:
 
 ```shell
-ollama run llama3.2:1b-instruct-fp16 --keepalive 60m
+ollama run "your-llm-model" --keepalive 60m
 ```
 ### 2. Start Kagenti operator
 In a new terminal, run:
