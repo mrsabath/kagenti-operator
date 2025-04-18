@@ -101,6 +101,7 @@ spec:
         value: "http://host.docker.internal:11434/v1"
       - name: LLM_API_KEY
         value: "dummy"  
+      # Replace "your-llm-model" below with the actual LLM model  
       - name: LLM_MODEL
         value: "your-llm-model"
     resources:
@@ -215,6 +216,7 @@ spec:
   env:
     - name: PORT
       value: "8000"
+    # Replace "your-llm-model" below with the actual LLM model  
     - name: LLM_MODEL
       value: "your-llm-model"
     - name: LLM_API_BASE
