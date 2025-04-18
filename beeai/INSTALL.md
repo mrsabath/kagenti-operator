@@ -139,7 +139,7 @@ research-agent-183740ed-git-clone-pod                  0/1     Completed   0    
 research-agent-c7cc5f568-82chd                         1/1     Running     0          9s
 ```
 
-`Important:` Take note of the pod name that starts with `research-agent-`. In the example above, it is research-agent-f4877984b-9prhs. The `research-agent` is the name of your running agent and will be used in subsequent commands to interact with it.
+`Important:` Take note of the pod name that starts with `research-agent-`. In the example above, it is research-agent-c7cc5f568-82chd. The `research-agent` is the name of your running agent and will be used in subsequent commands to interact with it.
 
 If your configured agent pod to expose port 8000 (env var PORT value), port-forward to the agent's k8s service as follows:
 
