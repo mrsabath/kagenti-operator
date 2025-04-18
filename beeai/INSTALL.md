@@ -62,9 +62,6 @@ Create research-agent-build.yaml:
 apiVersion: beeai.beeai.dev/v1
 kind: AgentBuild
 metadata:
-  labels:
-    app.kubernetes.io/name: kagenti-operator
-    app.kubernetes.io/managed-by: kustomize
   name: research-agent-build
 spec:
   # Example agent source code repository
