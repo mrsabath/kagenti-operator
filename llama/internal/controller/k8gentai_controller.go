@@ -175,8 +175,6 @@ func (r *K8gentaiReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			}
 			continue
 		}
-
-		// Process the component
 		status, err := r.reconcileComponent(ctx, ap, compInfo)
 		if err != nil {
 			logger.Error(err, "Failed to reconcile component",
