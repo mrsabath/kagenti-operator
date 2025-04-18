@@ -142,7 +142,7 @@ research-agent-c7cc5f568-82chd                               1/1     Running    
 
 **Finding the BeeAI Agent's Internal Name:**
 
-The name you'll use with the BeeAI CLI to interact with your agent may be different from the Kubernetes pod name. This internal agent name is typically defined within the agent's code itself. To discover the specific name your deployed agent is using, you need to inspect its logs. `Note:` need a better way to discover agent's name as outlined below.
+The name you'll use with the BeeAI CLI to interact with your agent may be different from the Kubernetes pod name. This internal agent name is typically defined within the agent's code itself. To discover the specific name your deployed agent is using, you need to inspect its logs. `Note:` need a better way to discover agent's name.
 
 1.  **Identify the Agent Pod Name:**
 
