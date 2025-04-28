@@ -24,8 +24,7 @@ EOF
 : -------------------------------------------------------------------------
 : "Deploy a container registry"
 :
-kubectl apply -f ${SCRIPT_DIR}/kind-with-registry.yaml
-
+kubectl apply -f https://raw.githubusercontent.com/kagenti/kagenti-operator/refs/heads/main/scripts/kind-with-registry.yaml
 :
 : -------------------------------------------------------------------------
 : "Wait to be ready"
