@@ -29,7 +29,25 @@ kubectl apply -f https://raw.githubusercontent.com/kagenti/kagenti-operator/refs
 : -------------------------------------------------------------------------
 : "Wait to be ready"
 :
-kubectl wait --for=condition=Available=true --timeout=120s -n cr-system deployment/registry
+
+namespace="cr-system"
+deployment_name="registry"
+
+desired_replicas=$(kubectl -n "$namespace" get deployment/"$deployment_name" -o jsonpath='{.spec.replicas}')
+
+echo "Waiting for deployment '$deployment_name' in namespace '$namespace' to become ready (desired: $desired_replicas)..."
+
+while true; do
+  ready_replicas=$(kubectl -n "$namespace" get deployment/"$deployment_name" -o jsonpath='{.status.readyReplicas}')
+  echo "Ready replicas: $ready_replicas"
+  if [ "$ready_replicas" -eq "$desired_replicas" ]; then
+    echo "Deployment '$deployment_name' is fully rolled out."
+    break
+  fi
+  sleep 5 # Wait for 5 seconds before checking again
+done
+
+#kubectl wait --for=condition=Available=true --timeout=120s -n cr-system deployment/registry
 #kubectl -n cr-system rollout status deployment/registry --watch=false
 
 
