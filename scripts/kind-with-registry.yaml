@@ -1,0 +1,45 @@
+ # registry.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cr-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+  namespace: cr-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry
+  template:
+    metadata:
+      labels:
+        app: registry
+    spec:
+      containers:
+      - name: registry
+        image: public.ecr.aws/docker/library/registry:3.0.0-rc.4
+        ports:
+        - containerPort: 5000
+          name: registry
+        env:
+        - name: OTEL_TRACES_EXPORTER
+          value: none
+        - name: REGISTRY_LOG_LEVEL
+          value: info
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  namespace: cr-system
+spec:
+  ports:
+  - port: 5000
+    targetPort: 5000
+  selector:
+    app: registry
