@@ -82,12 +82,13 @@ spec:
   imageRegistry: "registry.cr-system.svc.cluster.local:5000"
   # reference the secret created in step 3 above
   env:
+    # Uncomment below code to enable pushing docker image to external repository like ghcr.io
     # your github repo token to push the docker image
-    - name: "SOURCE_REPO_SECRET"
-      valueFrom:
-        secretKeyRef:
-          name: "github-token-secret"
-          key: "token"
+    #- name: "SOURCE_REPO_SECRET"
+    #  valueFrom:
+    #    secretKeyRef:
+    #      name: "github-token-secret"
+    #      key: "token"
 
   # auto deploy the agent when pipeline succeeds
   deployAfterBuild: true
