@@ -54,7 +54,8 @@ kubectl apply -f https://raw.githubusercontent.com/kagenti/kagenti-operator/refs
 : "Apply workaround to resolve registry DNS from the Kind kubelet"
 :
 REGISTRY_IP=$(kubectl get service -n cr-system registry -o jsonpath='{.spec.clusterIP}')
-docker exec -it agent-platform-control-plane sh -c "echo ${REGISTRY_IP} registry.cr-system.svc.cluster.local >> /etc/hosts"
+# docker exec -it agent-platform-control-plane sh -c "echo ${REGISTRY_IP} registry.cr-system.svc.cluster.local >> /etc/hosts"
+docker exec agent-platform-control-plane sh -c "echo ${REGISTRY_IP} registry.cr-system.svc.cluster.local >> /etc/hosts"
 
   
 :    "Kind cluster '$cluster_name' created successfully."
