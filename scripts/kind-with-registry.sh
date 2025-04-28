@@ -29,7 +29,7 @@ kubectl apply -f https://raw.githubusercontent.com/kagenti/kagenti-operator/refs
 : -------------------------------------------------------------------------
 : "Wait to be ready"
 :
-kubectl -n cr-system rollout status deployment/registry --timeout=60s
+kubectl -n cr-system rollout status deployment/registry --watch=false
 
 
 :
