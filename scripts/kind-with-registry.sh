@@ -25,17 +25,17 @@ EOF
 : "Deploy a container registry"
 :
 kubectl apply -f https://raw.githubusercontent.com/kagenti/kagenti-operator/refs/heads/main/scripts/kind-with-registry.yaml
-:
-: -------------------------------------------------------------------------
-: "Wait to be ready"
-:
+#:
+#: -------------------------------------------------------------------------
+#: "Wait to be ready"
+#:
 
-kubectl -n cr-system rollout status deployment/registry --watch=false
+#kubectl -n cr-system rollout status deployment/registry --watch=false
 
 
-:
-: -------------------------------------------------------------------------
-: "Apply workaround to resolve registry DNS from the Kind kubelet"
-:
-REGISTRY_IP=$(kubectl get service -n cr-system registry -o jsonpath='{.spec.clusterIP}')
-docker exec -it agent-platform-control-plane sh -c "echo ${REGISTRY_IP} registry.cr-system.svc.cluster.local >> /etc/hosts"
+#:
+#: -------------------------------------------------------------------------
+#: "Apply workaround to resolve registry DNS from the Kind kubelet"
+#:
+#REGISTRY_IP=$(kubectl get service -n cr-system registry -o jsonpath='{.spec.clusterIP}')
+#docker exec -it agent-platform-control-plane sh -c "echo ${REGISTRY_IP} registry.cr-system.svc.cluster.local >> /etc/hosts"
