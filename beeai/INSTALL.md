@@ -45,8 +45,8 @@ curl -sSL https://raw.githubusercontent.com/kagenti/kagenti-operator/main/beeai/
 ## Usage
 
 ### Option 1: Building and Deploying New Agents From Source
-
-Github token is required to push the agent docker image (built by the operator) to your ghcr.io image repo.
+By default the operator install script creates Local Registry within Kind and a token is not needed to
+push and pull images. If you want to use an external registry like ghcr.io, follow instructions below. 
 In a new terminal, run:
 ```
 export PASSWORD=<your github token>
@@ -76,8 +76,10 @@ spec:
   image: "research-agent"
   imageTag: "v0.0.1"
   # repo url to receive the image built. The Tekton build step will push the docker image
-  # to this repo.
-  imageRegistry: "ghcr.io/your-github-username"
+  # to this repo. Uncomment below if using external image repository like ghcr.io
+  #  imageRegistry: "ghcr.io/your-github-username"
+  # Use local registry 
+  imageRegistry: "registry.cr-system.svc.cluster.local:5000"
   # reference the secret created in step 3 above
   env:
     # your github repo token to push the docker image
