@@ -167,13 +167,13 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					//
 					pullRepoSecret, err := r.createSecret(ctx, agentBuild, ".dockerconfigjson", token, corev1.SecretTypeDockerConfigJson, "docker")
 					if err != nil {
-						logger.Error(err, "Failed to create secret for the image repository",
-							"pipelineRunName", agentBuild.Status.PipelineRunName)
+						logger.Error(err, "Failed to create secret for the image repository", "pipelineRunName", agentBuild.Status.PipelineRunName)
 						return ctrl.Result{}, err
 					}
 					return r.createAgentCR(ctx, agentBuild, pullRepoSecret, logger)
 				}
 			} else if agentBuild.Status.BuildStatus == "Completed" && agentBuild.Spec.CleanupAfterBuild {
+
 				if err := r.cleanupTektonCompletedPods(ctx, agentBuild, logger); err != nil {
 					logger.Error(err, "Failed to cleanup tekton pods",
 						"pipelineRunName", agentBuild.Status.PipelineRunName)
