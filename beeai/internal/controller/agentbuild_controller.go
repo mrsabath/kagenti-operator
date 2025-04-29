@@ -173,8 +173,13 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					}
 					return r.createAgentCR(ctx, agentBuild, pullRepoSecret, logger)
 				}
+			} else if agentBuild.Status.BuildStatus == "Completed" && agentBuild.Spec.CleanupAfterBuild {
+				if err := r.cleanupTektonCompletedPods(ctx, agentBuild, logger); err != nil {
+					logger.Error(err, "Failed to cleanup tekton pods",
+						"pipelineRunName", agentBuild.Status.PipelineRunName)
+					return ctrl.Result{}, err
+				}
 			}
-
 			return ctrl.Result{}, nil
 		} else {
 			if agentBuild.Status.BuildStatus != "Failed" {
@@ -198,6 +203,39 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
+}
+
+func (r *AgentBuildReconciler) cleanupTektonCompletedPods(ctx context.Context, agentBuild *beeaiv1.AgentBuild, logger logr.Logger) error {
+	// Get the pods associated with the PipelineRun
+	pipelineRunName := agentBuild.Status.PipelineRunName
+
+	// List the pods with the PipelineRun label
+	podList := &corev1.PodList{}
+	err := r.List(ctx, podList, client.MatchingLabels{"tekton.dev/pipelineRun": pipelineRunName})
+	if err != nil {
+		logger.Error(err, "Failed to list pods for PipelineRun", "pipelineRunName", pipelineRunName)
+		return err
+	}
+
+	// Filter for completed pods (Succeeded)
+	var completedPods []corev1.Pod
+	for _, pod := range podList.Items {
+		if pod.Status.Phase == corev1.PodSucceeded { //|| pod.Status.Phase == corev1.PodFailed {
+			completedPods = append(completedPods, pod)
+		}
+	}
+
+	// Delete completed pods
+	for _, pod := range completedPods {
+		logger.Info("Deleting completed pod", "podName", pod.Name)
+		err := r.Delete(ctx, &pod)
+		if err != nil {
+			logger.Error(err, "Failed to delete completed pod", "podName", pod.Name)
+			// Continue with other pods rather than failing the cleanup
+		}
+	}
+
+	return nil
 }
 
 func (r *AgentBuildReconciler) handleDeletion(ctx context.Context, agentBuild *beeaiv1.AgentBuild, logger logr.Logger) (ctrl.Result, error) {

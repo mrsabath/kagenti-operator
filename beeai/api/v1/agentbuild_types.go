@@ -60,6 +60,10 @@ type AgentBuildSpec struct {
 	// +optional
 	DeployAfterBuild bool `json:"deployAfterBuild,omitempty"`
 
+	// DeployAfterBuild indicates whether to automatically deploy the agent after build
+	// +optional
+	CleanupAfterBuild bool `json:"cleanupAfterBuild,omitempty"`
+
 	// Agent defines the configuration for the Agent CR that will be created
 	// +optional
 	Agent AgentTemplate `json:"agent,omitempty"`
