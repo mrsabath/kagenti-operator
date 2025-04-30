@@ -294,7 +294,7 @@ func (r *AgentBuildReconciler) createPipelineRun(ctx context.Context, agentBuild
 			"pipelineRunName", agentBuild.Status.PipelineRunName)
 		return ctrl.Result{}, err
 	}
-	logger.Info("createPipelineRun", "created push secret", pushRepoSecret)
+	logger.Info("- createPipelineRun", "created push secret", pushRepoSecret)
 
 	pipelineRunName := fmt.Sprintf("%s-%s", agentBuild.Name, generateShortUID())
 	pv, err := r.createPersistentVolume(ctx, agentBuild, pipelineRunName, "5Gi", "ReadWriteOnce", "/mnt/data")
