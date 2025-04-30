@@ -173,7 +173,7 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					return r.createAgentCR(ctx, agentBuild, pullRepoSecret, logger)
 				}
 			} else if agentBuild.Status.BuildStatus == "Completed" && agentBuild.Spec.CleanupAfterBuild {
-
+				logger.Info("Reconciling AgentBuild", "Cleaning Up Tekton Pods", req.NamespacedName)
 				if err := r.cleanupTektonCompletedPods(ctx, agentBuild, logger); err != nil {
 					logger.Error(err, "Failed to cleanup tekton pods",
 						"pipelineRunName", agentBuild.Status.PipelineRunName)
