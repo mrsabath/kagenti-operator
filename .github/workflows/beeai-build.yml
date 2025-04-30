@@ -14,6 +14,7 @@ on:
     branches:
       - main
       - tekton-pod-cleanup
+      - namespace-support
     paths:
       - 'beeai/**'
   pull_request:
