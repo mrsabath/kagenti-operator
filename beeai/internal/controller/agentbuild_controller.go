@@ -76,7 +76,7 @@ const (
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
 func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciling AgentBuild", "namespacedName", req.NamespacedName)
+	logger.Info("- Reconciling AgentBuild", "namespacedName", req.NamespacedName)
 
 	agentBuild := &beeaiv1.AgentBuild{}
 	err := r.Get(ctx, req.NamespacedName, agentBuild)
