@@ -25,6 +25,15 @@ rules:
   - watch
 - apiGroups:
   - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+  - delete    
+- apiGroups:
+  - ""
   resources:  ["persistentvolumes", "persistentvolumeclaims"]
   verbs:
   - create
