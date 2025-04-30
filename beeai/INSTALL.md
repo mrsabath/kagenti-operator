@@ -92,6 +92,10 @@ spec:
 
   # auto deploy the agent when pipeline succeeds
   deployAfterBuild: true
+  
+  # auto cleanup Tekton pods when pipeline succeeds
+  cleanupAfterBuild: true
+
   # define agent configuration parameters
   agent:
     name: "research-agent"
@@ -133,10 +137,7 @@ When a Tekton pipeline succeeds you should see the following pods:
 ```
 NAME                                         READY   STATUS      RESTARTS   AGE
 kagenti-operator-controller-manager-585c587f7f-nxctl   1/1     Running     0          85s
-research-agent-build-183740ed-build-and-push-pod             0/1     Completed   0          47s
-research-agent-build-183740ed-check-subfolder-pod            0/1     Completed   0          56s
-research-agent-build-183740ed-git-clone-pod                  0/1     Completed   0          66s
-research-agent-c7cc5f568-82chd                               1/1     Running     0          9s
+research-agent-c7cc5f568-82chd                         1/1     Running     0          9s
 ```
 
 `Important:` Take note of the agent pod name research-agent-c7cc5f568-82chd. 

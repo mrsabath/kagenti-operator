@@ -22,7 +22,8 @@ spec:
 
   # auto deploy the agent when pipeline succeeds       
   deployAfterBuild: true 
-
+  cleanupAfterBuild: true
+  
 # define the agent configuration to deploy
   agent: 
     name: "research-agent" 
