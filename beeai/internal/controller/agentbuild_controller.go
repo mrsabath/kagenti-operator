@@ -320,7 +320,7 @@ func (r *AgentBuildReconciler) createPipelineRun(ctx context.Context, agentBuild
 		ObjectMeta: metav1.ObjectMeta{
 
 			Name:      pipelineRunName,
-			Namespace: "default",
+			Namespace: agentBuild.Namespace,
 		},
 		Spec: tektonv1.PipelineRunSpec{
 			PipelineSpec: &tektonv1.PipelineSpec{
