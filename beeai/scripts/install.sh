@@ -26,6 +26,11 @@ else
 cat <<EOF | kind create cluster --name agent-platform --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 30080
+    hostPort: 8080
 containerdConfigPatches:
   - |
     [plugins."io.containerd.grpc.v1.cri".registry]
