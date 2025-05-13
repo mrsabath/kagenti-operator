@@ -180,7 +180,7 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					return ctrl.Result{}, err
 				}
 			}
-			return ctrl.Result{}, nil
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		} else {
 			if agentBuild.Status.BuildStatus != "Failed" {
 				agentBuild.Status.BuildStatus = "Failed"
@@ -190,7 +190,7 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 			}
 
-			return ctrl.Result{}, nil
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 	} else {
 		if agentBuild.Status.BuildStatus != "Building" {
