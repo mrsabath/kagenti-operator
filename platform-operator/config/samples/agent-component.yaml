@@ -1,0 +1,53 @@
+apiVersion: beeai.dev/v1
+kind: Component
+metadata:
+  name: research-agent
+spec:
+  # Component type (only one should be specified)
+  agentComponent:
+    # Optional build specification for building from source
+    build:
+      sourceRepository: "github.com/beeai/agent-examples.git"
+      sourceRevision: "main"
+      sourceSubfolder: "beeai/research-agent"
+      repoUser: "beeai"
+      sourceCredentials:
+        name: "github-token-secret"
+      buildOutput:
+        image: "research-agent"
+        imageTag: "v1.0.0"
+        imageRegistry: "ghcr.io/beeai"
+      cleanupAfterBuild: true
+ 
+    # General component configuration
+    description: "A BeeAI research agent for information gathering"
+    env:
+      - name: LLM_MODEL
+        value: "llama3.2:70b"
+      - name: LLM_URL
+        value: "http://llm-service:11434"
+ 
+    # Deployment configuration
+    deploymentSpec:
+     # Deployment method (only one should be specified)
+      kubernetesSpec:
+        imageSpec:
+          image: "research-agent"
+          imageTag: "v1.0.0"
+          imageRegistry: "ghcr.io/beeai"
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+        serviceType: "ClusterIP"
+   
+      # Automatic deployment after build
+      deployAfterBuild: true
+ 
+    # Component dependencies
+    dependencies:
+      - name: "mcp-server-weather"
+        type: "Tool"
