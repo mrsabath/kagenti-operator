@@ -48,3 +48,7 @@ func (b *HelmDeployer) GetStatus(ctx context.Context, component *platformv1alpha
 
 	return platformv1alpha1.ComponentDeploymentStatus{}, nil
 }
+func (d *HelmDeployer) CheckComponentStatus(ctx context.Context, component *platformv1alpha1.Component) (bool, string, error) {
+
+	return false, "Not implemented", nil
+}

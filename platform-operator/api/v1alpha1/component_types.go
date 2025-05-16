@@ -24,7 +24,6 @@ import (
 type ComponentSpec struct {
 
 	// Component Types
-	// +kubebuilder:validation:XValidation:rule="(has(self.agentComponent) ? 1 : 0) + (has(self.toolComponent) ? 1 : 0) + (has(self.infraComponent) ? 1 : 0) == 1",message="Exactly one component type must be specified"
 	// Union pattern: only one of the following components should be specified.
 	Agent *AgentComponent `json:"agentComponent,omitempty"`
 	// MCP Servers, Utilities, etc
@@ -215,6 +214,10 @@ type KubernetesSpec struct {
 	// Resources is the compute resources required by the container
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	ContainerPorts []corev1.ContainerPort `json:"containerPorts,omitempty"`
+
+	ServicePorts []corev1.ServicePort `json:"servicePorts,omitempty"`
 
 	// ServiceType is the type of service to create
 	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer

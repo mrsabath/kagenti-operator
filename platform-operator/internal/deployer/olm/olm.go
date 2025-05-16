@@ -48,3 +48,8 @@ func (b *OLMDeployer) GetStatus(ctx context.Context, component *platformv1alpha1
 
 	return platformv1alpha1.ComponentDeploymentStatus{}, nil
 }
+
+func (d *OLMDeployer) CheckComponentStatus(ctx context.Context, component *platformv1alpha1.Component) (bool, string, error) {
+
+	return false, "Not implemented", nil
+}

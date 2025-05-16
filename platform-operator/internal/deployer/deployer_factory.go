@@ -1,7 +1,7 @@
 package deployer
 
 import (
-	"context"
+	//"context"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -37,7 +37,7 @@ func NewDeployerFactory(client client.Client, log logr.Logger, scheme *runtime.S
 	return factory
 }
 
-func (d *DeployerFactory) getDeployer(component *platformv1alpha1.Component) (types.ComponentDeployer, error) {
+func (d *DeployerFactory) GetDeployer(component *platformv1alpha1.Component) (types.ComponentDeployer, error) {
 	if component == nil {
 		return nil, fmt.Errorf("unable to get Deployer for undefined (nil) component")
 	}
@@ -56,6 +56,7 @@ func (d *DeployerFactory) getDeployer(component *platformv1alpha1.Component) (ty
 	return nil, fmt.Errorf("No valid deployer found for component %s/%s", component.Namespace, component.Name)
 }
 
+/*
 // DeployComponent is a convenience method to deploy a component using the appropriate deployer
 func (f *DeployerFactory) DeployComponent(ctx context.Context, component *platformv1alpha1.Component) error {
 	deployer, err := f.getDeployer(component)
@@ -89,3 +90,4 @@ func (f *DeployerFactory) GetComponentStatus(ctx context.Context, component *pla
 	}
 	return deployer.GetStatus(ctx, component)
 }
+*/
