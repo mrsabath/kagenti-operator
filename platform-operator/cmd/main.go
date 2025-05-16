@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	kagentioperatordevv1alpha1 "github.com/kagenti/operator/platform/api/v1alpha1"
+	"github.com/kagenti/operator/platform/internal/builder/tekton"
 	"github.com/kagenti/operator/platform/internal/controller"
 	"github.com/kagenti/operator/platform/internal/deployer"
 	"github.com/kagenti/operator/platform/internal/deployer/helm"
@@ -207,9 +208,10 @@ func main() {
 	}
 
 	if err = (&controller.ComponentReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Component"),
+		Client:  mgr.GetClient(),
+		Scheme:  mgr.GetScheme(),
+		Log:     ctrl.Log.WithName("controllers").WithName("Component"),
+		Builder: tekton.NewTektonBuilder(mgr.GetClient(), mgr.GetLogger(), mgr.GetScheme()),
 		DeployerFactory: &deployer.DeployerFactory{
 			Client:       mgr.GetClient(),
 			Scheme:       mgr.GetScheme(),

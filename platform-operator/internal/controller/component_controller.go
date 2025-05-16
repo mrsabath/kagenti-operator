@@ -21,24 +21,26 @@ import (
 	"fmt"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	//"sigs.k8s.io/controller-runtime/pkg/log"
 	"github.com/go-logr/logr"
 	platformv1alpha1 "github.com/kagenti/operator/platform/api/v1alpha1"
+	"github.com/kagenti/operator/platform/internal/builder"
 	"github.com/kagenti/operator/platform/internal/deployer"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ComponentReconciler reconciles a Component object
 type ComponentReconciler struct {
-	Client client.Client
-	Scheme *runtime.Scheme
-	Log    logr.Logger
-
+	Client          client.Client
+	Scheme          *runtime.Scheme
+	Log             logr.Logger
+	Builder         builder.Builder
 	DeployerFactory *deployer.DeployerFactory
 }
 
@@ -64,6 +66,13 @@ func (r *ComponentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return r.deleteComponent(ctx, component)
 	}
 
+	if len(component.Status.Conditions) == 0 {
+		if err := r.initializeComponentStatus(ctx, component); err != nil {
+			logger.Error(err, "Failed to initialize component status")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{Requeue: true}, nil
+	}
 	if !controllerutil.ContainsFinalizer(component, componentFinalizer) {
 		controllerutil.AddFinalizer(component, componentFinalizer)
 		if err := r.Client.Update(ctx, component); err != nil {
@@ -119,6 +128,34 @@ func (r *ComponentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	logger.Info("Component reconciliation competed successfully")
 	return ctrl.Result{RequeueAfter: time.Second * 50}, nil
 }
+func (r *ComponentReconciler) initializeComponentStatus(ctx context.Context, component *platformv1alpha1.Component) error {
+	now := metav1.Now()
+	component.Status.Conditions = []metav1.Condition{
+		{
+			Type:               "Ready",
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: now,
+			Reason:             "Initializing",
+			Message:            "Component is being initialized",
+		},
+	}
+	component.Status.LastTransitionTime = &now
+
+	if r.hasBuildSpec(component) {
+		component.Status.BuildStatus = &platformv1alpha1.BuildStatus{
+			Phase:   "Pending",
+			Message: "Build is pending",
+		}
+	}
+
+	component.Status.DeploymentStatus = &platformv1alpha1.ComponentDeploymentStatus{
+		Phase:             "Pending",
+		DeploymentMessage: "Deployment is pending",
+	}
+
+	return r.Client.Status().Update(ctx, component)
+}
+
 func (r *ComponentReconciler) updateComponentStatus(ctx context.Context, component *platformv1alpha1.Component) error {
 	ready := true
 	reason := "Ready"
@@ -220,6 +257,27 @@ func (r *ComponentReconciler) hasBuildSpec(component *platformv1alpha1.Component
 }
 func (r *ComponentReconciler) deleteComponent(ctx context.Context, component *platformv1alpha1.Component) (ctrl.Result, error) {
 
+	if component.Status.BuildStatus != nil && component.Status.BuildStatus.Phase == "Building" {
+		r.Log.Info("Cancelling in-progress build")
+		if err := r.Builder.Cancel(ctx, component); err != nil {
+			r.Log.Error(err, "Error while cancelling component build")
+		}
+	}
+	if component.Status.DeploymentStatus != nil {
+		componentDeployer, err := r.DeployerFactory.GetDeployer(component)
+		if err != nil {
+			r.Log.Error(err, "Unable to determine deployer for component")
+			return ctrl.Result{}, err
+		}
+		if err := componentDeployer.Delete(ctx, component); err != nil {
+			r.Log.Error(err, "Failed to delete component")
+			return ctrl.Result{}, err
+		}
+	}
+	controllerutil.RemoveFinalizer(component, componentFinalizer)
+	if err := r.Client.Update(ctx, component); err != nil {
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -227,6 +285,8 @@ func (r *ComponentReconciler) deleteComponent(ctx context.Context, component *pl
 func (r *ComponentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&platformv1alpha1.Component{}).
-		Named("component").
+		Owns(&appsv1.Deployment{}).
+		Owns(&corev1.Service{}).
+		Owns(&corev1.ConfigMap{}).
 		Complete(r)
 }

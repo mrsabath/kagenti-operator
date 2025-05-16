@@ -72,15 +72,49 @@ func (d *KubernetesDeployer) Update(ctx context.Context, component *platformv1al
 // Delete existing component
 func (d *KubernetesDeployer) Delete(ctx context.Context, component *platformv1alpha1.Component) error {
 
+	logger := d.Log.WithValues("component", component.Name, component.Namespace)
+	logger.Info("Deleting component's Kubernetes resources")
+
+	namespace := component.Namespace
+	if component.Spec.Deployer.Namespace != "" {
+		namespace = component.Spec.Deployer.Namespace
+	}
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      component.Name,
+			Namespace: namespace,
+		},
+	}
+	if err := d.Client.Delete(ctx, service); err != nil {
+		if !errors.IsNotFound(err) {
+			logger.Error(err, "Failed to delete service")
+			return err
+		}
+	}
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      component.Name,
+			Namespace: namespace,
+		},
+	}
+	if err := d.Client.Delete(ctx, deployment); err != nil {
+		if !errors.IsNotFound(err) {
+			logger.Error(err, "Failed to delete deployment")
+			return err
+		}
+	}
+	logger.Info("Component's Kubernetes resources deleted succesfully")
+
 	return nil
 }
 
 // Return status of the component
 
 func (d *KubernetesDeployer) GetStatus(ctx context.Context, component *platformv1alpha1.Component) (platformv1alpha1.ComponentDeploymentStatus, error) {
-
-	return platformv1alpha1.ComponentDeploymentStatus{}, nil
+	return *component.Status.DeploymentStatus, nil
 }
+
 func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *platformv1alpha1.Component, namespace string) error {
 
 	kubeSpec := component.Spec.Deployer.Kubernetes
@@ -120,7 +154,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      component.Name,
-			Namespace: component.Namespace,
+			Namespace: namespace,
 			Labels:    labels,
 		},
 
@@ -160,7 +194,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 	}
 
 	existingDeployment := &appsv1.Deployment{}
-	err := d.Client.Get(ctx, k8stypes.NamespacedName{Name: deployment.Name, Namespace: deployment.Namespace}, existingDeployment)
+	err := d.Client.Get(ctx, k8stypes.NamespacedName{Name: deployment.Name, Namespace: namespace}, existingDeployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return d.Client.Create(ctx, deployment)
