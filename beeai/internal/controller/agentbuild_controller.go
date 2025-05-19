@@ -383,7 +383,7 @@ func (r *AgentBuildReconciler) createPipelineRun(ctx context.Context, agentBuild
 								Steps: []tektonv1.Step{
 									{
 										Name:  "check-dir",
-										Image: "alpine:latest",
+										Image: "public.ecr.aws/docker/library/alpine:latest",
 										Command: []string{
 											"sh", "-c",
 										},
