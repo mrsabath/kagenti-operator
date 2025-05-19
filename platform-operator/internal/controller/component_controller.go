@@ -25,9 +25,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	//"sigs.k8s.io/controller-runtime/pkg/log"
 	"github.com/go-logr/logr"
 	platformv1alpha1 "github.com/kagenti/operator/platform/api/v1alpha1"
@@ -54,7 +57,7 @@ const componentFinalizer = "kagenti.operator.dev/finalizer"
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 func (r *ComponentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := r.Log.WithValues("controller", req.Name, req.Namespace)
+	logger := r.Log.WithValues("controller", req.Name, "Namespace", req.Namespace)
 	logger.Info("Reconciling component")
 
 	component := &platformv1alpha1.Component{}
@@ -87,7 +90,7 @@ func (r *ComponentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 	if doDeploy {
-		logger.Info("Starting component deployment")
+		logger.Info("Starting component deployment --------")
 		component.Status.DeploymentStatus.Phase = "Deploying"
 		component.Status.DeploymentStatus.DeploymentMessage = "Deployment in progress"
 		if err := r.Client.Status().Update(ctx, component); err != nil {
@@ -114,6 +117,11 @@ func (r *ComponentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		return ctrl.Result{RequeueAfter: time.Second * 20}, nil
 	}
+	phase := ""
+	if component.Status.DeploymentStatus != nil {
+		phase = component.Status.DeploymentStatus.Phase
+	}
+
 	if component.Status.DeploymentStatus != nil && component.Status.DeploymentStatus.Phase == "Deploying" {
 		if err := r.checkDeploymentStatus(ctx, component); err != nil {
 			logger.Error(err, "Failed to check deployment status")
@@ -125,7 +133,7 @@ func (r *ComponentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		logger.Error(err, "Failed to update component status")
 		return ctrl.Result{}, nil
 	}
-	logger.Info("Component reconciliation competed successfully")
+	logger.Info("Component reconciliation completed successfully", "phase", phase)
 	return ctrl.Result{RequeueAfter: time.Second * 50}, nil
 }
 func (r *ComponentReconciler) initializeComponentStatus(ctx context.Context, component *platformv1alpha1.Component) error {
@@ -214,27 +222,55 @@ func (r *ComponentReconciler) updateComponentCondition(component *platformv1alph
 	component.Status.Conditions = append(component.Status.Conditions, condition)
 }
 func (r *ComponentReconciler) checkDeploymentStatus(ctx context.Context, component *platformv1alpha1.Component) error {
-	logger := r.Log.WithValues("component", component.Name, component.Namespace)
+	logger := r.Log.WithValues("component", component.Name, "Namespace", component.Namespace)
 	logger.Info("Checking component status")
 
 	deployer, err := r.DeployerFactory.GetDeployer(component)
 	if err != nil {
+		logger.Error(err, "Failed deployer lookup - invalid component")
 		component.Status.DeploymentStatus.Phase = "Failed"
 		component.Status.DeploymentStatus.DeploymentMessage = "Invalid deployer for the component"
 		err = r.Client.Status().Update(ctx, component)
 		if err != nil {
 			return err
 		}
-	}
 
-	ready, message, err := deployer.CheckComponentStatus(ctx, component)
-	component.Status.DeploymentStatus.DeploymentMessage = message
-	if ready {
-		component.Status.DeploymentStatus.Phase = "Ready"
-	} else {
-		component.Status.DeploymentStatus.Phase = "Deploying"
 	}
-	return r.Client.Status().Update(ctx, component)
+	logger.Info("checkDeploymentStatus", "deployer", deployer.GetName())
+	ready, message, err := deployer.CheckComponentStatus(ctx, component)
+	if err != nil {
+		logger.Error(err, "Failed to check component status ")
+		return err
+	}
+	component.Status.DeploymentStatus.DeploymentMessage = message
+
+	logger.Info("checkDeploymentStatus", "phase", component.Status.DeploymentStatus.Phase)
+
+	nn := types.NamespacedName{
+		Name:      component.Name,
+		Namespace: component.Namespace,
+	}
+	// Attempt to update the object with retry
+	err2 := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		current := &platformv1alpha1.Component{}
+
+		if err := r.Client.Get(ctx, nn, current); err != nil {
+			return err
+		}
+		if ready {
+			current.Status.DeploymentStatus.Phase = "Ready"
+			current.Status.DeploymentStatus.DeploymentMessage = "Component Deployed"
+		} else {
+			current.Status.DeploymentStatus.Phase = "Deploying"
+		}
+
+		return r.Client.Status().Update(ctx, current)
+	})
+	if err2 != nil {
+		logger.Error(err, "Failed to update component status ")
+		return err
+	}
+	return nil //r.Client.Status().Update(ctx, component)
 }
 
 func (r *ComponentReconciler) isDeploymentNeeded(component *platformv1alpha1.Component) (bool, error) {

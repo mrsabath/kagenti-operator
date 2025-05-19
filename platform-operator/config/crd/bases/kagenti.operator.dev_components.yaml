@@ -38,12 +38,12 @@ spec:
             type: object
           spec:
             properties:
-              agentComponent:
+              agent:
                 description: |-
                   Component Types
                   Union pattern: only one of the following components should be specified.
                 properties:
-                  buildSpec:
+                  build:
                     description: Build configuration for building the agent from source
                     properties:
                       buildArgs:
@@ -146,9 +146,10 @@ spec:
                   - name
                   type: object
                 type: array
-              deployerSpec:
-                description: 'Deployment strategy for the component: Helm, K8s manifest(deployments),
-                  OLM (operators)'
+              deployer:
+                description: |-
+                  Common fields for all component types
+                  Deployment strategy for the component: Helm, K8s manifest(deployments), OLM (operators)
                 properties:
                   deployAfterBuild:
                     description: DeployAfterBuild indicates whether to automatically
@@ -274,7 +275,7 @@ spec:
                       - name
                       type: object
                     type: array
-                  helmSpec:
+                  helm:
                     description: Only one of the following deployment methods should
                       be specified.
                     properties:
@@ -299,7 +300,7 @@ spec:
                     required:
                     - chartName
                     type: object
-                  kubernetesSpec:
+                  kubernetes:
                     description: KubernetesSpec defines Kubernetes manifest deployment
                     properties:
                       containerPorts:
@@ -509,14 +510,14 @@ spec:
                     description: Namespace to deploy to, defaults to the namespace
                       of the CR
                     type: string
-                  olmSpec:
+                  olm:
                     description: HelmSpec defines Helm deployment configuration
                     type: object
                 type: object
               description:
                 description: Description is a human-readable description of the component
                 type: string
-              infraComponent:
+              infra:
                 description: Redis, Postgresql, etc
                 properties:
                   infraProvider:
@@ -552,10 +553,10 @@ spec:
                 - infraType
                 - version
                 type: object
-              toolComponent:
+              tool:
                 description: MCP Servers, Utilities, etc
                 properties:
-                  buildSpec:
+                  build:
                     description: Build configuration for building the tool from source
                     properties:
                       buildArgs:
@@ -642,7 +643,7 @@ spec:
                 - toolType
                 type: object
             required:
-            - deployerSpec
+            - deployer
             type: object
           status:
             description: ComponentStatus defines the observed state of Component.

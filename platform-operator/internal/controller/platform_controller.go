@@ -42,7 +42,7 @@ type PlatformReconciler struct {
 const platformFinalizer = "kagenti.operator.dev/finalizer"
 
 func (r *PlatformReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := r.Log.WithValues("platform", req.Name, req.Namespace)
+	logger := r.Log.WithValues("platform", req.Name, "Namespace", req.Namespace)
 	logger.Info("Reconciling agentic platform")
 
 	platform := &platformv1alpha1.Platform{}
@@ -162,7 +162,7 @@ func (r *PlatformReconciler) updateCondition(conditions *[]metav1.Condition, con
 	*conditions = append(*conditions, condition)
 }
 func (r *PlatformReconciler) reconcileComponents(ctx context.Context, platform *platformv1alpha1.Platform, components []platformv1alpha1.PlatformComponentRef, componentType string) error {
-	logger := r.Log.WithValues("platform", platform.Name, platform.Namespace)
+	logger := r.Log.WithValues("platform", platform.Name, "Namespace", platform.Namespace)
 	logger.Info("Reconciling components", "count", len(components))
 
 	for _, compRef := range components {
@@ -277,7 +277,7 @@ func (r *PlatformReconciler) updateComponentStatusList(statusList *[]platformv1a
 	})
 }
 func (r *PlatformReconciler) deletePlatform(ctx context.Context, platform *platformv1alpha1.Platform) (ctrl.Result, error) {
-	logger := r.Log.WithValues("platform", platform.Name, platform.Namespace)
+	logger := r.Log.WithValues("platform", platform.Name, "Namespace", platform.Namespace)
 	logger.Info("Deleting platform")
 
 	allComponents := []platformv1alpha1.PlatformComponentRef{}

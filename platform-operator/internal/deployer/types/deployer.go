@@ -7,6 +7,7 @@ import (
 )
 
 type ComponentDeployer interface {
+	GetName() string
 	// Deploy component into the k8s cluster
 	Deploy(ctx context.Context, component *platformv1alpha1.Component) error
 	// Update existing component

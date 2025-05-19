@@ -19,11 +19,15 @@ type HelmDeployer struct {
 }
 
 func NewHelmDeployer(client client.Client, log logr.Logger, scheme *runtime.Scheme) *HelmDeployer {
+	log.Info("NewHelmDeployer -------------- ")
 	return &HelmDeployer{
 		Client: client,
 		Log:    log,
 		Scheme: scheme,
 	}
+}
+func (b *HelmDeployer) GetName() string {
+	return "helm"
 }
 func (b *HelmDeployer) Deploy(ctx context.Context, component *platformv1alpha1.Component) error {
 

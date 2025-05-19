@@ -25,22 +25,21 @@ type ComponentSpec struct {
 
 	// Component Types
 	// Union pattern: only one of the following components should be specified.
-	Agent *AgentComponent `json:"agentComponent,omitempty"`
+	Agent *AgentComponent `json:"agent,omitempty"`
 	// MCP Servers, Utilities, etc
-	Tool *ToolComponent `json:"toolComponent,omitempty"`
+	Tool *ToolComponent `json:"tool,omitempty"`
 	// Redis, Postgresql, etc
-	Infra *InfraComponent `json:"infraComponent,omitempty"`
+	Infra *InfraComponent `json:"infra,omitempty"`
 
 	// --------------------------
 
 	// Common fields for all component types
+	// Deployment strategy for the component: Helm, K8s manifest(deployments), OLM (operators)
+	Deployer DeployerSpec `json:"deployer"`
 
 	// Description is a human-readable description of the component
 	// +optional
 	Description string `json:"description,omitempty"`
-
-	// Deployment strategy for the component: Helm, K8s manifest(deployments), OLM (operators)
-	Deployer DeployerSpec `json:"deployerSpec"`
 
 	// Dependencies defines other components this agent depends on
 	// +optional
@@ -52,7 +51,7 @@ type AgentComponent struct {
 
 	// Build configuration for building the agent from source
 	// +optional
-	Build *BuildSpec `json:"buildSpec,omitempty"`
+	Build *BuildSpec `json:"build,omitempty"`
 }
 
 type ToolComponent struct {
@@ -60,7 +59,7 @@ type ToolComponent struct {
 
 	// Build configuration for building the tool from source
 	// +optional
-	Build *BuildSpec `json:"buildSpec,omitempty"`
+	Build *BuildSpec `json:"build,omitempty"`
 
 	// ToolType specifies the type of tool
 	// MCP;Utility
@@ -103,9 +102,9 @@ type DependencySpec struct {
 // DeployerSpec defines how to deploy a component
 type DeployerSpec struct {
 	// Only one of the following deployment methods should be specified.
-	Helm       *HelmSpec       `json:"helmSpec,omitempty"`
-	Kubernetes *KubernetesSpec `json:"kubernetesSpec,omitempty"`
-	Olm        *OlmSpec        `json:"olmSpec,omitempty"`
+	Helm       *HelmSpec       `json:"helm,omitempty"`
+	Kubernetes *KubernetesSpec `json:"kubernetes,omitempty"`
+	Olm        *OlmSpec        `json:"olm,omitempty"`
 	// Common deployment settings
 
 	// Name of the k8s resource
@@ -209,7 +208,7 @@ type HelmSpec struct {
 
 // KubernetesSpec defines Kubernetes manifest deployment
 type KubernetesSpec struct {
-	Image ImageSpec `json:"imageSpec,omitempty"`
+	ImageSpec ImageSpec `json:"imageSpec,omitempty"`
 
 	// Resources is the compute resources required by the container
 	// +optional

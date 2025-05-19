@@ -27,15 +27,19 @@ type KubernetesDeployer struct {
 }
 
 func NewKubernetesDeployer(client client.Client, log logr.Logger, scheme *runtime.Scheme) *KubernetesDeployer {
+	log.Info("NewKubernetesDeployer -------------- ")
 	return &KubernetesDeployer{
 		Client: client,
 		Log:    log,
 		Scheme: scheme,
 	}
 }
+func (b *KubernetesDeployer) GetName() string {
+	return "kubernetes"
+}
 func (d *KubernetesDeployer) Deploy(ctx context.Context, component *platformv1alpha1.Component) error {
 
-	logger := d.Log.WithValues("deployer", component.Name, component.Namespace)
+	logger := d.Log.WithValues("deployer", component.Name, "Namespace", component.Namespace)
 	logger.Info("Deploying component with Kubernetes resources")
 
 	namespace := component.Namespace
@@ -72,7 +76,7 @@ func (d *KubernetesDeployer) Update(ctx context.Context, component *platformv1al
 // Delete existing component
 func (d *KubernetesDeployer) Delete(ctx context.Context, component *platformv1alpha1.Component) error {
 
-	logger := d.Log.WithValues("component", component.Name, component.Namespace)
+	logger := d.Log.WithValues("component", component.Name, "Namespace", component.Namespace)
 	logger.Info("Deleting component's Kubernetes resources")
 
 	namespace := component.Namespace
@@ -145,9 +149,9 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		}
 	}
 	image := fmt.Sprintf("%s/%s:%s",
-		kubeSpec.Image.ImageRegistry,
-		kubeSpec.Image.Image,
-		kubeSpec.Image.ImageTag,
+		kubeSpec.ImageSpec.ImageRegistry,
+		kubeSpec.ImageSpec.Image,
+		kubeSpec.ImageSpec.ImageTag,
 	)
 
 	deployment := &appsv1.Deployment{
@@ -174,7 +178,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 						{
 							Name:            component.Name,
 							Image:           image,
-							ImagePullPolicy: corev1.PullPolicy(kubeSpec.Image.ImagePullPolicy),
+							ImagePullPolicy: corev1.PullPolicy(kubeSpec.ImageSpec.ImagePullPolicy),
 							Resources:       component.Spec.Deployer.Kubernetes.Resources,
 							Env:             component.Spec.Deployer.Env,
 							Ports:           containerPorts,

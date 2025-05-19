@@ -19,11 +19,15 @@ type OLMDeployer struct {
 }
 
 func NewOLMDeployer(client client.Client, log logr.Logger, scheme *runtime.Scheme) *OLMDeployer {
+	log.Info("NewOLMDeployer -------------- ")
 	return &OLMDeployer{
 		Client: client,
 		Log:    log,
 		Scheme: scheme,
 	}
+}
+func (b *OLMDeployer) GetName() string {
+	return "olm"
 }
 func (b *OLMDeployer) Deploy(ctx context.Context, component *platformv1alpha1.Component) error {
 
