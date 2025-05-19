@@ -5,10 +5,11 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - kagenti.operator.dev.kagenti.operator.dev
+  - ""
   resources:
-  - components
-  - platforms
+  - configmaps
+  - secrets
+  - services
   verbs:
   - create
   - delete
@@ -18,17 +19,39 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kagenti.operator.dev.kagenti.operator.dev
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kagenti.operator.dev
+  resources:
+  - components
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kagenti.operator.dev
   resources:
   - components/finalizers
-  - platforms/finalizers
   verbs:
   - update
 - apiGroups:
-  - kagenti.operator.dev.kagenti.operator.dev
+  - kagenti.operator.dev
   resources:
   - components/status
-  - platforms/status
   verbs:
   - get
   - patch

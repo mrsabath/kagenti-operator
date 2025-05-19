@@ -1,53 +1,52 @@
-apiVersion: beeai.dev/v1
+apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: research-agent
 spec:
+  description: "A BeeAI research agent for information gathering"
+
   # Component type (only one should be specified)
   agentComponent:
+  
     # Optional build specification for building from source
     build:
-      sourceRepository: "github.com/beeai/agent-examples.git"
+      sourceRepository: "github.com/kagenti/agent-examples.git"
       sourceRevision: "main"
-      sourceSubfolder: "beeai/research-agent"
-      repoUser: "beeai"
+      sourceSubfolder: "acp/ollama-deep-researcher"
+      repoUser: "cwiklik"
       sourceCredentials:
         name: "github-token-secret"
       buildOutput:
-        image: "research-agent"
-        imageTag: "v1.0.0"
-        imageRegistry: "ghcr.io/beeai"
+        image: "beai-research-agent"
+        imageTag: "latest"
+        imageRegistry: "registry.cr-system.svc.cluster.local:5000"
       cleanupAfterBuild: true
  
     # General component configuration
-    description: "A BeeAI research agent for information gathering"
+ 
+  deployer:
+    name: "my-agent-deployment"
+    namespace: "default"
+    deployAfterBuild: true
+    kubernetes:
+      imageSpec:
+        image: "beai-research-agent"
+        imageTag: "latest"
+        imageRegistry: "registry.cr-system.svc.cluster.local:5000"
+        imagePullPolicy: "IfNotPresent"
+      resources:
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+      serviceType: "ClusterIP"
+
     env:
       - name: LLM_MODEL
         value: "llama3.2:70b"
       - name: LLM_URL
         value: "http://llm-service:11434"
+
  
-    # Deployment configuration
-    deploymentSpec:
-     # Deployment method (only one should be specified)
-      kubernetesSpec:
-        imageSpec:
-          image: "research-agent"
-          imageTag: "v1.0.0"
-          imageRegistry: "ghcr.io/beeai"
-        resources:
-          limits:
-            cpu: "1"
-            memory: "2Gi"
-          requests:
-            cpu: "500m"
-            memory: "1Gi"
-        serviceType: "ClusterIP"
-   
-      # Automatic deployment after build
-      deployAfterBuild: true
- 
-    # Component dependencies
-    dependencies:
-      - name: "mcp-server-weather"
-        type: "Tool"

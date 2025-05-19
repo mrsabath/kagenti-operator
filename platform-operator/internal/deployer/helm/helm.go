@@ -19,11 +19,15 @@ type HelmDeployer struct {
 }
 
 func NewHelmDeployer(client client.Client, log logr.Logger, scheme *runtime.Scheme) *HelmDeployer {
+	log.Info("NewHelmDeployer -------------- ")
 	return &HelmDeployer{
 		Client: client,
 		Log:    log,
 		Scheme: scheme,
 	}
+}
+func (b *HelmDeployer) GetName() string {
+	return "helm"
 }
 func (b *HelmDeployer) Deploy(ctx context.Context, component *platformv1alpha1.Component) error {
 
@@ -47,4 +51,8 @@ func (b *HelmDeployer) Delete(ctx context.Context, component *platformv1alpha1.C
 func (b *HelmDeployer) GetStatus(ctx context.Context, component *platformv1alpha1.Component) (platformv1alpha1.ComponentDeploymentStatus, error) {
 
 	return platformv1alpha1.ComponentDeploymentStatus{}, nil
+}
+func (d *HelmDeployer) CheckComponentStatus(ctx context.Context, component *platformv1alpha1.Component) (bool, string, error) {
+
+	return false, "Not implemented", nil
 }

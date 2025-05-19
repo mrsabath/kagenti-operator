@@ -19,11 +19,15 @@ type OLMDeployer struct {
 }
 
 func NewOLMDeployer(client client.Client, log logr.Logger, scheme *runtime.Scheme) *OLMDeployer {
+	log.Info("NewOLMDeployer -------------- ")
 	return &OLMDeployer{
 		Client: client,
 		Log:    log,
 		Scheme: scheme,
 	}
+}
+func (b *OLMDeployer) GetName() string {
+	return "olm"
 }
 func (b *OLMDeployer) Deploy(ctx context.Context, component *platformv1alpha1.Component) error {
 
@@ -47,4 +51,9 @@ func (b *OLMDeployer) Delete(ctx context.Context, component *platformv1alpha1.Co
 func (b *OLMDeployer) GetStatus(ctx context.Context, component *platformv1alpha1.Component) (platformv1alpha1.ComponentDeploymentStatus, error) {
 
 	return platformv1alpha1.ComponentDeploymentStatus{}, nil
+}
+
+func (d *OLMDeployer) CheckComponentStatus(ctx context.Context, component *platformv1alpha1.Component) (bool, string, error) {
+
+	return false, "Not implemented", nil
 }

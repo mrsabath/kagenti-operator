@@ -7,6 +7,7 @@ import (
 )
 
 type ComponentDeployer interface {
+	GetName() string
 	// Deploy component into the k8s cluster
 	Deploy(ctx context.Context, component *platformv1alpha1.Component) error
 	// Update existing component
@@ -15,4 +16,6 @@ type ComponentDeployer interface {
 	Delete(ctx context.Context, component *platformv1alpha1.Component) error
 	// Return status of the component
 	GetStatus(ctx context.Context, component *platformv1alpha1.Component) (platformv1alpha1.ComponentDeploymentStatus, error)
+	// Returns if component pods are ready or not
+	CheckComponentStatus(ctx context.Context, component *platformv1alpha1.Component) (bool, string, error)
 }

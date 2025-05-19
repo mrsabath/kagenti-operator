@@ -38,7 +38,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	kagentioperatordevv1alpha1 "github.com/kagenti/operator/platform/api/v1alpha1"
+	"github.com/kagenti/operator/platform/internal/builder/tekton"
 	"github.com/kagenti/operator/platform/internal/controller"
+	"github.com/kagenti/operator/platform/internal/deployer"
+	"github.com/kagenti/operator/platform/internal/deployer/helm"
+	"github.com/kagenti/operator/platform/internal/deployer/kubernetes"
+	"github.com/kagenti/operator/platform/internal/deployer/olm"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -203,8 +208,18 @@ func main() {
 	}
 
 	if err = (&controller.ComponentReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:  mgr.GetClient(),
+		Scheme:  mgr.GetScheme(),
+		Log:     ctrl.Log.WithName("controllers").WithName("Component"),
+		Builder: tekton.NewTektonBuilder(mgr.GetClient(), mgr.GetLogger(), mgr.GetScheme()),
+		DeployerFactory: &deployer.DeployerFactory{
+			Client:       mgr.GetClient(),
+			Scheme:       mgr.GetScheme(),
+			Log:          ctrl.Log.WithName("deployers").WithName("Deployer"),
+			KubeDeployer: kubernetes.NewKubernetesDeployer(mgr.GetClient(), ctrl.Log.WithName("deployers").WithName("KubernetesDeployer"), mgr.GetScheme()),
+			HelmDeployer: helm.NewHelmDeployer(mgr.GetClient(), ctrl.Log.WithName("deployers").WithName("HelmDeployer"), mgr.GetScheme()),
+			OLMDeployer:  olm.NewOLMDeployer(mgr.GetClient(), ctrl.Log.WithName("deployers").WithName("OLMDeployer"), mgr.GetScheme()),
+		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Component")
 		os.Exit(1)
@@ -212,6 +227,7 @@ func main() {
 	if err = (&controller.PlatformReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Log:    ctrl.Log.WithName("platforms").WithName("Platform"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Platform")
 		os.Exit(1)
