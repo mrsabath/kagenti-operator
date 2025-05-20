@@ -1,8 +1,9 @@
 version: 2
 builds:
 - id: "beeai"
-  main: ./beeai/cmd
-  binary: ./beeai/bin/manager
+  dir: beeai
+  main: ./cmd
+  binary: ./bin/manager
   goos:
   - linux
   - darwin
@@ -15,12 +16,12 @@ builds:
   env:
   - CGO_ENABLED=0
 archives:
-- id: beeai
-  builds:
-  - beeai
+- ids: [beeai]
 kos:           
-  - repository: kagenti/kagenti-operator/beeai-operator
-    main: ./beeai/cmd
+  - repositories: 
+    - kagenti/kagenti-operator/beeai-operator
+    working_dir: beeai
+    main: ./cmd
     build: beeai
     tags:
     - '{{.Version}}'
