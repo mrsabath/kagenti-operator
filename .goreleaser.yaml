@@ -19,7 +19,7 @@ archives:
 - ids: [beeai]
 kos:           
   - repositories: 
-    - kagenti/kagenti-operator/beeai-operator
+    - ghcr.io/kagenti/kagenti-operator/beeai-operator
     working_dir: beeai
     main: ./cmd
     build: beeai
