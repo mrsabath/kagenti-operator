@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	//"sigs.k8s.io/controller-runtime/pkg/log"
 	"github.com/go-logr/logr"
 	platformv1alpha1 "github.com/kagenti/operator/platform/api/v1alpha1"
 	"github.com/kagenti/operator/platform/internal/builder"
@@ -270,7 +269,7 @@ func (r *ComponentReconciler) checkDeploymentStatus(ctx context.Context, compone
 		logger.Error(err, "Failed to update component status ")
 		return err
 	}
-	return nil //r.Client.Status().Update(ctx, component)
+	return nil
 }
 
 func (r *ComponentReconciler) isDeploymentNeeded(component *platformv1alpha1.Component) (bool, error) {

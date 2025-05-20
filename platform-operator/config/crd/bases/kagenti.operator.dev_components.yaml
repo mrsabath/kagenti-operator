@@ -50,13 +50,13 @@ spec:
                         description: BuildArgs are arguments to pass to the build
                           process
                         items:
-                          description: BuildArg defines a build argument
+                          description: Parameter defines an argument
                           properties:
                             name:
-                              description: Name of the build argument
+                              description: Name of the  argument
                               type: string
                             value:
-                              description: Value of the build argument
+                              description: Value of the argument
                               type: string
                           required:
                           - name
@@ -282,21 +282,36 @@ spec:
                       chartName:
                         description: ChartName is the name of the Helm chart
                         type: string
-                      chartRepository:
-                        description: ChartRepository is the repository for the Helm
+                      chartRepoName:
+                        description: ChartRepoName is the repository for the Helm
+                          chart
+                        type: string
+                      chartRepoUrl:
+                        description: ChartRepoUrl is the repository URL for the Helm
                           chart
                         type: string
                       chartVersion:
                         description: ChartVersion is the version of the Helm chart
                         type: string
+                      parameters:
+                        description: Parameters
+                        items:
+                          description: Parameter defines an argument
+                          properties:
+                            name:
+                              description: Name of the  argument
+                              type: string
+                            value:
+                              description: Value of the argument
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       releaseName:
                         description: ReleaseName is the name of the Helm release
                         type: string
-                      valueOverrides:
-                        description: ValueOverrides are files containing value overrides
-                        items:
-                          type: string
-                        type: array
                     required:
                     - chartName
                     type: object
@@ -548,10 +563,6 @@ spec:
                     description: Version specifies the version of the infrastructure
                       component
                     type: string
-                required:
-                - infraProvider
-                - infraType
-                - version
                 type: object
               tool:
                 description: MCP Servers, Utilities, etc
@@ -563,13 +574,13 @@ spec:
                         description: BuildArgs are arguments to pass to the build
                           process
                         items:
-                          description: BuildArg defines a build argument
+                          description: Parameter defines an argument
                           properties:
                             name:
-                              description: Name of the build argument
+                              description: Name of the  argument
                               type: string
                             value:
-                              description: Value of the build argument
+                              description: Value of the argument
                               type: string
                           required:
                           - name
