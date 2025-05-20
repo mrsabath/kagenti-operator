@@ -3,8 +3,6 @@ builds:
 - id: "beeai"
   main: ./beeai/cmd
   binary: bin/beeai
-  ldflags:
-  - "{{ .Env.LDFLAGS }}"
   goos:
   - linux
   - darwin
@@ -29,8 +27,6 @@ kos:
     - latest
     bare: true
     preserve_import_paths: false
-    ldflags:
-    - "{{ .Env.LDFLAGS }}"
     platforms:
     - linux/amd64
     - linux/arm64
