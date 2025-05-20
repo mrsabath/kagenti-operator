@@ -53,9 +53,9 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Package and push clustermetrics chart
+    - name: Package and push beeai operator chart
       run: |
-        chartVersion=0.0.1
+        chartVersion=$(echo ${{ github.ref_name }} | cut -c 2-)
         chartPackageName="kagenti-beeai-operator-chart-${chartVersion}.tgz"
         cd ${{ env.CHARTS_PATH }}/beeai-operator 
         helm package . --destination . --version ${chartVersion} --app-version ${chartVersion}
