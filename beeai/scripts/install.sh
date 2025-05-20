@@ -5,6 +5,7 @@ set -x # echo so that users can understand what is happening
 
 TEKTON_VERSION="v0.66.0" 
 OPERATOR_NAMESPACE="kagenti-system"
+LATEST_TAG=0.2.0-alpha.1
 
 cluster_name="agent-platform" 
 
@@ -79,12 +80,6 @@ kubectl apply --filename "https://storage.googleapis.com/tekton-releases/pipelin
 : -------------------------------------------------------------------------
 : "Installing the BeeAI Operator"
 : 
-LATEST_TAG=$(curl -s "https://api.github.com/repos/kagenti/kagenti-operator/tags" | \
-  jq -r '.[].name' | \
-  grep '^v' | \
-  sort -V | \
-  tail -n 1 |
-  sed 's/^v//')
 helm upgrade --install kagenti-beeai-operator --create-namespace --namespace ${OPERATOR_NAMESPACE} oci://ghcr.io/kagenti/kagenti-operator/kagenti-beeai-operator-chart --version ${LATEST_TAG}
 
 :
