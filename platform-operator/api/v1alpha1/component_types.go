@@ -71,14 +71,14 @@ type InfraComponent struct {
 
 	// InfraType specifies the type of infrastructure
 	// Database;Cache;Queue;StorageService;SearchEngine
-	InfraType string `json:"infraType"`
+	InfraType string `json:"infraType,omitempty"`
 
 	// InfraProvider specifies the infrastructure provider
 	// PostgreSQL;MySQL;MongoDB;Redis;Kafka;ElasticSearch;MinIO
-	InfraProvider string `json:"infraProvider"`
+	InfraProvider string `json:"infraProvider,omitempty"`
 
 	// Version specifies the version of the infrastructure component
-	Version string `json:"version"`
+	Version string `json:"version,omitempty"`
 
 	// SecretRef reference to secrets containing credentials
 	// +optional
@@ -145,7 +145,7 @@ type BuildSpec struct {
 
 	// BuildArgs are arguments to pass to the build process
 	// +optional
-	BuildArgs []BuildArg `json:"buildArgs,omitempty"`
+	BuildArgs []Parameter `json:"buildArgs,omitempty"`
 
 	// BuildOutput specifies where to store build artifacts
 	// +optional
@@ -156,6 +156,7 @@ type BuildSpec struct {
 	CleanupAfterBuild bool `json:"cleanupAfterBuild,omitempty"`
 }
 
+/*
 // BuildArg defines a build argument
 type BuildArg struct {
 	// Name of the build argument
@@ -164,7 +165,7 @@ type BuildArg struct {
 	// Value of the build argument
 	Value string `json:"value"`
 }
-
+*/
 // BuildOutput defines where to store build artifacts
 type BuildOutput struct {
 	// Image is the name of the image to build
@@ -193,17 +194,30 @@ type HelmSpec struct {
 	// +optional
 	ChartVersion string `json:"chartVersion,omitempty"`
 
-	// ChartRepository is the repository for the Helm chart
+	// ChartRepoName is the repository for the Helm chart
 	// +optional
-	ChartRepository string `json:"chartRepository,omitempty"`
+	ChartRepoName string `json:"chartRepoName,omitempty"`
 
-	// ValueOverrides are files containing value overrides
+	// ChartRepoUrl is the repository URL for the Helm chart
 	// +optional
-	ValueOverrides []string `json:"valueOverrides,omitempty"`
+	ChartRepoUrl string `json:"chartRepoUrl,omitempty"`
+
+	// Parameters
+	// +optional
+	Parameters []Parameter `json:"parameters,omitempty"`
 
 	// ReleaseName is the name of the Helm release
 	// +optional
 	ReleaseName string `json:"releaseName,omitempty"`
+}
+
+// Parameter defines an argument
+type Parameter struct {
+	// Name of the  argument
+	Name string `json:"name"`
+
+	// Value of the argument
+	Value string `json:"value"`
 }
 
 // KubernetesSpec defines Kubernetes manifest deployment
