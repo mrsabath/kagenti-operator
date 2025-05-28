@@ -5,7 +5,7 @@ set -x # echo so that users can understand what is happening
 
 TEKTON_VERSION="v0.66.0" 
 OPERATOR_NAMESPACE="kagenti-system"
-LATEST_TAG=0.2.0-alpha.1
+LATEST_TAG=0.2.0-alpha.2
 
 cluster_name="agent-platform" 
 
