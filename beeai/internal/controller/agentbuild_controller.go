@@ -706,15 +706,24 @@ func (r *AgentBuildReconciler) createAgentCR(ctx context.Context, agentBuild *be
 		agentName = agentBuild.Name
 	}
 
+	agentLabels := map[string]string{
+		"app.kubernetes.io/part-of":    "agent-operator",
+		"app.kubernetes.io/managed-by": "agent-build-controller",
+		"app.kubernetes.io/created-by": agentBuild.Name,
+	}
+
+	// Merge labels from agentBuild if they exist
+	for key, value := range agentBuild.Labels {
+		if _, exists := agentLabels[key]; !exists {
+			agentLabels[key] = value
+		}
+	}
+
 	agent := &beeaiv1.Agent{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      agentName,
 			Namespace: agentBuild.Namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/part-of":    "agent-operator",
-				"app.kubernetes.io/managed-by": "agent-build-controller",
-				"app.kubernetes.io/created-by": agentBuild.Name,
-			},
+			Labels:    agentLabels,
 		},
 		Spec: beeaiv1.AgentSpec{
 			Description: agentBuild.Spec.Agent.Description,
