@@ -1,0 +1,96 @@
+apiVersion: kagenti.operator.dev/v1alpha1
+kind: Component
+metadata:
+  name: istio
+spec:
+  description: Istiod Infra component
+
+  infra:
+    infraType: Networking
+    infraProvider: Istio
+
+  deployer:
+    name: "helm"
+    namespace: "istio-system"
+    
+    helm:
+      chartName: base
+      chartRepoName: istio
+      chartRepoUrl: https://istio-release.storage.googleapis.com/charts
+      releaseName: istio-base
+      parameters:
+
+    env:
+---
+apiVersion: kagenti.operator.dev/v1alpha1
+kind: Component
+metadata:
+  name: istiod
+spec:
+  description: Istiod Infra component
+
+  infra:
+    infraType: Networking
+    infraProvider: Istio
+
+  deployer:
+    name: "helm"
+    namespace: "istio-system"
+    
+    helm:
+      chartName: istiod
+      chartRepoName: istio
+      chartRepoUrl: https://istio-release.storage.googleapis.com/charts
+      releaseName: istiod
+      parameters:
+        - name: profile
+          value: ambient
+    env:
+---
+apiVersion: kagenti.operator.dev/v1alpha1
+kind: Component
+metadata:
+  name: istio-cni
+spec:
+  description: Istio Cni Infra component
+
+  infra:
+    infraType: Networking
+    infraProvider: Istio
+
+  deployer:
+    name: "helm"
+    namespace: "istio-system"
+    
+    helm:
+      chartName: cni
+      chartRepoName: istio
+      chartRepoUrl: https://istio-release.storage.googleapis.com/charts
+      releaseName: cni
+      parameters:
+        - name: profile
+          value: ambient
+    env:    
+---
+apiVersion: kagenti.operator.dev/v1alpha1
+kind: Component
+metadata:
+  name: istio-ztunnel
+spec:
+  description: Istio Ztunnel Infra component
+
+  infra:
+    infraType: Networking
+    infraProvider: Istio
+
+  deployer:
+    name: "helm"
+    namespace: "istio-system"
+    
+    helm:
+      chartName: ztunnel
+      chartRepoName: istio
+      chartRepoUrl: https://istio-release.storage.googleapis.com/charts
+      releaseName: ztunnel
+      parameters:
+    env:        

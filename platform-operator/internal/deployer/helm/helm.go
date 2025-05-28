@@ -9,11 +9,11 @@ import (
 	platformv1alpha1 "github.com/kagenti/operator/platform/api/v1alpha1"
 	"github.com/kagenti/operator/platform/internal/deployer/types"
 	helm "github.com/kubestellar/kubeflex/pkg/helm"
-	//appsv1 "k8s.io/api/apps/v1"
-	//	corev1 "k8s.io/api/core/v1"
-	//	"k8s.io/apimachinery/pkg/api/errors"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	//	k8stypes "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -39,19 +39,35 @@ func (b *HelmDeployer) GetName() string {
 func (b *HelmDeployer) Deploy(ctx context.Context, component *platformv1alpha1.Component) error {
 
 	reqLogger := b.Log
+
+	namespace := component.Namespace
+	if component.Spec.Deployer.Namespace != "" {
+		namespace = component.Spec.Deployer.Namespace
+	}
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace,
+		},
+	}
+	if err := b.Client.Create(ctx, ns); err != nil {
+		if !errors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create namespace: %w", err)
+		}
+	}
+
 	parameters := []string{}
 
 	for _, parameter := range component.Spec.Deployer.Helm.Parameters {
 		parameters = append(parameters, fmt.Sprintf("%s=%s", parameter.Name, parameter.Value))
 	}
 
-	reqLogger.Info("Deploying ", "Infra Component", component.Name)
+	reqLogger.Info("Deploying ", "Infra Component", component.Name, "namespace", component.Spec.Deployer.Namespace)
 	h := &helm.HelmHandler{
 		URL:         component.Spec.Deployer.Helm.ChartRepoUrl,
 		Version:     component.Spec.Deployer.Helm.ChartVersion,
 		RepoName:    component.Spec.Deployer.Helm.ChartRepoName,
 		ChartName:   component.Spec.Deployer.Helm.ChartName,
-		Namespace:   component.Namespace,
+		Namespace:   component.Spec.Deployer.Namespace,
 		ReleaseName: component.Name,
 		Args:        map[string]string{"set": strings.Join(parameters, ",")},
 	}
