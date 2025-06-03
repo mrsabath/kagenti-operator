@@ -5,6 +5,8 @@
 domain: kagenti.operator.dev
 layout:
 - go.kubebuilder.io/v4
+plugins:
+  helm.kubebuilder.io/v1-alpha: {}
 projectName: agentic-platform
 repo: github.com/kagenti/operator/platform
 resources:

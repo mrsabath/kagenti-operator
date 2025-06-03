@@ -2,6 +2,8 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: research-agent
+  namespace: kagenti-system 
+
 spec:
   description: "A research agent for information gathering"
 
@@ -32,7 +34,7 @@ spec:
             configMap: check-subfolder-step
             parameters:
               - name: subfolder-path
-                value: "acp/ollama-deep-researcher"
+                value: "acp/acp_ollama_researcher"
               - name: fail-on-missing
                 value: "true"      
 
@@ -42,7 +44,7 @@ spec:
               - name: IMAGE
                 value: "registry.cr-system.svc.cluster.local:5000/beai-research-agent:latest"
               - name: subfolder-path
-                value: "acp/ollama-deep-researcher"
+                value: "acp/acp_ollama_researcher"
               - name: registry-secret
                 value: "github-token-secret"
               - name: SKIP_TLS_VERIFY
@@ -60,8 +62,8 @@ spec:
  
   deployer:
     name: "my-agent-deployment"
-    namespace: "default"
-    deployAfterBuild: false
+    namespace: kagenti-system 
+    deployAfterBuild: true
     kubernetes:
       imageSpec:
         image: "beai-research-agent"

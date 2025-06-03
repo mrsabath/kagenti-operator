@@ -1,3 +1,19 @@
+/*
+Copyright 2025.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package kubernetes
 
 import (
@@ -59,11 +75,12 @@ func (d *KubernetesDeployer) Deploy(ctx context.Context, component *platformv1al
 	}
 	logger.Info("Creating deployment", "component", component.Name, "namespace", component.Namespace)
 	if err := d.createDeployment(ctx, component, namespace); err != nil {
+		logger.Error(err, "failed to create Deployment")
 		return fmt.Errorf("failed to create deployment: %w", err)
 	}
 	logger.Info("Creating service", "component", component.Name, "namespace", component.Namespace)
 	if err := d.createService(ctx, component, namespace); err != nil {
-		logger.Error(err, "failed to create service")
+		logger.Error(err, "failed to create Service")
 		return fmt.Errorf("failed to create service: %w", err)
 	}
 

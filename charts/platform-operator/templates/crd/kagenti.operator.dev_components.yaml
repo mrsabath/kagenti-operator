@@ -1,0 +1,899 @@
+{{- if .Values.crd.enable }}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.crd.keep }}
+    "helm.sh/resource-policy": keep
+    {{- end }}
+    controller-gen.kubebuilder.io/version: v0.17.1
+  name: components.kagenti.operator.dev
+spec:
+  group: kagenti.operator.dev
+  names:
+    kind: Component
+    listKind: ComponentList
+    plural: components
+    singular: component
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Component is the Schema for the components API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              agent:
+                description: |-
+                  Component Types
+                  Union pattern: only one of the following components should be specified.
+                properties:
+                  build:
+                    description: Build configuration for building the agent from source
+                    properties:
+                      buildArgs:
+                        description: BuildArgs are arguments to pass to the build
+                          process
+                        items:
+                          description: Parameter defines an argument
+                          properties:
+                            name:
+                              description: Name of the  argument
+                              type: string
+                            value:
+                              description: Value of the argument
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
+                      buildOutput:
+                        description: BuildOutput specifies where to store build artifacts
+                        properties:
+                          image:
+                            description: Image is the name of the image to build
+                            type: string
+                          imageRegistry:
+                            description: ImageRegistry is the container registry where
+                              the image will be pushed
+                            type: string
+                          imageTag:
+                            description: ImageTag is the tag to apply to the built
+                              image
+                            type: string
+                        required:
+                        - image
+                        - imageRegistry
+                        - imageTag
+                        type: object
+                      cleanupAfterBuild:
+                        description: CleanupAfterBuild indicates whether to automatically
+                          cleanup after build
+                        type: boolean
+                      pipeline:
+                        description: Pipeline specifies the pipeline configuration
+                        properties:
+                          parameters:
+                            description: Parameters contains additional parameters
+                              to pass to the pipeline
+                            items:
+                              description: Parameter defines an argument
+                              properties:
+                                name:
+                                  description: Name of the  argument
+                                  type: string
+                                value:
+                                  description: Value of the argument
+                                  type: string
+                              required:
+                              - name
+                              - value
+                              type: object
+                            type: array
+                          steps:
+                            description: Steps is an ordered list of pipeline steps
+                              to execute
+                            items:
+                              description: PipelineStepSpec defines a single step
+                                in the pipeline
+                              properties:
+                                configMap:
+                                  description: ConfigMap references the ConfigMap
+                                    containing the step definition
+                                  type: string
+                                enabled:
+                                  description: Enabled indicates whether this step
+                                    should be included in the pipeline
+                                  type: boolean
+                                name:
+                                  description: Name is the identifier for the step
+                                  type: string
+                                parameters:
+                                  description: Parameters contains step-specific parameters
+                                    that override global parameters
+                                  items:
+                                    description: Parameter defines an argument
+                                    properties:
+                                      name:
+                                        description: Name of the  argument
+                                        type: string
+                                      value:
+                                        description: Value of the argument
+                                        type: string
+                                    required:
+                                    - name
+                                    - value
+                                    type: object
+                                  type: array
+                              required:
+                              - configMap
+                              - name
+                              type: object
+                            type: array
+                        required:
+                        - steps
+                        type: object
+                      repoUser:
+                        description: RepoUser is the username in the Git repository
+                          containing the source
+                        type: string
+                      sourceCredentials:
+                        description: SourceCredentials is a reference to a secret
+                          containing Git credentials
+                        properties:
+                          name:
+                            default: ""
+                            description: |-
+                              Name of the referent.
+                              This field is effectively required, but due to backwards compatibility is
+                              allowed to be empty. Instances of this type with an empty value here are
+                              almost certainly wrong.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      sourceRepository:
+                        description: SourceRepository is the Git repository URL
+                        type: string
+                      sourceRevision:
+                        description: SourceRevision is the Git revision (branch, tag,
+                          commit)
+                        type: string
+                      sourceSubfolder:
+                        description: SourceSubfolder is the folder within the repository
+                          containing the source
+                        type: string
+                    required:
+                    - pipeline
+                    type: object
+                type: object
+              dependencies:
+                description: Dependencies defines other components this agent depends
+                  on
+                items:
+                  description: DependencySpec defines a dependency on another component
+                  properties:
+                    kind:
+                      description: Kind is the kind of the component
+                      enum:
+                      - Agent
+                      - Tool
+                      - Infra
+                      type: string
+                    name:
+                      description: Name is the name of the component
+                      type: string
+                    version:
+                      description: Version is the version of the component
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  type: object
+                type: array
+              deployer:
+                description: |-
+                  Common fields for all component types
+                  Deployment strategy for the component: Helm, K8s manifest(deployments), OLM (operators)
+                properties:
+                  deployAfterBuild:
+                    description: DeployAfterBuild indicates whether to automatically
+                      deploy the component after build
+                    type: boolean
+                  env:
+                    description: Environment variables for the component
+                    items:
+                      description: EnvVar represents an environment variable present
+                        in a Container.
+                      properties:
+                        name:
+                          description: Name of the environment variable. Must be a
+                            C_IDENTIFIER.
+                          type: string
+                        value:
+                          description: |-
+                            Variable references $(VAR_NAME) are expanded
+                            using the previously defined environment variables in the container and
+                            any service environment variables. If a variable cannot be resolved,
+                            the reference in the input string will be unchanged. Double $$ are reduced
+                            to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                            "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                            Escaped references will never be expanded, regardless of whether the variable
+                            exists or not.
+                            Defaults to "".
+                          type: string
+                        valueFrom:
+                          description: Source for the environment variable's value.
+                            Cannot be used if value is not empty.
+                          properties:
+                            configMapKeyRef:
+                              description: Selects a key of a ConfigMap.
+                              properties:
+                                key:
+                                  description: The key to select.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the ConfigMap or its
+                                    key must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            fieldRef:
+                              description: |-
+                                Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                              properties:
+                                apiVersion:
+                                  description: Version of the schema the FieldPath
+                                    is written in terms of, defaults to "v1".
+                                  type: string
+                                fieldPath:
+                                  description: Path of the field to select in the
+                                    specified API version.
+                                  type: string
+                              required:
+                              - fieldPath
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            resourceFieldRef:
+                              description: |-
+                                Selects a resource of the container: only resources limits and requests
+                                (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                              properties:
+                                containerName:
+                                  description: 'Container name: required for volumes,
+                                    optional for env vars'
+                                  type: string
+                                divisor:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: Specifies the output format of the
+                                    exposed resources, defaults to "1"
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                resource:
+                                  description: 'Required: resource to select'
+                                  type: string
+                              required:
+                              - resource
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            secretKeyRef:
+                              description: Selects a key of a secret in the pod's
+                                namespace
+                              properties:
+                                key:
+                                  description: The key of the secret to select from.  Must
+                                    be a valid secret key.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the Secret or its key
+                                    must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  helm:
+                    description: Only one of the following deployment methods should
+                      be specified.
+                    properties:
+                      chartName:
+                        description: ChartName is the name of the Helm chart
+                        type: string
+                      chartRepoName:
+                        description: ChartRepoName is the repository for the Helm
+                          chart
+                        type: string
+                      chartRepoUrl:
+                        description: ChartRepoUrl is the repository URL for the Helm
+                          chart
+                        type: string
+                      chartVersion:
+                        description: ChartVersion is the version of the Helm chart
+                        type: string
+                      parameters:
+                        description: Parameters
+                        items:
+                          description: Parameter defines an argument
+                          properties:
+                            name:
+                              description: Name of the  argument
+                              type: string
+                            value:
+                              description: Value of the argument
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
+                      releaseName:
+                        description: ReleaseName is the name of the Helm release
+                        type: string
+                    required:
+                    - chartName
+                    type: object
+                  kubernetes:
+                    description: KubernetesSpec defines Kubernetes manifest deployment
+                    properties:
+                      containerPorts:
+                        items:
+                          description: ContainerPort represents a network port in
+                            a single container.
+                          properties:
+                            containerPort:
+                              description: |-
+                                Number of port to expose on the pod's IP address.
+                                This must be a valid port number, 0 < x < 65536.
+                              format: int32
+                              type: integer
+                            hostIP:
+                              description: What host IP to bind the external port
+                                to.
+                              type: string
+                            hostPort:
+                              description: |-
+                                Number of port to expose on the host.
+                                If specified, this must be a valid port number, 0 < x < 65536.
+                                If HostNetwork is specified, this must match ContainerPort.
+                                Most containers do not need this.
+                              format: int32
+                              type: integer
+                            name:
+                              description: |-
+                                If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
+                                named port in a pod must have a unique name. Name for the port that can be
+                                referred to by services.
+                              type: string
+                            protocol:
+                              default: TCP
+                              description: |-
+                                Protocol for port. Must be UDP, TCP, or SCTP.
+                                Defaults to "TCP".
+                              type: string
+                          required:
+                          - containerPort
+                          type: object
+                        type: array
+                      imageSpec:
+                        properties:
+                          image:
+                            description: Image is the name of the image to use
+                            type: string
+                          imagePullPolicy:
+                            description: ImagePullPolicy defines when to pull the
+                              image
+                            type: string
+                          imageRegistry:
+                            description: ImageRegistry is the container registry where
+                              the image is going to be pulled from
+                            type: string
+                          imageTag:
+                            description: ImageTag is the tag assigned to image
+                            type: string
+                        required:
+                        - image
+                        - imageRegistry
+                        - imageTag
+                        type: object
+                      resources:
+                        description: Resources is the compute resources required by
+                          the container
+                        properties:
+                          claims:
+                            description: |-
+                              Claims lists the names of resources, defined in spec.resourceClaims,
+                              that are used by this container.
+
+                              This is an alpha field and requires enabling the
+                              DynamicResourceAllocation feature gate.
+
+                              This field is immutable. It can only be set for containers.
+                            items:
+                              description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                              properties:
+                                name:
+                                  description: |-
+                                    Name must match the name of one entry in pod.spec.resourceClaims of
+                                    the Pod where this field is used. It makes that resource available
+                                    inside a container.
+                                  type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            type: array
+                            x-kubernetes-list-map-keys:
+                            - name
+                            x-kubernetes-list-type: map
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Limits describes the maximum amount of compute resources allowed.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Requests describes the minimum amount of compute resources required.
+                              If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                              otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                            type: object
+                        type: object
+                      servicePorts:
+                        items:
+                          description: ServicePort contains information on service's
+                            port.
+                          properties:
+                            appProtocol:
+                              description: |-
+                                The application protocol for this port.
+                                This is used as a hint for implementations to offer richer behavior for protocols that they understand.
+                                This field follows standard Kubernetes label syntax.
+                                Valid values are either:
+
+                                * Un-prefixed protocol names - reserved for IANA standard service names (as per
+                                RFC-6335 and https://www.iana.org/assignments/service-names).
+
+                                * Kubernetes-defined prefixed names:
+                                  * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-
+                                  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455
+                                  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455
+
+                                * Other protocols should use implementation-defined prefixed names such as
+                                mycompany.com/my-custom-protocol.
+                              type: string
+                            name:
+                              description: |-
+                                The name of this port within the service. This must be a DNS_LABEL.
+                                All ports within a ServiceSpec must have unique names. When considering
+                                the endpoints for a Service, this must match the 'name' field in the
+                                EndpointPort.
+                                Optional if only one ServicePort is defined on this service.
+                              type: string
+                            nodePort:
+                              description: |-
+                                The port on each node on which this service is exposed when type is
+                                NodePort or LoadBalancer.  Usually assigned by the system. If a value is
+                                specified, in-range, and not in use it will be used, otherwise the
+                                operation will fail.  If not specified, a port will be allocated if this
+                                Service requires one.  If this field is specified when creating a
+                                Service which does not need it, creation will fail. This field will be
+                                wiped when updating a Service to no longer need it (e.g. changing type
+                                from NodePort to ClusterIP).
+                                More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
+                              format: int32
+                              type: integer
+                            port:
+                              description: The port that will be exposed by this service.
+                              format: int32
+                              type: integer
+                            protocol:
+                              default: TCP
+                              description: |-
+                                The IP protocol for this port. Supports "TCP", "UDP", and "SCTP".
+                                Default is TCP.
+                              type: string
+                            targetPort:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                Number or name of the port to access on the pods targeted by the service.
+                                Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.
+                                If this is a string, it will be looked up as a named port in the
+                                target Pod's container ports. If this is not specified, the value
+                                of the 'port' field is used (an identity map).
+                                This field is ignored for services with clusterIP=None, and should be
+                                omitted or set equal to the 'port' field.
+                                More info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service
+                              x-kubernetes-int-or-string: true
+                          required:
+                          - port
+                          type: object
+                        type: array
+                      serviceType:
+                        description: ServiceType is the type of service to create
+                        enum:
+                        - ClusterIP
+                        - NodePort
+                        - LoadBalancer
+                        type: string
+                    type: object
+                  name:
+                    description: Name of the k8s resource
+                    type: string
+                  namespace:
+                    description: Namespace to deploy to, defaults to the namespace
+                      of the CR
+                    type: string
+                  olm:
+                    description: HelmSpec defines Helm deployment configuration
+                    type: object
+                type: object
+              description:
+                description: Description is a human-readable description of the component
+                type: string
+              infra:
+                description: Redis, Postgresql, etc
+                properties:
+                  infraProvider:
+                    description: |-
+                      InfraProvider specifies the infrastructure provider
+                      PostgreSQL;MySQL;MongoDB;Redis;Kafka;ElasticSearch;MinIO
+                    type: string
+                  infraType:
+                    description: |-
+                      InfraType specifies the type of infrastructure
+                      Database;Cache;Queue;StorageService;SearchEngine
+                    type: string
+                  secretRef:
+                    description: SecretRef reference to secrets containing credentials
+                    properties:
+                      name:
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  version:
+                    description: Version specifies the version of the infrastructure
+                      component
+                    type: string
+                type: object
+              tool:
+                description: MCP Servers, Utilities, etc
+                properties:
+                  build:
+                    description: Build configuration for building the tool from source
+                    properties:
+                      buildArgs:
+                        description: BuildArgs are arguments to pass to the build
+                          process
+                        items:
+                          description: Parameter defines an argument
+                          properties:
+                            name:
+                              description: Name of the  argument
+                              type: string
+                            value:
+                              description: Value of the argument
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
+                      buildOutput:
+                        description: BuildOutput specifies where to store build artifacts
+                        properties:
+                          image:
+                            description: Image is the name of the image to build
+                            type: string
+                          imageRegistry:
+                            description: ImageRegistry is the container registry where
+                              the image will be pushed
+                            type: string
+                          imageTag:
+                            description: ImageTag is the tag to apply to the built
+                              image
+                            type: string
+                        required:
+                        - image
+                        - imageRegistry
+                        - imageTag
+                        type: object
+                      cleanupAfterBuild:
+                        description: CleanupAfterBuild indicates whether to automatically
+                          cleanup after build
+                        type: boolean
+                      pipeline:
+                        description: Pipeline specifies the pipeline configuration
+                        properties:
+                          parameters:
+                            description: Parameters contains additional parameters
+                              to pass to the pipeline
+                            items:
+                              description: Parameter defines an argument
+                              properties:
+                                name:
+                                  description: Name of the  argument
+                                  type: string
+                                value:
+                                  description: Value of the argument
+                                  type: string
+                              required:
+                              - name
+                              - value
+                              type: object
+                            type: array
+                          steps:
+                            description: Steps is an ordered list of pipeline steps
+                              to execute
+                            items:
+                              description: PipelineStepSpec defines a single step
+                                in the pipeline
+                              properties:
+                                configMap:
+                                  description: ConfigMap references the ConfigMap
+                                    containing the step definition
+                                  type: string
+                                enabled:
+                                  description: Enabled indicates whether this step
+                                    should be included in the pipeline
+                                  type: boolean
+                                name:
+                                  description: Name is the identifier for the step
+                                  type: string
+                                parameters:
+                                  description: Parameters contains step-specific parameters
+                                    that override global parameters
+                                  items:
+                                    description: Parameter defines an argument
+                                    properties:
+                                      name:
+                                        description: Name of the  argument
+                                        type: string
+                                      value:
+                                        description: Value of the argument
+                                        type: string
+                                    required:
+                                    - name
+                                    - value
+                                    type: object
+                                  type: array
+                              required:
+                              - configMap
+                              - name
+                              type: object
+                            type: array
+                        required:
+                        - steps
+                        type: object
+                      repoUser:
+                        description: RepoUser is the username in the Git repository
+                          containing the source
+                        type: string
+                      sourceCredentials:
+                        description: SourceCredentials is a reference to a secret
+                          containing Git credentials
+                        properties:
+                          name:
+                            default: ""
+                            description: |-
+                              Name of the referent.
+                              This field is effectively required, but due to backwards compatibility is
+                              allowed to be empty. Instances of this type with an empty value here are
+                              almost certainly wrong.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      sourceRepository:
+                        description: SourceRepository is the Git repository URL
+                        type: string
+                      sourceRevision:
+                        description: SourceRevision is the Git revision (branch, tag,
+                          commit)
+                        type: string
+                      sourceSubfolder:
+                        description: SourceSubfolder is the folder within the repository
+                          containing the source
+                        type: string
+                    required:
+                    - pipeline
+                    type: object
+                  toolType:
+                    description: |-
+                      ToolType specifies the type of tool
+                      MCP;Utility
+                    type: string
+                required:
+                - toolType
+                type: object
+            required:
+            - deployer
+            type: object
+          status:
+            description: ComponentStatus defines the observed state of Component.
+            properties:
+              buildStatus:
+                description: Build status
+                properties:
+                  builtImage:
+                    type: string
+                  completionTime:
+                    description: pipeline completion time
+                    format: date-time
+                    type: string
+                  lastBuildTime:
+                    description: Last build time
+                    format: date-time
+                    type: string
+                  message:
+                    description: Build Message
+                    type: string
+                  phase:
+                    description: 'Current build phase: Pending, Building, Succeeded,
+                      Failed'
+                    type: string
+                  pipelineRunName:
+                    description: PipelineRun name
+                    type: string
+                type: object
+              componentType:
+                description: ComponentType indicates the type of component (Agent,
+                  Tool, Infra)
+                type: string
+              conditions:
+                description: Conditions represent overall status
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              deploymentStatus:
+                description: Deployment status
+                properties:
+                  completionTime:
+                    description: Deployment completion time
+                    format: date-time
+                    type: string
+                  deploymentMessage:
+                    description: Deployment message
+                    type: string
+                  phase:
+                    description: 'Current deployment phase: Pending, Deploying, Ready,
+                      Failed'
+                    type: string
+                type: object
+              lastTransitionTime:
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+{{- end -}}

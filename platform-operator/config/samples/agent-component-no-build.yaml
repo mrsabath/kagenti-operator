@@ -3,7 +3,7 @@ kind: Component
 metadata:
   name: research-agent
 spec:
-  description: My first agent component
+  description: My research agent component
   agentComponent:
   
   deployer:

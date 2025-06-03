@@ -3,7 +3,7 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Platform
 metadata:
   name: ai-development-platform
-#  namespace: ai-platform
+  namespace: kagenti-system 
   labels:
     app.kubernetes.io/name: agentic-platform
     app.kubernetes.io/managed-by: platform-operator
@@ -14,7 +14,7 @@ spec:
   description: "AI/ML Development Platform with complete toolchain and agent deployment capabilities"
   
   globalConfig:
-    namespace: ai-platform
+    namespace: kagenti-system 
     annotations:
       platform.example.com/managed-by: "ai-platform-operator"
       platform.example.com/version: "v1.0.0"
@@ -24,6 +24,33 @@ spec:
       team: ai-engineering
   
   infrastructure:
+    - name: istio-base
+      componentReference:
+        name: istio
+        kind: Component
+        apiVersion: agent.example.com/v1
+        namespace: kagenti-system 
+
+    - name: istiod
+      componentReference:
+        name: istiod
+        kind: Component
+        apiVersion: agent.example.com/v1
+        namespace: kagenti-system 
+
+    - name: istio-cni
+      componentReference:
+        name: istio-cni
+        kind: Component
+        apiVersion: agent.example.com/v1
+        namespace: kagenti-system  
+
+    - name: istio-ztunnel
+      componentReference:
+        name: istio-ztunnel
+        kind: Component
+        apiVersion: agent.example.com/v1
+        namespace: kagenti-system           
 
   tools:
   
@@ -33,5 +60,5 @@ spec:
         name: research-agent
         kind: Component
         apiVersion: agent.example.com/v1
-        namespace: default
+        namespace: kagenti-system
   

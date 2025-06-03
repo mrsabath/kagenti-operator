@@ -55,7 +55,7 @@ func (r *PlatformReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			logger.Error(err, "Failed to initialize platform status")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{RequeueAfter: time.Second * 30}, nil
 	}
 
 	if !controllerutil.ContainsFinalizer(platform, platformFinalizer) {

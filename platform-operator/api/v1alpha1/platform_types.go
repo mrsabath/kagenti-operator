@@ -132,6 +132,7 @@ type DeploymentStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:path=platforms,scope=Cluster,singular=platform
 // Platform is the Schema for the platforms API
 type Platform struct {
 	metav1.TypeMeta   `json:",inline"`
