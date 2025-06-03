@@ -2,6 +2,7 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: istio
+  namespace: kagenti-system 
 spec:
   description: Istiod Infra component
 
@@ -26,6 +27,7 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: istiod
+  namespace: kagenti-system   
 spec:
   description: Istiod Infra component
 
@@ -51,6 +53,7 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: istio-cni
+  namespace: kagenti-system   
 spec:
   description: Istio Cni Infra component
 
@@ -76,6 +79,7 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: istio-ztunnel
+  namespace: kagenti-system   
 spec:
   description: Istio Ztunnel Infra component
 

@@ -1,3 +1,19 @@
+/*
+Copyright 2025.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package deployer
 
 import (
@@ -55,39 +71,3 @@ func (d *DeployerFactory) GetDeployer(component *platformv1alpha1.Component) (ty
 	}
 	return nil, fmt.Errorf("No valid deployer found for component %s/%s", component.Namespace, component.Name)
 }
-
-/*
-// DeployComponent is a convenience method to deploy a component using the appropriate deployer
-func (f *DeployerFactory) DeployComponent(ctx context.Context, component *platformv1alpha1.Component) error {
-	deployer, err := f.getDeployer(component)
-	if err != nil {
-		return err
-	}
-	return deployer.Deploy(ctx, component)
-}
-
-// UpdateComponent is a convenience method to update a component using the appropriate deployer
-func (f *DeployerFactory) UpdateComponent(ctx context.Context, component *platformv1alpha1.Component) error {
-	deployer, err := f.getDeployer(component)
-	if err != nil {
-		return err
-	}
-	return deployer.Update(ctx, component)
-} // DeleteComponent is a convenience method to delete a component using the appropriate deployer
-func (f *DeployerFactory) DeleteComponent(ctx context.Context, component *platformv1alpha1.Component) error {
-	deployer, err := f.getDeployer(component)
-	if err != nil {
-		return err
-	}
-	return deployer.Delete(ctx, component)
-}
-
-// GetComponentStatus is a convenience method to get the status of a component using the appropriate deployer
-func (f *DeployerFactory) GetComponentStatus(ctx context.Context, component *platformv1alpha1.Component) (platformv1alpha1.ComponentDeploymentStatus, error) {
-	deployer, err := f.getDeployer(component)
-	if err != nil {
-		return platformv1alpha1.ComponentDeploymentStatus{}, err
-	}
-	return deployer.GetStatus(ctx, component)
-}
-*/

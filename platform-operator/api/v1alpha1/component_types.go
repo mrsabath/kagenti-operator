@@ -187,16 +187,6 @@ type PipelineStepSpec struct {
 	Parameters []ParameterSpec `json:"parameters,omitempty"`
 }
 
-/*
-// BuildArg defines a build argument
-type BuildArg struct {
-	// Name of the build argument
-	Name string `json:"name"`
-
-	// Value of the build argument
-	Value string `json:"value"`
-}
-*/
 // BuildOutput defines where to store build artifacts
 type BuildOutput struct {
 	// Image is the name of the image to build
