@@ -34,6 +34,7 @@ rules:
   - kagenti.operator.dev
   resources:
   - components
+  - platforms
   verbs:
   - create
   - delete
@@ -46,12 +47,14 @@ rules:
   - kagenti.operator.dev
   resources:
   - components/finalizers
+  - platforms/finalizers
   verbs:
   - update
 - apiGroups:
   - kagenti.operator.dev
   resources:
   - components/status
+  - platforms/status
   verbs:
   - get
   - patch
