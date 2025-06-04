@@ -32,8 +32,9 @@ builds:
   - CGO_ENABLED=0  
 archives:
 - ids: [beeai,platform-operator]
-kos:           
-  - repositories: 
+kos:
+  - id: "beeai-ko"       
+    repositories: 
     - ghcr.io/kagenti/kagenti-operator/beeai-operator
     working_dir: beeai
     main: ./cmd
@@ -48,7 +49,8 @@ kos:
     - linux/arm64
     env:
     - CGO_ENABLED=0
-  - repositories:
+  - id: "platform-operator-ko"
+    repositories:
     - ghcr.io/kagenti/kagenti-operator/platform-operator 
     working_dir: platform-operator 
     main: ./cmd  
