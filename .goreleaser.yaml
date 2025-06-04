@@ -3,7 +3,7 @@ builds:
 - id: "beeai"
   dir: beeai
   main: ./cmd
-  binary: ./bin/manager
+  binary: ./bin/beeai-manager
   goos:
   - linux
   - darwin
@@ -18,7 +18,7 @@ builds:
 - id: "platform-operator" 
   dir: platform-operator  
   main: ./cmd  
-  binary: ./bin/manager 
+  binary: ./bin/platform-operator-manager 
   goos:  
   - linux
   - darwin
