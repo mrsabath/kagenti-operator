@@ -31,7 +31,7 @@ builds:
   env: 
   - CGO_ENABLED=0  
 archives:
-- ids: [beeai]
+- ids: [beeai,platform-operator]
 kos:           
   - repositories: 
     - ghcr.io/kagenti/kagenti-operator/beeai-operator
