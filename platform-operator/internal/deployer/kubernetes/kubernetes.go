@@ -180,7 +180,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		kubeSpec.ImageSpec.Image,
 		kubeSpec.ImageSpec.ImageTag,
 	)
-
+	gracePeriodSeconds := int64(300)
 	deployment := &appsv1.Deployment{
 
 		ObjectMeta: metav1.ObjectMeta{
@@ -211,6 +211,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 							Ports:           containerPorts,
 						},
 					},
+					TerminationGracePeriodSeconds: &gracePeriodSeconds,
 				},
 			},
 		},
