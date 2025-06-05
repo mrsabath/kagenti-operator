@@ -89,9 +89,18 @@ spec:
       serviceType: "ClusterIP"
 
     env:
+#      - name: LLM_MODEL
+#        value: "llama3.2:3b-instruct-fp16"
+#      - name: LLM_URL
+#        value: "http://llm-service:11434"
+      - name: HOST
+        value: "0.0.0.0"  
+      - name: LLM_API_BASE
+        value: "http://host.docker.internal:11434/v1"
+      - name: LLM_API_KEY
+        value: "dummy"  
       - name: LLM_MODEL
-        value: "llama3.2:70b"
-      - name: LLM_URL
-        value: "http://llm-service:11434"
+        value: "llama3.2:3b-instruct-fp16"
+
 
  
