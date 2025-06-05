@@ -181,6 +181,8 @@ func (r *PlatformReconciler) reconcileComponents(ctx context.Context, platform *
 			logger.Error(err, "Platform component not found", "component", compRef.Name, "namespace", compRef.ComponentReference.Namespace)
 			return err
 		}
+		r.Log.Info("reconcileComponents +++++ ", "component", component.Name, "Namespace", component.Namespace)
+
 		if err := r.setComponentOwner(ctx, platform, component, compRef); err != nil {
 			logger.Error(err, "Failed to set component ownership", "component", compRef.Name)
 		}
@@ -207,6 +209,7 @@ func (r *PlatformReconciler) updateComponentStatusFromComponent(ctx context.Cont
 	r.updateComponentStatusInPlatform(ctx, platform, componentName, componentType, status, errorMsg)
 }
 func (r *PlatformReconciler) setComponentOwner(ctx context.Context, platform *platformv1alpha1.Platform, component *platformv1alpha1.Component, compRef platformv1alpha1.PlatformComponentRef) error {
+	r.Log.Info("setComponentOwner ++++++++++++++")
 
 	if metav1.IsControlledBy(component, platform) {
 		return nil
@@ -235,6 +238,7 @@ func (r *PlatformReconciler) setComponentOwner(ctx context.Context, platform *pl
 	}
 	component.Labels["platform.operator.dev/platform"] = platform.Name
 	component.Labels["platform.operator.dev/component"] = compRef.Name
+	r.Log.Info("setComponentOwner", "merged Labels", component.Labels)
 	return r.Client.Update(ctx, component)
 }
 func (r *PlatformReconciler) updateComponentStatusInPlatform(ctx context.Context, platform *platformv1alpha1.Platform, componentName, componentType, status, errorMsg string) {
