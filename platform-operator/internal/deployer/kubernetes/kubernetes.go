@@ -166,10 +166,10 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 
 	}
 	labels := map[string]string{
-		"app.kubernetes.io/name":       component.Name,
-		"app.kubernetes.io/part-of":    "platform-operator",
-		"app.kuberbetes.io/managed-by": "platform-operator",
-		"app.kubernetes.io/component":  getComponentType(component),
+		"app.kubernetes.io/name": component.Name,
+		//		"app.kubernetes.io/part-of":    "platform-operator",
+		//		"app.kuberbetes.io/managed-by": "platform-operator",
+		"app.kubernetes.io/component": getComponentType(component),
 	}
 	for k, v := range component.Labels {
 		if _, exists := labels[k]; !exists {
@@ -245,10 +245,10 @@ func (d *KubernetesDeployer) createService(ctx context.Context, component *platf
 		return fmt.Errorf("failed to create service - missing expected Spec.Deployer.Kubernetes in the CR")
 	}
 	labels := map[string]string{
-		"app.kubernetes.io/name":       component.Name,
-		"app.kubernetes.io/part-of":    "platform-operator",
-		"app.kuberbetes.io/managed-by": "platform-operator",
-		"app.kubernetes.io/component":  getComponentType(component),
+		"app.kubernetes.io/name": component.Name,
+		//		"app.kubernetes.io/part-of":    "platform-operator",
+		//		"app.kuberbetes.io/managed-by": "platform-operator",
+		"app.kubernetes.io/component": getComponentType(component),
 	}
 	for k, v := range component.Labels {
 		if _, exists := labels[k]; !exists {
