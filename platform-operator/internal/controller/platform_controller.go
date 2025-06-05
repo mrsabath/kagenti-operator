@@ -215,6 +215,7 @@ func (r *PlatformReconciler) setComponentOwner(ctx context.Context, platform *pl
 		return nil
 	}
 	if err := controllerutil.SetControllerReference(platform, component, r.Scheme); err != nil {
+		r.Log.Error(err, "Unable to set controller reference")
 		return err
 	}
 	if platform.Spec.GlobalConfig.Labels != nil {
