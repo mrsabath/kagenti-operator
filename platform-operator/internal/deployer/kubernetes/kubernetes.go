@@ -70,6 +70,7 @@ func (d *KubernetesDeployer) Deploy(ctx context.Context, component *platformv1al
 	}
 	if err := d.Client.Create(ctx, ns); err != nil {
 		if !errors.IsAlreadyExists(err) {
+			logger.Error(err, "failed to create Namespace")
 			return fmt.Errorf("failed to create namespace: %w", err)
 		}
 	}
