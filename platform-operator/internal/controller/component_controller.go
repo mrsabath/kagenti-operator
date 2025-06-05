@@ -154,6 +154,7 @@ func (r *ComponentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		err = deployer.Deploy(ctx, component)
 		if err != nil {
+			logger.Error(err, "Failed to deploy component")
 			component.Status.DeploymentStatus.Phase = "Failed"
 			component.Status.DeploymentStatus.DeploymentMessage = "Failed to deploy the component"
 			err = r.Client.Status().Update(ctx, component)
