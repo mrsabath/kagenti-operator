@@ -631,6 +631,10 @@ spec:
                       component
                     type: string
                 type: object
+              suspend:
+                default: false
+                description: Suspend indicates whether the component should be suspended
+                type: boolean
               tool:
                 description: MCP Servers, Utilities, etc
                 properties:

@@ -37,6 +37,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+
 	kagentioperatordevv1alpha1 "github.com/kagenti/operator/platform/api/v1alpha1"
 	"github.com/kagenti/operator/platform/internal/builder/tekton"
 	"github.com/kagenti/operator/platform/internal/controller"
@@ -44,7 +46,7 @@ import (
 	"github.com/kagenti/operator/platform/internal/deployer/helm"
 	"github.com/kagenti/operator/platform/internal/deployer/kubernetes"
 	"github.com/kagenti/operator/platform/internal/deployer/olm"
-	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	webhookkagentioperatordevv1alpha1 "github.com/kagenti/operator/platform/internal/webhook/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -238,6 +240,13 @@ func main() {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Platform")
 		os.Exit(1)
+	}
+	// nolint:goconst
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = webhookkagentioperatordevv1alpha1.SetupComponentWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Component")
+			os.Exit(1)
+		}
 	}
 	// +kubebuilder:scaffold:builder
 

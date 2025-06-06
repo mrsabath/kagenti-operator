@@ -44,6 +44,11 @@ type ComponentSpec struct {
 	// Dependencies defines other components this agent depends on
 	// +optional
 	Dependencies []DependencySpec `json:"dependencies,omitempty"`
+
+	// Suspend indicates whether the component should be suspended
+	// +optional
+	// +kubebuilder:default=false
+	Suspend *bool `json:"suspend,omitempty"`
 }
 
 type AgentComponent struct {

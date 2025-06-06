@@ -10,9 +10,6 @@ rules:
   - configmaps
   - secrets
   - services
-  - persistentvolumeclaims
-  - pods
-  - namespaces
   verbs:
   - create
   - delete
