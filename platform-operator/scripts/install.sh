@@ -78,6 +78,12 @@ kubectl apply --filename "https://storage.googleapis.com/tekton-releases/pipelin
 
 :
 : -------------------------------------------------------------------------
+: "Installing Cert Manager"
+: 
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.2/cert-manager.yaml
+
+:
+: -------------------------------------------------------------------------
 : "Installing the Kagenti Platform Operator"
 : 
 helm upgrade --install kagenti-platform-operator --create-namespace --namespace ${OPERATOR_NAMESPACE} oci://ghcr.io/kagenti/kagenti-operator/kagenti-platform-operator-chart --version ${LATEST_TAG}
