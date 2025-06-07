@@ -56,3 +56,21 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - tekton.dev
+  resources:
+  - clustertasks
+  - customruns
+  - pipelineruns
+  - pipelines
+  - stepactions
+  - taskruns
+  - tasks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

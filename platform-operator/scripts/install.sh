@@ -82,6 +82,28 @@ kubectl apply --filename "https://storage.googleapis.com/tekton-releases/pipelin
 : 
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.2/cert-manager.yaml
 
+# Define a timeout for the wait operations (e.g., 5 minutes = 300 seconds)
+WAIT_TIMEOUT_SECONDS=300
+
+# Function to wait for a specific deployment
+wait_for_deployment() {
+    local deployment_name=$1
+    echo "  Waiting for deployment/${deployment_name} in namespace cert-manager..."
+    kubectl wait --for=condition=Available deployment/"${deployment_name}" -n cert-manager --timeout="${WAIT_TIMEOUT_SECONDS}s"
+    if [ $? -ne 0 ]; then
+        echo "Error: Deployment ${deployment_name} did not become ready within ${WAIT_TIMEOUT_SECONDS}s. Check 'kubectl describe deployment ${deployment_name} -n cert-manager' for details."
+        exit 1
+    fi
+    echo "  Deployment ${deployment_name} is ready."
+}
+
+# Wait for each cert-manager component
+wait_for_deployment cert-manager
+wait_for_deployment cert-manager-cainjector
+wait_for_deployment cert-manager-webhook
+
+: "All cert-manager components are ready. Continuing with operator installation..."
+
 :
 : -------------------------------------------------------------------------
 : "Installing the Kagenti Platform Operator"
