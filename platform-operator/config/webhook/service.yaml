@@ -5,7 +5,7 @@ metadata:
     app.kubernetes.io/name: agentic-platform
     app.kubernetes.io/managed-by: kustomize
   name: webhook-service
-  namespace: system
+  namespace: kagenti-system
 spec:
   ports:
     - port: 443
