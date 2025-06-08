@@ -47,7 +47,7 @@ type ComponentSpec struct {
 
 	// Suspend indicates whether the component should be suspended
 	// +optional
-	// +kubebuilder:default=false
+	// +kubebuilder:default=true
 	Suspend *bool `json:"suspend,omitempty"`
 }
 
