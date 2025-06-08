@@ -91,8 +91,10 @@ func (v *ComponentCustomValidator) ValidateCreate(ctx context.Context, obj runti
 	}
 	componentlog.Info("Validation for Component upon creation", "name", component.GetName())
 
-	v.validateComponentSpec(component)
-
+	errs := v.validateComponentSpec(component)
+	if errs != nil {
+		return nil, fmt.Errorf("Object validation failedt %T", errs)
+	}
 	return nil, nil
 }
 
@@ -104,8 +106,10 @@ func (v *ComponentCustomValidator) ValidateUpdate(ctx context.Context, oldObj, n
 	}
 	componentlog.Info("Validation for Component upon update", "name", component.GetName())
 
-	v.validateComponentSpec(component)
-
+	errs := v.validateComponentSpec(component)
+	if errs != nil {
+		return nil, fmt.Errorf("Object validation failedt %T", errs)
+	}
 	return nil, nil
 }
 
