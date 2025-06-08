@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -93,7 +94,7 @@ func (v *ComponentCustomValidator) ValidateCreate(ctx context.Context, obj runti
 
 	errs := v.validateComponentSpec(component)
 	if errs != nil {
-		return nil, fmt.Errorf("Object validation failedt %T", errs)
+		return nil, fmt.Errorf("Object validation failed: %s", strings.Join(errs, "; "))
 	}
 	return nil, nil
 }
@@ -108,7 +109,7 @@ func (v *ComponentCustomValidator) ValidateUpdate(ctx context.Context, oldObj, n
 
 	errs := v.validateComponentSpec(component)
 	if errs != nil {
-		return nil, fmt.Errorf("Object validation failedt %T", errs)
+		return nil, fmt.Errorf("Object validation failed: %s", strings.Join(errs, "; "))
 	}
 	return nil, nil
 }
