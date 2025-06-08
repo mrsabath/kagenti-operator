@@ -9,6 +9,8 @@ controllerManager:
       - "--leader-elect"
       - "--metrics-bind-address=:8443"
       - "--health-probe-bind-address=:8081"
+      - "--webhook-cert-path=/tmp/k8s-webhook-server/serving-certs"
+
     resources:
       limits:
         cpu: 500m
