@@ -91,7 +91,7 @@ func (v *ComponentCustomValidator) ValidateCreate(ctx context.Context, obj runti
 	}
 	componentlog.Info("Validation for Component upon creation", "name", component.GetName())
 
-	// TODO(user): fill in your validation logic upon object creation.
+	v.validateComponentSpec(component)
 
 	return nil, nil
 }
@@ -120,4 +120,56 @@ func (v *ComponentCustomValidator) ValidateDelete(ctx context.Context, obj runti
 	// TODO(user): fill in your validation logic upon object deletion.
 
 	return nil, nil
+}
+
+// validateComponentSpec validates the ComponentSpec for mutually exclusive fields
+func (v *ComponentCustomValidator) validateComponentSpec(component *kagentioperatordevv1alpha1.Component) []string {
+	var errors []string
+
+	// Validate component types - only one should be specified
+	componentCount := 0
+	if component.Spec.Agent != nil {
+		componentCount++
+	}
+	if component.Spec.Tool != nil {
+		componentCount++
+	}
+	if component.Spec.Infra != nil {
+		componentCount++
+	}
+
+	if componentCount == 0 {
+		errors = append(errors, "exactly one component type must be specified (agent, tool, or infra)")
+	} else if componentCount > 1 {
+		errors = append(errors, "only one component type can be specified (agent, tool, or infra are mutually exclusive)")
+	}
+
+	// Validate deployer - only one deployment method should be specified
+	deployerErrors := v.validateDeployerSpec(&component.Spec.Deployer)
+	errors = append(errors, deployerErrors...)
+
+	return errors
+}
+
+// validateDeployerSpec validates the DeployerSpec for mutually exclusive deployment methods
+func (v *ComponentCustomValidator) validateDeployerSpec(deployer *kagentioperatordevv1alpha1.DeployerSpec) []string {
+	var errors []string
+
+	deployerCount := 0
+	if deployer.Helm != nil {
+		deployerCount++
+	}
+	if deployer.Kubernetes != nil {
+		deployerCount++
+	}
+	if deployer.Olm != nil {
+		deployerCount++
+	}
+
+	if deployerCount == 0 {
+		errors = append(errors, "exactly one deployer method must be specified (helm, kubernetes, or olm)")
+	} else if deployerCount > 1 {
+		errors = append(errors, "only one deployer method can be specified (helm, kubernetes, and olm are mutually exclusive)")
+	}
+	return errors
 }
