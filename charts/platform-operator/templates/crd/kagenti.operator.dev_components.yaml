@@ -626,7 +626,7 @@ spec:
                     type: string
                 type: object
               suspend:
-                default: false
+                default: true
                 description: Suspend indicates whether the component should be suspended
                 type: boolean
               tool:
