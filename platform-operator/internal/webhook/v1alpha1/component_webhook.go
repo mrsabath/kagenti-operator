@@ -104,7 +104,7 @@ func (v *ComponentCustomValidator) ValidateUpdate(ctx context.Context, oldObj, n
 	}
 	componentlog.Info("Validation for Component upon update", "name", component.GetName())
 
-	// TODO(user): fill in your validation logic upon object update.
+	v.validateComponentSpec(component)
 
 	return nil, nil
 }
@@ -126,6 +126,8 @@ func (v *ComponentCustomValidator) ValidateDelete(ctx context.Context, obj runti
 func (v *ComponentCustomValidator) validateComponentSpec(component *kagentioperatordevv1alpha1.Component) []string {
 	var errors []string
 
+	componentlog.Info("Validation of Component Spec", "name", component.GetName())
+
 	// Validate component types - only one should be specified
 	componentCount := 0
 	if component.Spec.Agent != nil {
@@ -138,6 +140,7 @@ func (v *ComponentCustomValidator) validateComponentSpec(component *kagentiopera
 		componentCount++
 	}
 
+	componentlog.Info("Validation of Component Spec", "name", component.GetName(), "number of component types specified", componentCount)
 	if componentCount == 0 {
 		errors = append(errors, "exactly one component type must be specified (agent, tool, or infra)")
 	} else if componentCount > 1 {
