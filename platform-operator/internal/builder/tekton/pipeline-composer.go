@@ -187,6 +187,9 @@ func (pc *PipelineComposer) createPipelineTasks(steps map[string]*StepDefinition
 func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec, parameterList []platformv1alpha1.ParameterSpec) []platformv1alpha1.ParameterSpec {
 	var mergedParams []platformv1alpha1.ParameterSpec
 
+	for _, p := range parameterList {
+		pc.Logger.Info("mergeTaskParameters", "parameterList param name", p.Name, "Value", p.Value)
+	}
 	for _, taskParam := range taskParams {
 		// LOG: Right after taskParam is assigned from the range
 		pc.Logger.Info("Processing taskParam",
@@ -222,19 +225,23 @@ func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec,
 		}
 
 		// FIX: Check if Default exists before accessing StringVal
-		if taskParam.Default != nil {
-			mergedParam.Value = taskParam.Default.StringVal
-			pc.Logger.Info("Using default value",
-				"param", taskParam.Name,
-				"defaultValue", taskParam.Default.StringVal)
-		} else {
-			mergedParam.Value = "" // Safe fallback
-			pc.Logger.Info("No default value, using empty string", "param", taskParam.Name)
-		}
+		//	if taskParam.Default != nil {
+		//		mergedParam.Value = taskParam.Default.StringVal
+		//		pc.Logger.Info("Using default value",
+		//			"param", taskParam.Name,
+		//			"defaultValue", taskParam.Default.StringVal)
+		//	} else {
+		//		mergedParam.Value = "" // Safe fallback
+		//		pc.Logger.Info("No default value, using empty string", "param", taskParam.Name)
+		//	}
 
-		taskParam := pc.getTaskParam(parameterList, taskParam.Name)
-		if taskParam != nil {
-			mergedParam.Value = taskParam.Value
+		param := pc.getTaskParam(parameterList, taskParam.Name)
+		if param != nil {
+			mergedParam.Value = param.Value
+			pc.Logger.Info("param has value", "name", taskParam.Name, "value", mergedParam.Value)
+		} else {
+			pc.Logger.Info("param has nil value", "name", taskParam.Name)
+			mergedParam.Value = ""
 		}
 		mergedParams = append(mergedParams, mergedParam)
 	}
