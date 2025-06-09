@@ -161,7 +161,7 @@ func (pc *PipelineComposer) createPipelineTasks(steps map[string]*StepDefinition
 			Name: stepDefinition.Name,
 			TaskSpec: &tektonv1.EmbeddedTask{
 				TaskSpec: tektonv1.TaskSpec{
-					Params:     stepDefinition.TaskSpec.Params,
+					Params:     pc.getTaskParams(stepDefinition.Parameters),
 					Steps:      stepDefinition.TaskSpec.Steps,
 					Workspaces: stepDefinition.TaskSpec.Workspaces,
 				},
