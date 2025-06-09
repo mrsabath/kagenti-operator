@@ -191,6 +191,7 @@ func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec,
 		pc.Logger.Info("mergeTaskParameters", "parameterList param name", p.Name, "Value", p.Value)
 	}
 	for _, taskParam := range taskParams {
+		defaultValue := ""
 		// LOG: Right after taskParam is assigned from the range
 		pc.Logger.Info("Processing taskParam",
 			"name", taskParam.Name,
@@ -208,6 +209,7 @@ func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec,
 				"arrayValLen", len(taskParam.Default.ArrayVal),
 				"hasObjectVal", taskParam.Default.ObjectVal != nil,
 				"objectValLen", len(taskParam.Default.ObjectVal))
+			defaultValue = taskParam.Default.StringVal
 		} else {
 			pc.Logger.Info("TaskParam has nil Default", "name", taskParam.Name)
 		}
@@ -241,7 +243,7 @@ func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec,
 			pc.Logger.Info("param has value", "name", taskParam.Name, "value", mergedParam.Value)
 		} else {
 			pc.Logger.Info("param has nil value", "name", taskParam.Name)
-			mergedParam.Value = ""
+			mergedParam.Value = defaultValue
 		}
 		mergedParams = append(mergedParams, mergedParam)
 	}
