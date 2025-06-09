@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	platformv1alpha1 "github.com/kagenti/operator/platform/api/v1alpha1"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -46,11 +47,13 @@ type StepDefinition struct {
 // PipelineComposer handles composition of pipelines from individual steps
 type PipelineComposer struct {
 	client client.Client
+	Logger logr.Logger
 }
 
-func NewPipelineComposer(c client.Client) *PipelineComposer {
+func NewPipelineComposer(c client.Client, log logr.Logger) *PipelineComposer {
 	return &PipelineComposer{
 		client: c,
+		Logger: log,
 	}
 }
 
@@ -185,12 +188,50 @@ func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec,
 	var mergedParams []platformv1alpha1.ParameterSpec
 
 	for _, taskParam := range taskParams {
+		// LOG: Right after taskParam is assigned from the range
+		pc.Logger.Info("Processing taskParam",
+			"name", taskParam.Name,
+			"type", string(taskParam.Type),
+			"description", taskParam.Description,
+			"hasDefault", taskParam.Default != nil)
+
+		// Additional detailed logging of the Default field
+		if taskParam.Default != nil {
+			pc.Logger.Info("TaskParam default details",
+				"name", taskParam.Name,
+				"defaultType", string(taskParam.Default.Type),
+				"stringVal", taskParam.Default.StringVal,
+				"hasArrayVal", taskParam.Default.ArrayVal != nil,
+				"arrayValLen", len(taskParam.Default.ArrayVal),
+				"hasObjectVal", taskParam.Default.ObjectVal != nil,
+				"objectValLen", len(taskParam.Default.ObjectVal))
+		} else {
+			pc.Logger.Info("TaskParam has nil Default", "name", taskParam.Name)
+		}
+		// Create a copy of the task parameter
+		//		mergedParam := platformv1alpha1.ParameterSpec{
+		//			Name:        taskParam.Name,
+		//			Description: taskParam.Description,
+		//			Value:       taskParam.Default.StringVal,
+		//		}
+
 		// Create a copy of the task parameter
 		mergedParam := platformv1alpha1.ParameterSpec{
 			Name:        taskParam.Name,
 			Description: taskParam.Description,
-			Value:       taskParam.Default.StringVal,
 		}
+
+		// FIX: Check if Default exists before accessing StringVal
+		if taskParam.Default != nil {
+			mergedParam.Value = taskParam.Default.StringVal
+			pc.Logger.Info("Using default value",
+				"param", taskParam.Name,
+				"defaultValue", taskParam.Default.StringVal)
+		} else {
+			mergedParam.Value = "" // Safe fallback
+			pc.Logger.Info("No default value, using empty string", "param", taskParam.Name)
+		}
+
 		taskParam := pc.getTaskParam(parameterList, taskParam.Name)
 		if taskParam != nil {
 			mergedParam.Value = taskParam.Value
