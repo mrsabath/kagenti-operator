@@ -176,6 +176,8 @@ type BuildSpec struct {
 
 // PipelineSpec defines how the pipeline should be configured
 type PipelineSpec struct {
+	Namespace string `json:"namespace"`
+
 	// Steps is an ordered list of pipeline steps to execute
 	Steps []PipelineStepSpec `json:"steps"`
 
@@ -209,6 +211,7 @@ type PipelineStepSpec struct {
 type PipelineTemplate struct {
 	// Metadata about the template
 	Name        string `json:"name"`
+	Namespace   string `json:"namespace"`
 	Description string `json:"description"`
 
 	// Template steps with default parameters

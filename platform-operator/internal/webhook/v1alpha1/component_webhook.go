@@ -248,7 +248,8 @@ func (d *ComponentCustomDefaulter) mergePipelineTemplate(template *kagentioperat
 
 	// Create final pipeline
 	finalPipeline := &kagentioperatordevv1alpha1.PipelineSpec{
-		Steps: finalSteps,
+		Namespace: template.Namespace,
+		Steps:     finalSteps,
 	}
 
 	// Add global parameters if any

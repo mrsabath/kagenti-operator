@@ -13,10 +13,10 @@ data:
       "name": "Development Pipeline",
       "description": "Basic pipeline for development builds",
       "requiredParameters": [
-        "SourceRepository",
-        "SourceRevision",
-        "SourceSubfolder",
-        "FullImageName"
+        "repo-url",
+        "revision",
+        "subfolder-path",
+        "IMAGE"
       ],
       "steps": [
         {
@@ -24,21 +24,21 @@ data:
           "configMap": "github-clone-step",
           "enabled": true,
           "description": "Clone source code from GitHub repository",
-          "requiredParameters": ["SourceRepository"]
+          "requiredParameters": ["repo-url"]
         },
         {
           "name": "folder-verification",
           "configMap": "check-subfolder-step",
           "enabled": true,
           "description": "Verify that the specified subfolder exists",
-          "requiredParameters": ["SourceSubfolder"]
+          "requiredParameters": ["subfolder-path"]
         },
         {
           "name": "kaniko-build",
           "configMap": "kaniko-docker-build-step",
           "enabled": true,
           "description": "Build container image using Kaniko",
-          "requiredParameters": ["FullImageName"]
+          "requiredParameters": ["IMAGE"]
         }
       ],
       "globalParameters": [
