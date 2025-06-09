@@ -243,30 +243,6 @@ func (d *ComponentCustomDefaulter) mergePipelineTemplate(template *kagentioperat
 			ConfigMap: stepTemplate.ConfigMap,
 			Enabled:   stepTemplate.Enabled,
 		}
-
-		// Merge parameters: defaults + user overrides
-		paramMap := make(map[string]string)
-
-		// First, add default parameters
-		for _, defaultParam := range stepTemplate.DefaultParameters {
-			resolvedValue := d.resolveTemplateValue(defaultParam.Value, userParams)
-			paramMap[defaultParam.Name] = resolvedValue
-		}
-
-		// Then, override with user parameters
-		for _, userParam := range buildSpec.Pipeline.Parameters {
-			resolvedValue := d.resolveTemplateValue(userParam.Value, userParams)
-			paramMap[userParam.Name] = resolvedValue
-		}
-
-		// Convert map back to slice
-		for name, value := range paramMap {
-			finalStep.Parameters = append(finalStep.Parameters, kagentioperatordevv1alpha1.ParameterSpec{
-				Name:  name,
-				Value: value,
-			})
-		}
-
 		finalSteps = append(finalSteps, finalStep)
 	}
 
