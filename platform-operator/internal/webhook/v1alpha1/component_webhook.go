@@ -46,19 +46,21 @@ const (
 	DefaultPipelineMode = "dev"
 )
 
-// SetupComponentWebhookWithManager registers the webhook for Component in the manager.
-func SetupComponentWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).For(&kagentioperatordevv1alpha1.Component{}).
-		WithValidator(&ComponentCustomValidator{}).
-		WithDefaulter(&ComponentCustomDefaulter{}).
-		Complete()
-}
-
 // +kubebuilder:webhook:path=/mutate-kagenti-operator-dev-v1alpha1-component,mutating=true,failurePolicy=fail,sideEffects=None,groups=kagenti.operator.dev,resources=components,verbs=create;update,versions=v1alpha1,name=mcomponent-v1alpha1.kb.io,admissionReviewVersions=v1
 
 type ComponentCustomDefaulter struct {
-	client  client.Client
-	decoder *admission.Decoder
+	Client client.Client
+}
+
+// SetupComponentWebhookWithManager registers the webhook for Component in the manager.
+func SetupComponentWebhookWithManager(mgr ctrl.Manager) error {
+	defaulter := &ComponentCustomDefaulter{
+		Client: mgr.GetClient(),
+	}
+	return ctrl.NewWebhookManagedBy(mgr).For(&kagentioperatordevv1alpha1.Component{}).
+		WithValidator(&ComponentCustomValidator{}).
+		WithDefaulter(defaulter).
+		Complete()
 }
 
 var _ webhook.CustomDefaulter = &ComponentCustomDefaulter{}
@@ -153,10 +155,10 @@ func (d *ComponentCustomDefaulter) processPipelineConfig(ctx context.Context, co
 // getPipelineTemplate retrieves pipeline template from ConfigMap
 func (d *ComponentCustomDefaulter) getPipelineTemplate(ctx context.Context, mode, namespace string) (*kagentioperatordevv1alpha1.PipelineTemplate, error) {
 	configMapName := fmt.Sprintf("%s-%s", PipelineTemplateConfigMapPrefix, mode)
-	componentlog.Info("Mutating webbhook - using Tekton pipeline from configMap", "configMap Name", configMapName)
+	componentlog.Info("Mutating webbhook - using Tekton pipeline from configMap", "configMap Name", configMapName, "namespace", namespace)
 
 	configMap := &corev1.ConfigMap{}
-	err := d.client.Get(ctx, types.NamespacedName{
+	err := d.Client.Get(ctx, types.NamespacedName{
 		Name:      configMapName,
 		Namespace: namespace,
 	}, configMap)
