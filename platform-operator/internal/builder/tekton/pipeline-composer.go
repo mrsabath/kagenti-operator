@@ -109,7 +109,7 @@ func (pc *PipelineComposer) loadSteps(ctx context.Context, component *platformv1
 		configMap := &corev1.ConfigMap{}
 		err := pc.client.Get(ctx, types.NamespacedName{
 			Name:      stepSpec.ConfigMap,
-			Namespace: buildSpec.Pipeline.Namespace,
+			Namespace: component.Namespace,
 		}, configMap)
 
 		if err != nil {
