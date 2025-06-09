@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipeline-template-dev
+  namespace: kagenti-system  
+  labels:
+    app.kubernetes.io/name: component-operator
+    app.kubernetes.io/component: pipeline-template
+    component.kagenti.ai/mode: dev
+data:
+  template.json: |
+    {
+      "name": "Development Pipeline",
+      "description": "Basic pipeline for development builds",
+      "requiredParameters": [
+        "SourceRepository",
+        "SourceRevision",
+        "SourceSubfolder",
+        "FullImageName"
+      ],
+      "steps": [
+        {
+          "name": "github-clone",
+          "configMap": "github-clone-step",
+          "enabled": true,
+          "description": "Clone source code from GitHub repository",
+          "defaultParameters": [
+            {
+              "name": "github-token-secret",
+              "value": "github-credentials",
+              "description": "Secret containing GitHub access token"
+            },
+            {
+              "name": "repo-url",
+              "value": "{{.SourceRepository}}",
+              "description": "GitHub repository URL"
+            },
+            {
+              "name": "revision",
+              "value": "{{.SourceRevision}}",
+              "description": "Git revision to checkout"
+            }
+          ],
+          "requiredParameters": ["repo-url"]
+        },
+        {
+          "name": "folder-verification",
+          "configMap": "check-subfolder-step",
+          "enabled": true,
+          "description": "Verify that the specified subfolder exists",
+          "defaultParameters": [
+            {
+              "name": "subfolder-path",
+              "value": "{{.SourceSubfolder}}",
+              "description": "Path to subfolder containing the source code"
+            },
+            {
+              "name": "fail-on-missing",
+              "value": "true",
+              "description": "Whether to fail if subfolder is missing"
+            }
+          ],
+          "requiredParameters": ["subfolder-path"]
+        },
+        {
+          "name": "kaniko-build",
+          "configMap": "kaniko-docker-build-step",
+          "enabled": true,
+          "description": "Build container image using Kaniko",
+          "defaultParameters": [
+            {
+              "name": "IMAGE",
+              "value": "{{.FullImageName}}",
+              "description": "Full image name including registry and tag"
+            },
+            {
+              "name": "subfolder-path",
+              "value": "{{.SourceSubfolder}}",
+              "description": "Build context path"
+            },
+            {
+              "name": "registry-secret",
+              "value": "github-token-secret",
+              "description": "Secret for registry authentication"
+            },
+            {
+              "name": "SKIP_TLS_VERIFY",
+              "value": "false",
+              "description": "Skip TLS verification for registry"
+            },
+            {
+              "name": "DOCKERFILE",
+              "value": "Dockerfile",
+              "description": "Dockerfile name to use for build"
+            }
+          ],
+          "requiredParameters": ["IMAGE"]
+        }
+      ],
+      "globalParameters": [
+        {
+          "name": "pipeline-timeout",
+          "value": "20m",
+          "description": "Overall pipeline timeout"
+        }
+      ]
+    }

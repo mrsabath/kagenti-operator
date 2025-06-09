@@ -18,11 +18,15 @@ package v1alpha1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -33,6 +37,14 @@ import (
 // nolint:unused
 // log is for logging in this package.
 var componentlog = logf.Log.WithName("component-resource")
+
+const (
+	// ConfigMap naming convention for pipeline templates
+	PipelineTemplateConfigMapPrefix = "pipeline-template"
+
+	// Default values
+	DefaultPipelineMode = "dev"
+)
 
 // SetupComponentWebhookWithManager registers the webhook for Component in the manager.
 func SetupComponentWebhookWithManager(mgr ctrl.Manager) error {
@@ -45,7 +57,8 @@ func SetupComponentWebhookWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:webhook:path=/mutate-kagenti-operator-dev-v1alpha1-component,mutating=true,failurePolicy=fail,sideEffects=None,groups=kagenti.operator.dev,resources=components,verbs=create;update,versions=v1alpha1,name=mcomponent-v1alpha1.kb.io,admissionReviewVersions=v1
 
 type ComponentCustomDefaulter struct {
-	// TODO(user): Add more fields as needed for defaulting
+	client  client.Client
+	decoder *admission.Decoder
 }
 
 var _ webhook.CustomDefaulter = &ComponentCustomDefaulter{}
@@ -56,7 +69,7 @@ func (d *ComponentCustomDefaulter) Default(ctx context.Context, obj runtime.Obje
 	if !ok {
 		return fmt.Errorf("expected an Component object but got %T", obj)
 	}
-	componentlog.Info("Defaulting for Component", "name", component.GetName())
+	componentlog.Info("Mutating webbhook for Component", "name", component.GetName())
 
 	// Set suspend to true by default for new Component resources
 	if component.Spec.Suspend == nil {
@@ -64,8 +77,253 @@ func (d *ComponentCustomDefaulter) Default(ctx context.Context, obj runtime.Obje
 		component.Spec.Suspend = &suspend
 		componentlog.Info("setting suspend to true", "name", component.Name, "namespace", component.Namespace)
 	}
+	// Inject Tekton pipeline spec from a deployed template matching component mode (dev, preprod, or prod)
+	if d.injectPipelineTemplateSteps(component) {
+
+		err := d.processPipelineConfig(ctx, component)
+		if err != nil {
+			return fmt.Errorf("failed to process pipeline config: %w", err)
+		}
+
+	}
+	return nil
+}
+
+func (d *ComponentCustomDefaulter) injectPipelineTemplateSteps(component *kagentioperatordevv1alpha1.Component) bool {
+	// Only process for components that have build configuration
+	if component.Spec.Agent != nil && component.Spec.Agent.Build != nil {
+		return component.Spec.Agent.Build.Pipeline.Steps == nil
+	}
+	if component.Spec.Tool != nil && component.Spec.Tool.Build != nil {
+		return component.Spec.Tool.Build.Pipeline.Steps == nil
+	}
+	return false
+}
+
+func (d *ComponentCustomDefaulter) processPipelineConfig(ctx context.Context, component *kagentioperatordevv1alpha1.Component) error {
+	var buildSpec *kagentioperatordevv1alpha1.BuildSpec
+	componentlog.Info("Mutating webbhook - injecting Tekton pipeline", "name", component.GetName())
+
+	// Get the build spec to work with
+	if component.Spec.Agent != nil && component.Spec.Agent.Build != nil {
+		buildSpec = component.Spec.Agent.Build
+	} else if component.Spec.Tool != nil && component.Spec.Tool.Build != nil {
+		buildSpec = component.Spec.Tool.Build
+	} else {
+		return fmt.Errorf("no build spec found")
+	}
+
+	// Skip if custom pipeline is provided
+	if buildSpec.Pipeline.Steps != nil {
+		componentlog.Info("Mutating webbhook - using user defined Tekton pipeline", "name", component.GetName())
+		return nil
+	}
+
+	// Get pipeline mode (default to "dev" if not specified)
+	mode := buildSpec.Mode
+	if mode == "" {
+		mode = DefaultPipelineMode
+		buildSpec.Mode = mode
+	}
+
+	// Load pipeline template from ConfigMap
+	template, err := d.getPipelineTemplate(ctx, mode, component.Namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get pipeline template for mode %s: %w", mode, err)
+	}
+
+	// Validate required parameters
+	err = d.validateRequiredParameters(template, buildSpec)
+	if err != nil {
+		return fmt.Errorf("required parameter validation failed: %w", err)
+	}
+
+	// Create the final pipeline by merging template with user parameters
+	pipelineSpec, err := d.mergePipelineTemplate(template, buildSpec)
+	if err != nil {
+		return fmt.Errorf("failed to merge pipeline template: %w", err)
+	}
+
+	// Replace the pipeline config with the final merged pipeline
+	buildSpec.Pipeline.Steps = pipelineSpec.Steps
 
 	return nil
+}
+
+// getPipelineTemplate retrieves pipeline template from ConfigMap
+func (d *ComponentCustomDefaulter) getPipelineTemplate(ctx context.Context, mode, namespace string) (*kagentioperatordevv1alpha1.PipelineTemplate, error) {
+	configMapName := fmt.Sprintf("%s-%s", PipelineTemplateConfigMapPrefix, mode)
+	componentlog.Info("Mutating webbhook - using Tekton pipeline from configMap", "configMap Name", configMapName)
+
+	configMap := &corev1.ConfigMap{}
+	err := d.client.Get(ctx, types.NamespacedName{
+		Name:      configMapName,
+		Namespace: namespace,
+	}, configMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ConfigMap %s/%s: %w", namespace, configMapName, err)
+	}
+
+	// Parse pipeline template from ConfigMap data
+	templateData, exists := configMap.Data["template.json"]
+	if !exists {
+		return nil, fmt.Errorf("template.json not found in ConfigMap %s", configMapName)
+	}
+	componentlog.Info("Mutating webbhook - found Tekton pipeline in configMap", "configMap Name", configMapName)
+
+	var template kagentioperatordevv1alpha1.PipelineTemplate
+
+	err = json.Unmarshal([]byte(templateData), &template)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal pipeline template from ConfigMap: %w", err)
+	}
+	componentlog.Info("Mutating webbhook - unmarshalled Tekton pipeline from configMap", "configMap Name", configMapName)
+
+	return &template, nil
+}
+
+// validateRequiredParameters checks if all required parameters are provided
+func (d *ComponentCustomDefaulter) validateRequiredParameters(template *kagentioperatordevv1alpha1.PipelineTemplate, buildSpec *kagentioperatordevv1alpha1.BuildSpec) error {
+	userParams := make(map[string]string)
+	componentlog.Info("Mutating webbhook - validateRequiredParameters()")
+
+	// Build map of user-provided parameters
+	for _, param := range buildSpec.Pipeline.Parameters {
+		userParams[param.Name] = param.Value
+	}
+
+	// Check global required parameters
+	for _, requiredParam := range template.RequiredParameters {
+		if _, exists := userParams[requiredParam]; !exists {
+			return fmt.Errorf("required parameter '%s' not provided", requiredParam)
+		}
+	}
+
+	// Check step-specific required parameters
+	for _, step := range template.Steps {
+		for _, requiredParam := range step.RequiredParameters {
+			if _, exists := userParams[requiredParam]; !exists {
+				return fmt.Errorf("required parameter '%s' not provided for step '%s'", requiredParam, step.Name)
+			}
+		}
+	}
+
+	return nil
+}
+
+// mergePipelineTemplate merges template with user parameters to create final pipeline
+func (d *ComponentCustomDefaulter) mergePipelineTemplate(template *kagentioperatordevv1alpha1.PipelineTemplate, buildSpec *kagentioperatordevv1alpha1.BuildSpec) (*kagentioperatordevv1alpha1.PipelineSpec, error) {
+	componentlog.Info("Mutating webbhook - mergePipelineTemplate()")
+	// Create parameter map from user input
+	userParams := make(map[string]string)
+	for _, param := range buildSpec.Pipeline.Parameters {
+		userParams[param.Name] = param.Value
+	}
+
+	// Add build spec fields as template variables
+	templateVars := d.createTemplateVariables(buildSpec)
+	for k, v := range templateVars {
+		userParams[k] = v
+	}
+
+	var finalSteps []kagentioperatordevv1alpha1.PipelineStepSpec
+
+	// Process each step in the template
+	for _, stepTemplate := range template.Steps {
+		// Skip disabled steps
+		if stepTemplate.Enabled != nil && !*stepTemplate.Enabled {
+			continue
+		}
+
+		// Create final step
+		finalStep := kagentioperatordevv1alpha1.PipelineStepSpec{
+			Name:      stepTemplate.Name,
+			ConfigMap: stepTemplate.ConfigMap,
+			Enabled:   stepTemplate.Enabled,
+		}
+
+		// Merge parameters: defaults + user overrides
+		paramMap := make(map[string]string)
+
+		// First, add default parameters
+		for _, defaultParam := range stepTemplate.DefaultParameters {
+			resolvedValue := d.resolveTemplateValue(defaultParam.Value, userParams)
+			paramMap[defaultParam.Name] = resolvedValue
+		}
+
+		// Then, override with user parameters
+		for _, userParam := range buildSpec.Pipeline.Parameters {
+			resolvedValue := d.resolveTemplateValue(userParam.Value, userParams)
+			paramMap[userParam.Name] = resolvedValue
+		}
+
+		// Convert map back to slice
+		for name, value := range paramMap {
+			finalStep.Parameters = append(finalStep.Parameters, kagentioperatordevv1alpha1.ParameterSpec{
+				Name:  name,
+				Value: value,
+			})
+		}
+
+		finalSteps = append(finalSteps, finalStep)
+	}
+
+	// Create final pipeline
+	finalPipeline := &kagentioperatordevv1alpha1.PipelineSpec{
+		Steps: finalSteps,
+	}
+
+	// Add global parameters if any
+	for _, globalParam := range template.GlobalParameters {
+		resolvedValue := d.resolveTemplateValue(globalParam.Value, userParams)
+		finalPipeline.Parameters = append(finalPipeline.Parameters, kagentioperatordevv1alpha1.ParameterSpec{
+			Name:  globalParam.Name,
+			Value: resolvedValue,
+		})
+	}
+
+	return finalPipeline, nil
+}
+func (d *ComponentCustomDefaulter) createTemplateVariables(buildSpec *kagentioperatordevv1alpha1.BuildSpec) map[string]string {
+	vars := make(map[string]string)
+
+	if buildSpec.SourceRepository != "" {
+		vars["SourceRepository"] = buildSpec.SourceRepository
+	}
+	if buildSpec.SourceRevision != "" {
+		vars["SourceRevision"] = buildSpec.SourceRevision
+	}
+	if buildSpec.SourceSubfolder != "" {
+		vars["SourceSubfolder"] = buildSpec.SourceSubfolder
+	}
+	if buildSpec.RepoUser != "" {
+		vars["RepoUser"] = buildSpec.RepoUser
+	}
+
+	if buildSpec.BuildOutput != nil {
+		vars["Image"] = buildSpec.BuildOutput.Image
+		vars["ImageTag"] = buildSpec.BuildOutput.ImageTag
+		vars["ImageRegistry"] = buildSpec.BuildOutput.ImageRegistry
+		vars["FullImageName"] = fmt.Sprintf("%s/%s:%s",
+			buildSpec.BuildOutput.ImageRegistry,
+			buildSpec.BuildOutput.Image,
+			buildSpec.BuildOutput.ImageTag)
+	}
+
+	return vars
+}
+
+// resolveTemplateValue resolves template variables in parameter values
+func (d *ComponentCustomDefaulter) resolveTemplateValue(value string, vars map[string]string) string {
+	resolved := value
+
+	// Simple template variable substitution: {{.VarName}}
+	for varName, varValue := range vars {
+		placeholder := fmt.Sprintf("{{.%s}}", varName)
+		resolved = strings.ReplaceAll(resolved, placeholder, varValue)
+	}
+
+	return resolved
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
