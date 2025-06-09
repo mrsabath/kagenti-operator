@@ -218,7 +218,7 @@ func main() {
 			mgr.GetClient(),
 			mgr.GetLogger(),
 			mgr.GetScheme(),
-			tekton.NewPipelineComposer(mgr.GetClient()),
+			tekton.NewPipelineComposer(mgr.GetClient(), mgr.GetLogger()),
 			tekton.NewWorkspaceManager(mgr.GetClient(), mgr.GetLogger()),
 		),
 		DeployerFactory: &deployer.DeployerFactory{
