@@ -15,13 +15,13 @@ spec:
         parameters:
           - name: github-token-secret
             value: "github-credentials"  
-          - name: SourceRepository
+          - name: repo-url
             value: "github.com/kagenti/agent-examples.git"
-          - name: SourceRevision
+          - name: revision
             value: "main"
-          - name: SourceSubfolder
+          - name: subfolder-path
             value: "acp/acp_ollama_researcher"
-          - name: FullImageName
+          - name: IMAGE
             value: "registry.cr-system.svc.cluster.local:5000/beai-research-agent:latest"
 
       cleanupAfterBuild: true

@@ -11,7 +11,7 @@ data:
   template.json: |
     {
       "name": "Development Pipeline",
-      "namespace": "kagenti-system"
+      "namespace": "kagenti-system",
       "description": "Basic pipeline for development builds",
       "requiredParameters": [
         "repo-url",

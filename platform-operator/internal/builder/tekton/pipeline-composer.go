@@ -64,7 +64,7 @@ func (pc *PipelineComposer) ComposePipelineSpec(ctx context.Context, component *
 	}
 
 	// Create ordered pipeline tasks with embedded specs
-	pipelineTasks, err := pc.createPipelineTasks(steps, order, pc.collectPipelineParams(component))
+	pipelineTasks, err := pc.createPipelineTasks(steps, order) //pc.collectPipelineParams(component))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pipeline tasks: %w", err)
 	}
@@ -136,7 +136,7 @@ func (pc *PipelineComposer) loadSteps(ctx context.Context, component *platformv1
 			Name:       stepSpec.Name,
 			ConfigMap:  stepSpec.ConfigMap,
 			TaskSpec:   taskSpec,
-			Parameters: stepSpec.Parameters,
+			Parameters: pc.mergeTaskParameters(taskSpec.Params, buildSpec.Pipeline.Parameters),
 		}
 
 		steps[stepSpec.Name] = step
@@ -145,19 +145,20 @@ func (pc *PipelineComposer) loadSteps(ctx context.Context, component *platformv1
 	return steps, order, nil
 }
 
-func (pc *PipelineComposer) createPipelineTasks(steps map[string]*StepDefinition, order []string, parameters []tektonv1.ParamSpec) ([]tektonv1.PipelineTask, error) {
+func (pc *PipelineComposer) createPipelineTasks(steps map[string]*StepDefinition, order []string) ([]tektonv1.PipelineTask, error) {
 
 	tasks := make([]tektonv1.PipelineTask, 0, len(order))
 	for i, stepName := range order {
 		stepDefinition := steps[stepName]
 
-		stepParameters := pc.getTaskParams(stepDefinition.Parameters)
+		//	stepParameters := pc.getTaskParams(stepDefinition.Parameters)
+
 		// Create task with embedded spec using EmbeddedTask
 		task := tektonv1.PipelineTask{
 			Name: stepDefinition.Name,
 			TaskSpec: &tektonv1.EmbeddedTask{
 				TaskSpec: tektonv1.TaskSpec{
-					Params:     stepParameters,
+					Params:     stepDefinition.TaskSpec.Params,
 					Steps:      stepDefinition.TaskSpec.Steps,
 					Workspaces: stepDefinition.TaskSpec.Workspaces,
 				},
@@ -177,6 +178,36 @@ func (pc *PipelineComposer) createPipelineTasks(steps map[string]*StepDefinition
 	}
 
 	return tasks, nil
+}
+
+// mergeTaskParameters merges task parameters with component parameters
+func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec, parameterList []platformv1alpha1.ParameterSpec) []platformv1alpha1.ParameterSpec {
+	var mergedParams []platformv1alpha1.ParameterSpec
+
+	for _, taskParam := range taskParams {
+		// Create a copy of the task parameter
+		mergedParam := platformv1alpha1.ParameterSpec{
+			Name:        taskParam.Name,
+			Description: taskParam.Description,
+			Value:       taskParam.Default.StringVal,
+		}
+		taskParam := pc.getTaskParam(parameterList, taskParam.Name)
+		if taskParam != nil {
+			mergedParam.Value = taskParam.Value
+		}
+		mergedParams = append(mergedParams, mergedParam)
+	}
+	return mergedParams
+}
+
+func (pc *PipelineComposer) getTaskParam(params []platformv1alpha1.ParameterSpec, paramName string) *platformv1alpha1.ParameterSpec {
+
+	for _, param := range params {
+		if param.Name == paramName {
+			return &param
+		}
+	}
+	return nil
 }
 func (pc *PipelineComposer) getTaskParams(params []platformv1alpha1.ParameterSpec) []tektonv1.ParamSpec {
 	taskParams := make([]tektonv1.ParamSpec, 0, len(params))
