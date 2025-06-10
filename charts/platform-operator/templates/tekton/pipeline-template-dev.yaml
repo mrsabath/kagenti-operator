@@ -11,14 +11,13 @@ data:
   template.json: |
     {
       "name": "Development Pipeline",
-      "namespace": "kagenti-system",
+      "namespace": "kagenti-system",      
       "description": "Basic pipeline for development builds",
       "requiredParameters": [
         "repo-url",
         "revision",
         "subfolder-path",
-        "IMAGE"
-
+        "image"
       ],
       "steps": [
         {
@@ -40,7 +39,7 @@ data:
           "configMap": "kaniko-docker-build-step",
           "enabled": true,
           "description": "Build container image using Kaniko",
-          "requiredParameters": ["IMAGE"]
+          "requiredParameters": ["image"]
         }
       ],
       "globalParameters": [

@@ -81,7 +81,6 @@ func (d *ComponentCustomDefaulter) Default(ctx context.Context, obj runtime.Obje
 	}
 	// Inject Tekton pipeline spec from a deployed template matching component mode (dev, preprod, or prod)
 	if d.injectPipelineTemplateSteps(component) {
-
 		err := d.processPipelineConfig(ctx, component)
 		if err != nil {
 			return fmt.Errorf("failed to process pipeline config: %w", err)
@@ -222,13 +221,13 @@ func (d *ComponentCustomDefaulter) mergePipelineTemplate(template *kagentioperat
 		userParams[param.Name] = param.Value
 	}
 
-	// Add build spec fields as template variables
-	templateVars := d.createTemplateVariables(buildSpec)
-	for k, v := range templateVars {
-		userParams[k] = v
-	}
+	//	// Add build spec fields as template variables
+	//	templateVars := d.createTemplateVariables(buildSpec)
+	//	for k, v := range templateVars {
+	//		userParams[k] = v
+	//	}
 
-	var finalSteps []kagentioperatordevv1alpha1.PipelineStepSpec
+	var pipelineSteps []kagentioperatordevv1alpha1.PipelineStepSpec
 
 	// Process each step in the template
 	for _, stepTemplate := range template.Steps {
@@ -238,30 +237,30 @@ func (d *ComponentCustomDefaulter) mergePipelineTemplate(template *kagentioperat
 		}
 
 		// Create final step
-		finalStep := kagentioperatordevv1alpha1.PipelineStepSpec{
+		pipelineStep := kagentioperatordevv1alpha1.PipelineStepSpec{
 			Name:      stepTemplate.Name,
 			ConfigMap: stepTemplate.ConfigMap,
 			Enabled:   stepTemplate.Enabled,
 		}
-		finalSteps = append(finalSteps, finalStep)
+		pipelineSteps = append(pipelineSteps, pipelineStep)
 	}
 
-	// Create final pipeline
-	finalPipeline := &kagentioperatordevv1alpha1.PipelineSpec{
+	// Create the pipeline
+	pipeline := &kagentioperatordevv1alpha1.PipelineSpec{
 		Namespace: template.Namespace,
-		Steps:     finalSteps,
+		Steps:     pipelineSteps,
 	}
 
 	// Add global parameters if any
 	for _, globalParam := range template.GlobalParameters {
 		resolvedValue := d.resolveTemplateValue(globalParam.Value, userParams)
-		finalPipeline.Parameters = append(finalPipeline.Parameters, kagentioperatordevv1alpha1.ParameterSpec{
+		pipeline.Parameters = append(pipeline.Parameters, kagentioperatordevv1alpha1.ParameterSpec{
 			Name:  globalParam.Name,
 			Value: resolvedValue,
 		})
 	}
 
-	return finalPipeline, nil
+	return pipeline, nil
 }
 func (d *ComponentCustomDefaulter) createTemplateVariables(buildSpec *kagentioperatordevv1alpha1.BuildSpec) map[string]string {
 	vars := make(map[string]string)
@@ -358,8 +357,6 @@ func (v *ComponentCustomValidator) ValidateDelete(ctx context.Context, obj runti
 		return nil, fmt.Errorf("expected a Component object but got %T", obj)
 	}
 	componentlog.Info("Validation for Component upon deletion", "name", component.GetName())
-
-	// TODO(user): fill in your validation logic upon object deletion.
 
 	return nil, nil
 }
