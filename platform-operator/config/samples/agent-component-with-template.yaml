@@ -21,12 +21,9 @@ spec:
             value: "main"
           - name: subfolder-path
             value: "acp/acp_ollama_researcher"
-          - name: IMAGE
+          - name: image
             value: "registry.cr-system.svc.cluster.local:5000/beai-research-agent:latest"
-
       cleanupAfterBuild: true
- 
-    # General component configuration
  
   deployer:
     name: "my-agent-deployment"
@@ -57,10 +54,6 @@ spec:
       serviceType: "ClusterIP"
 
     env:
-#      - name: LLM_MODEL
-#        value: "llama3.2:3b-instruct-fp16"
-#      - name: LLM_URL
-#        value: "http://llm-service:11434"
       - name: HOST
         value: "0.0.0.0"  
       - name: LLM_API_BASE
