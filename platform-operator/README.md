@@ -1,6 +1,6 @@
 # Kubernetes Operator for Agentic Platform Component Management
 
-A Kubernetes operator for deploying and managing multi-component applications with intelligent build pipelines and lifecycle orchestration.
+A Kubernetes operator designed to deploy and manage multi-component applications, incorporating best-practice build pipelines and seamless lifecycle orchestration.
 
 ## Overview
 The Platform Operator simplifies the deployment of complex applications by managing collections of components through two key Custom Resources: Platform and Component. It provides automated build processes, dependency management, and deployment orchestration across different environments.
@@ -15,17 +15,17 @@ The Platform Operator simplifies the deployment of complex applications by manag
 
 **Three Component Types**
 
-* Agent: AI/ML agents and intelligent applications
+* Agent: AI/ML agents
 * Tool: Utilities, MCP servers, and supporting services
 * Infrastructure: Databases, caches, storage, and foundational services
 
 **Flexible Deployment Options**
 
-* Kubernetes: Native K8s resources (Deployments, Services, ConfigMaps)
+* Kubernetes: Native K8s resources (Deployments, Services)
 * Helm: Chart-based deployment with value templating
-* OLM: Operator Lifecycle Manager for operator deployment
+* OLM: Operator Lifecycle Manager for operator deployment (to be implemented)
 
-**Intelligent Build System**
+**Fully Automated Build System**
 
 * Template-based pipelines with mode-specific configurations (dev, preprod, prod)
 * Tekton integration for container image builds
@@ -35,9 +35,9 @@ The Platform Operator simplifies the deployment of complex applications by manag
 
 **Automated Lifecycle Management**
 
-* Webhook-based suspension prevents premature component activation
+* Webhook-based 'suspend' mechanism prevents out-of-order component activation
 * Platform-controlled orchestration manages component execution order
-* Dependency resolution ensures proper deployment sequencing
+* Dependency resolution ensures proper deployment sequencing (still to be implemented)
 * Status tracking across all components and build processes
 
 ## Architecture
@@ -50,8 +50,8 @@ Before installing the `kagenti-operator`, ensure you have:
 
 * **kubectl:** The Kubernetes command-line tool
 * **For building agents:**
-  * Agent source code in a GitHub repository with a working Dockerfile
-  * GitHub token for accessing repositories and pushing images to ghcr.io
+  * Agent/Tool source code in a GitHub repository with a working Dockerfile
+  * GitHub token for accessing repositories and pushing images to ghcr.io.
 * **For deploying agents:**
   * Existing agent image in a container registry (ghcr.io, Docker Hub, etc.)
   * (Optional) Registry credentials if using private images
