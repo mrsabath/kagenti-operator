@@ -10,7 +10,7 @@ The Platform Operator simplifies the deployment of complex applications by manag
 **Multi-Component Application Management**
 
 * Deploy and manage applications composed of multiple interconnected components
-* Orchestrate deployment order based on dependencies (still to be implemented)
+* Orchestrate deployment order based on dependencies `(still to be implemented)`
 * Centralized lifecycle management through Platform Custom Resources
 
 **Three Component Types**
@@ -23,7 +23,7 @@ The Platform Operator simplifies the deployment of complex applications by manag
 
 * Kubernetes: Native K8s resources (Deployments, Services)
 * Helm: Chart-based deployment with value templating
-* OLM: Operator Lifecycle Manager for operator deployment (to be implemented)
+* OLM: Operator Lifecycle Manager for operator deployment `(to be implemented)`
 
 **Fully Automated Build System**
 
@@ -37,7 +37,7 @@ The Platform Operator simplifies the deployment of complex applications by manag
 
 * Webhook-based 'suspend' mechanism prevents out-of-order component activation
 * Platform-controlled orchestration manages component execution order
-* Dependency resolution ensures proper deployment sequencing (still to be implemented)
+* Dependency resolution ensures proper deployment sequencing `(still to be implemented)`
 * Status tracking across all components and build processes
 
 ## Architecture
@@ -322,7 +322,7 @@ deployer:
 
 ```
 ### Operator Lifecycle Manager (OLM)
-Deployment through the Operator Lifecycle Manager for managing operators and their dependencies. Best suited for deploying operators that require subscription management, automatic updates, and complex dependency resolution. This deployment option is currently not implemented. 
+Deployment through the Operator Lifecycle Manager for managing operators and their dependencies. Best suited for deploying operators that require subscription management, automatic updates, and complex dependency resolution. `This deployment option is currently not implemented.` 
 ```yaml
 deployer:
   olm:
