@@ -5,13 +5,13 @@ metadata:
     control-plane: controller-manager
     app.kubernetes.io/name: agentic-platform
     app.kubernetes.io/managed-by: kustomize
-  name: system
+  name: kagenti-system
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: controller-manager
-  namespace: system
+  namespace: kagenti-system
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: agentic-platform
@@ -59,10 +59,12 @@ spec:
           type: RuntimeDefault
       containers:
       - command:
-        - /manager
+        - /ko-app/cmd
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
+          - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
+
         image: controller:latest
         name: manager
         ports: []

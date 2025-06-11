@@ -54,6 +54,7 @@ const componentFinalizer = "kagenti.operator.dev/finalizer"
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=services;configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns;pipelines;clustertasks;customruns;stepactions;taskruns;tasks,verbs=get;list;watch;create;update;patch;delete
 
 // Permissions for standard Kubernetes resources in arbitrary namespaces
 // The absence of "namespace=" means these apply cluster-wide for namespaced resources
@@ -92,6 +93,9 @@ func (r *ComponentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
+	}
+	if component.Spec.Suspend != nil && *component.Spec.Suspend {
+		return ctrl.Result{RequeueAfter: time.Second * 20}, nil
 	}
 	doBuild, err := r.triggerBuild(component)
 	if err != nil {

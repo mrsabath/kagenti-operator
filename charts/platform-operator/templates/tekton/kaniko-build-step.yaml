@@ -13,7 +13,7 @@ data:
         type: string
         description: Path to the Dockerfile relative to context
         default: "Dockerfile"
-      - name: IMAGE
+      - name: image
         type: string
         description: Destination image reference
       - name: SKIP_TLS_VERIFY
@@ -33,7 +33,7 @@ data:
         args:
           - --dockerfile=$(params.DOCKERFILE)
           - --context=$(workspaces.source.path)/$(params.subfolder-path)
-          - --destination=$(params.IMAGE)
+          - --destination=$(params.image)
           - --skip-tls-verify=$(params.SKIP_TLS_VERIFY)
           - --verbosity=trace
         env:

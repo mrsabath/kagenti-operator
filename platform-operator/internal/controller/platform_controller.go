@@ -240,6 +240,12 @@ func (r *PlatformReconciler) setComponentOwner(ctx context.Context, platform *pl
 	component.Labels["platform.operator.dev/platform"] = platform.Name
 	component.Labels["platform.operator.dev/component"] = compRef.Name
 	r.Log.Info("setComponentOwner", "merged Labels", component.Labels)
+
+	if component.Spec.Suspend != nil && *component.Spec.Suspend {
+		suspend := false
+		component.Spec.Suspend = &suspend
+		r.Log.Info("setting suspend to false &&&&&&& ", "name", component.Name, "namespace", component.Namespace)
+	}
 	return r.Client.Update(ctx, component)
 }
 func (r *PlatformReconciler) updateComponentStatusInPlatform(ctx context.Context, platform *platformv1alpha1.Platform, componentName, componentType, status, errorMsg string) {

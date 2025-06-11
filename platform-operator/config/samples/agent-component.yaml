@@ -8,7 +8,6 @@ spec:
   description: "A research agent for information gathering"
 
   agent:
-  
     # Optional build specification for building from source
     build:
 #      sourceRepository: "github.com/kagenti/agent-examples.git"

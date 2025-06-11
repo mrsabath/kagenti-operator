@@ -52,9 +52,18 @@ spec:
                         items:
                           description: Parameter defines an argument
                           properties:
+                            description:
+                              description: Description provides help text for the
+                                parameter
+                              type: string
                             name:
                               description: Name of the  argument
                               type: string
+                            required:
+                              description: |-
+                                Required indicates if this parameter must be provided by the user
+                                Only used in pipeline templates, not in user-provided parameters
+                              type: boolean
                             value:
                               description: Value of the argument
                               type: string
@@ -86,6 +95,17 @@ spec:
                         description: CleanupAfterBuild indicates whether to automatically
                           cleanup after build
                         type: boolean
+                      mode:
+                        default: dev
+                        description: |-
+                          Mode specifies which pipeline template to use (dev, preprod, prod)
+                          This will be used to fetch the pipeline template from ConfigMap
+                        enum:
+                        - dev
+                        - preprod
+                        - prod
+                        - custom
+                        type: string
                       pipeline:
                         description: Pipeline specifies the pipeline configuration
                         properties:
@@ -95,9 +115,18 @@ spec:
                             items:
                               description: Parameter defines an argument
                               properties:
+                                description:
+                                  description: Description provides help text for
+                                    the parameter
+                                  type: string
                                 name:
                                   description: Name of the  argument
                                   type: string
+                                required:
+                                  description: |-
+                                    Required indicates if this parameter must be provided by the user
+                                    Only used in pipeline templates, not in user-provided parameters
+                                  type: boolean
                                 value:
                                   description: Value of the argument
                                   type: string
@@ -130,9 +159,18 @@ spec:
                                   items:
                                     description: Parameter defines an argument
                                     properties:
+                                      description:
+                                        description: Description provides help text
+                                          for the parameter
+                                        type: string
                                       name:
                                         description: Name of the  argument
                                         type: string
+                                      required:
+                                        description: |-
+                                          Required indicates if this parameter must be provided by the user
+                                          Only used in pipeline templates, not in user-provided parameters
+                                        type: boolean
                                       value:
                                         description: Value of the argument
                                         type: string
@@ -140,6 +178,12 @@ spec:
                                     - name
                                     - value
                                     type: object
+                                  type: array
+                                requiredParameters:
+                                  description: RequiredParameters lists parameter
+                                    names that users must provide
+                                  items:
+                                    type: string
                                   type: array
                               required:
                               - configMap
@@ -179,8 +223,6 @@ spec:
                         description: SourceSubfolder is the folder within the repository
                           containing the source
                         type: string
-                    required:
-                    - pipeline
                     type: object
                 type: object
               dependencies:
@@ -359,9 +401,18 @@ spec:
                         items:
                           description: Parameter defines an argument
                           properties:
+                            description:
+                              description: Description provides help text for the
+                                parameter
+                              type: string
                             name:
                               description: Name of the  argument
                               type: string
+                            required:
+                              description: |-
+                                Required indicates if this parameter must be provided by the user
+                                Only used in pipeline templates, not in user-provided parameters
+                              type: boolean
                             value:
                               description: Value of the argument
                               type: string
@@ -625,6 +676,10 @@ spec:
                       component
                     type: string
                 type: object
+              suspend:
+                default: true
+                description: Suspend indicates whether the component should be suspended
+                type: boolean
               tool:
                 description: MCP Servers, Utilities, etc
                 properties:
@@ -637,9 +692,18 @@ spec:
                         items:
                           description: Parameter defines an argument
                           properties:
+                            description:
+                              description: Description provides help text for the
+                                parameter
+                              type: string
                             name:
                               description: Name of the  argument
                               type: string
+                            required:
+                              description: |-
+                                Required indicates if this parameter must be provided by the user
+                                Only used in pipeline templates, not in user-provided parameters
+                              type: boolean
                             value:
                               description: Value of the argument
                               type: string
@@ -671,6 +735,17 @@ spec:
                         description: CleanupAfterBuild indicates whether to automatically
                           cleanup after build
                         type: boolean
+                      mode:
+                        default: dev
+                        description: |-
+                          Mode specifies which pipeline template to use (dev, preprod, prod)
+                          This will be used to fetch the pipeline template from ConfigMap
+                        enum:
+                        - dev
+                        - preprod
+                        - prod
+                        - custom
+                        type: string
                       pipeline:
                         description: Pipeline specifies the pipeline configuration
                         properties:
@@ -680,9 +755,18 @@ spec:
                             items:
                               description: Parameter defines an argument
                               properties:
+                                description:
+                                  description: Description provides help text for
+                                    the parameter
+                                  type: string
                                 name:
                                   description: Name of the  argument
                                   type: string
+                                required:
+                                  description: |-
+                                    Required indicates if this parameter must be provided by the user
+                                    Only used in pipeline templates, not in user-provided parameters
+                                  type: boolean
                                 value:
                                   description: Value of the argument
                                   type: string
@@ -715,9 +799,18 @@ spec:
                                   items:
                                     description: Parameter defines an argument
                                     properties:
+                                      description:
+                                        description: Description provides help text
+                                          for the parameter
+                                        type: string
                                       name:
                                         description: Name of the  argument
                                         type: string
+                                      required:
+                                        description: |-
+                                          Required indicates if this parameter must be provided by the user
+                                          Only used in pipeline templates, not in user-provided parameters
+                                        type: boolean
                                       value:
                                         description: Value of the argument
                                         type: string
@@ -725,6 +818,12 @@ spec:
                                     - name
                                     - value
                                     type: object
+                                  type: array
+                                requiredParameters:
+                                  description: RequiredParameters lists parameter
+                                    names that users must provide
+                                  items:
+                                    type: string
                                   type: array
                               required:
                               - configMap
@@ -764,8 +863,6 @@ spec:
                         description: SourceSubfolder is the folder within the repository
                           containing the source
                         type: string
-                    required:
-                    - pipeline
                     type: object
                   toolType:
                     description: |-

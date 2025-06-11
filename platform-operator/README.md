@@ -1,617 +1,359 @@
 # Kubernetes Operator for Agentic Platform Component Management
 
-## 1. Proposal
+A Kubernetes operator designed to deploy and manage multi-component applications, incorporating best-practice build pipelines and seamless lifecycle orchestration.
 
-This document presents a design for a Kubernetes Operator to automate the lifecycle management of agentic platform components within a Kubernetes cluster. The operator will manage two primary Custom Resources: `Component` CRs and `Platform` CR.
+## Overview
+The Platform Operator simplifies the deployment of complex applications by managing collections of components through two key Custom Resources: Platform and Component. It provides automated build processes, dependency management, and deployment orchestration across different environments.
 
-The `Component` CR represents various types of deployable entities including Agents, Tools, and Infrastructure.
+## Key Features
 
-The `Platform` CR models the entire platform as a collection of components, managing cross-component dependencies and providing a unified view of the platform's status.
+**Multi-Component Application Management**
 
-The operator implements controllers for these CRs that handle automated creation, updating, and deletion of underlying Kubernetes resources. It will facilitate building components from source code using Tekton pipelines and deploying these components using various methods such as direct Kubernetes manifests, Helm charts, and the Operator Lifecycle Manager (OLM).
+* Deploy and manage applications composed of multiple interconnected components
+* Orchestrate deployment order based on dependencies `(still to be implemented)`
+* Centralized lifecycle management through Platform Custom Resources
+
+**Three Component Types**
+
+* Agent: AI/ML agents
+* Tool: Utilities, MCP servers, and supporting services
+* Infrastructure: Databases, caches, storage, and foundational services
+
+**Flexible Deployment Options**
+
+* Kubernetes: Native K8s resources (Deployments, Services)
+* Helm: Chart-based deployment with value templating
+* OLM: Operator Lifecycle Manager for operator deployment `(to be implemented)`
+
+**Fully Automated Build System**
+
+* Template-based pipelines with mode-specific configurations (dev, preprod, prod)
+* Tekton integration for container image builds
+* Modular step definitions stored in ConfigMaps for reusability
+* Parameter override system for customizing build processes
+* Built-in steps: GitHub clone, folder verification, Kaniko builds
+
+**Automated Lifecycle Management**
+
+* Webhook-based 'suspend' mechanism prevents out-of-order component activation
+* Platform-controlled orchestration manages component execution order
+* Dependency resolution ensures proper deployment sequencing `(still to be implemented)`
+* Status tracking across all components and build processes
+
+## Architecture
+![Architecture Overview](docs/images/arch1.png)
+![Architecture Overview](docs/images/arch3.png)
+![Architecture Overview](docs/images/arch5.png)
+## Prerequisites
+
+Before installing the `kagenti-operator`, ensure you have:
+
+* **kubectl:** The Kubernetes command-line tool
+* **For building agents:**
+  * Agent/Tool source code in a GitHub repository with a working Dockerfile
+  * GitHub token for accessing repositories and pushing images to ghcr.io.
+* **For deploying agents:**
+  * Existing agent image in a container registry (ghcr.io, Docker Hub, etc.)
+  * (Optional) Registry credentials if using private images
+* **Install [ollama]:**(https://ollama.com/download)
 
 
-## 2. Goals
+## Quick Start
 
-* **Unified Management:** Provide a single, consistent way to manage various types of components through a unified `Component` CR.
-* **Component Type Support:** Accommodate different component types (Agent, Tool, Infrastructure) with configurations tailored to each type.
-* **Automated Resource Management:** Automate the creation and management of underlying Kubernetes resources based on the specifications defined in the `Component` CR.
-* **Flexible Deployment:** Support multiple deployment strategies, including Helm charts, direct Kubernetes manifests, and OLM.
-* **Tekton Integration:** Seamlessly integrate with Tekton Pipelines for building container images from source code.
-* **Dependency Management:** Implement support for defining and managing dependencies between different components.
-* **Secure Credential Management:** Securely handle credentials required for accessing source repositories and container image registries.
+### 1. Start Ollama
+In a new terminal, run:
 
-## 3. Proposed Design
-
-The following diagram illustrates the high-level architecture of the Component Operator:
-
-```mermaid
-graph TD;
-    subgraph Kubernetes
-        direction RL
-        Operator[Agentic Platform Operator]
-        PlatformCRD["Platform CRD"]
-        ComponentCRD["Component CRD"] 
-        AgentComp[Agent Component]
-        ToolComp[Tool Component]
-        InfraComp[Infrastructure Component]
-        HelmInstaller[Helm Installer]
-        OLMDeployer[OLM Deployer]
-        
-        PlatformCRD --> |References| ComponentCRD
-        ComponentCRD --> AgentComp
-        ComponentCRD --> ToolComp
-        ComponentCRD --> InfraComp
-        Operator -- Reconciles --> PlatformCRD
-        Operator -- Reconciles --> ComponentCRD
-        
-        AgentComp --> |Creates| AgentService[Service]
-        AgentComp --> |Creates| AgentDeployment[Deployment]
-        
-        ToolComp --> |Creates| ToolService[Service]
-        ToolComp --> |Creates| ToolDeployment[Deployment]
-        
-        InfraComp --> |Processed by| HelmInstaller
-        InfraComp --> |Processed by| OLMDeployer
-        
- 
-        
-        OLMDeployer --> |Creates| OLMSubscription[OLM Subscription]
-        OLMDeployer --> |Creates| PrometheusOperator[Prometheus Operator]
-        
-        PrometheusOperator --> |Creates| CustomResource[Custom Resource]
-    end
+```shell
+ollama run "your-llm-model" --keepalive 60m
 ```
-The architecture diagram illustrates the key components of the system and their interactions:
 
-**Platform CRD:** The central resource definition which models complete platform as collections of components.
+### 1. Install the Operator
+In a new terminal, run:
 
-**Component CRD:** Represents various deployable entities supporting different component types through a union pattern (Agent, Tool, Infrastructure).
+```shell
+curl -sSL https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/scripts/install.sh | bash
+```
 
-**Component Operator:** The core controller that reconciles Component resources and orchestrates the deployment process.
+The above installs Kind k8s, Tekton Pipeline CRDs, Cert Manager and its CRDs, and finally the operator runtime with. Part of this is also installation of sample Tekton steps and a template which enable building Docker images from source. You can find the sample steps and template here:  https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/config/samples/tekton
 
-**Tekton Pipeline:** Manages the build process for components requiring building from source code, consisting of three main tasks:
+### 2. Create a Component object in Kind
+Use a sample agent component from the operator samples folder.
+```shell
+kubectl apply -f https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/config/samples/agent-component-with-template.yaml
+```
 
-* **Pull Task:** Clones the specified source repository.
-* **Check Subfolder:** Verifies the existence of the designated subfolder within the repository.
-* **Build & Push Task:** Builds the container image and pushes it to the specified registry.
+The operator's webhook at this point adds suspend=true and also injects a pipeline spec into the Component's CR. With suspend=true flag, the Component controller will not build nor deploy the Component. To confirm the object state, run:
 
-The initial design offers a basic, built-in pipeline that automates the essential steps to built images from source code. However, Tekton's true strength lies in its extensibility.  While this default pipeline serves as a convenient starting point, the operator will evolve to accommodate more complex, user-defined Tekton pipelines. This allows for advanced workflows, such as those seen in Red Hat Trusted Application Pipelines, which incorporate practices like creating Bill of Materials (BOM) manifests and performing signed builds to enhance software security.  
+```shell
+ kubectl get component.kagenti.operator.dev/research-agent -n kagenti-system -o yaml
+```
 
-**Deployment Methods:**
-* Direct Kubernetes resources for Agent and Tool components.
-
-* Helm Installer for deploying infrastructure components using Helm charts.
-
-* OLM Deployer for managing infrastructure components through existing operators.
-
-
-This architecture provides a cohesive approach to managing diverse components while accommodating deployment strategies best suited for each component type.
-
-## 4. Platform Definition
-
-The Platform CR defines the overall composition of an agentic platform, referencing the infrastructure, tools, and agents that make up the platform.
-
-Example:
-
+In response to the above you should see:
 
 ```yaml
-apiVersion: agentic.example.com/v1alpha1
-kind: Platform
-metadata:
-  name: research-platform
-spec:
-  description: "Research Agentic Platform"
-  
-  # Infrastructure components required by the platform
-  infrastructure:
-    - name: redis-cache-component
-      componentReference:
-        name: redis
-        namespace: redis-system
-    - name: postgres-component
-      componentReference:
-        name: postgresql
-        namespace: postgres-system
-    - name: prometheus-component
-      componentReference:
-        name: prometheus
-        namespace: prometheus-system
-  # Tools required by the platform
-  tools:
-    - name: mcp-server-component
-      componentReference:
-        name: mcp-server
-        namespace: mcp-system
-    - name: dashboard-component
-      componentReference:
-        name: dashboard
-        namespace: agentic-platform
-  
-  # Agents that will run on the platform
-  agents:
-    - name: research-agent-component
-      componentReference:
-        name: research-agent
-        namespace: my-agents
-    - name: assistant-agent-component
-      componentReference:
-        name: assistant-agent
-        namespace: my-agents
-  
-  # Global configurations that apply to all components
-  globalConfig:
-    namespace: agentic-platform
-    annotations:
-      platform.agentic.example.com/version: "1.0.0"
-    labels:
-      environment: development
-
-status:
-```
-## 5. Component Types
-The Component CRD supports three primary types of components: Agents, Tools, and Infrastructure. Each type has its own specific configuration within the spec field. Only one type can be defined in the Component CR instance. This will be enforced by the k8s validation webhook.
-
-### 5.1 Agent Component
-Agent components represent AI agents designed to perform specific tasks within the agentic platform. Each agent can be configured with unique attributes and can be built from source code if necessary.
-
-Example:
-
-```YAML
-
-apiVersion: agentic.platform.dev/v1alpha1
+apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
+  creationTimestamp: "2025-06-10T15:06:43Z"
+  finalizers:
+  - kagenti.operator.dev/finalizer
+  generation: 2
   name: research-agent
+  namespace: kagenti-system
+  resourceVersion: "21313"
+  uid: 28065a0d-499f-44da-a464-655459b137be
 spec:
-  agentComponent:
-    buildSpec:
-      sourceRepository: "github.com/example/agents.git"
-      sourceRevision: "main"
-      sourceSubfolder: "research-agent"
-      repoUser: "git-user"
-      buildOutput:
-        image: "research-agent"
-        imageTag: "v1.0.0"
-        imageRegistry: "ghcr.io/example"
-
-  description: "A research agent for information gathering"
-
-  deployerSpec:
-    name: research-agent
-    namespace: my-agents
-    kubernetes:
-      imageSpec:
-        image: "research-agent"
-        imageTag: "v1.0.0"
-        imageRegistry: "ghcr.io/example"
-        secret: $(IMAGE_REPO_SECRET)
-      resources:
-        limits:
-          cpu: "1"
-          memory: "2Gi"
-        requests:
-          cpu: "500m"
-          memory: "1Gi"
-      serviceType: "ClusterIP"
-
-    env:
-      - name: LLM_MODEL
-        value: "llama3.2:70b"
-      - name: LLM_URL
-        value: "http://llm-service:11434"
-      - name: "IMAGE_REPO_SECRET"
-        valueFrom:
-          secretKeyRef:
-            name: "ghcr-token-secret" 
-            key: "token"  
-
+  agent:
+    build:
+      cleanupAfterBuild: true
+      mode: dev
+      pipeline:
+        parameters:
+        - name: github-token-secret
+          value: github-credentials
+        - name: repo-url
+          value: github.com/kagenti/agent-examples.git
+        - name: revision
+          value: main
+        - name: subfolder-path
+          value: acp/acp_ollama_researcher
+        - name: image
+          value: registry.cr-system.svc.cluster.local:5000/beai-research-agent:latest
+        steps:
+        - configMap: github-clone-step
+          enabled: true
+          name: github-clone
+        - configMap: check-subfolder-step
+          enabled: true
+          name: folder-verification
+        - configMap: kaniko-docker-build-step
+          enabled: true
+          name: kaniko-build
+  deployer:
     deployAfterBuild: true
-
-```      
-
-### 5.2 Tool Component
-Tool components are services that agents can utilize to interact with external systems or provide specific functionalities, such as Model Context Protocal Servers(MCP).
-
-Example:
-
-```YAML
-
-apiVersion: agentic.platform.dev/v1alpha1
-kind: Component
-metadata:
-  name: mcp-server
-spec:
-  toolComponent:
-    toolType: "MCP"
-    buildSpec:
-      sourceRepository: "github.com/example/mcp-server.git
-      sourceRevision: "main"
-      repoUser: "git-user"
-      buildOutput:
-        image: "mcp-server"
-        imageTag: "v1.0.0"
-        imageRegistry: "ghcr.io/example"
-
-  description: "MCP Server"
-
-  deployerSpec:
-    name: weather-mcp-server
-    namespace: my-mcps
+    env:
+    - name: HOST
+      value: 0.0.0.0
+    - name: LLM_API_BASE
+      value: http://host.docker.internal:11434/v1
+    - name: LLM_API_KEY
+      value: dummy
+    - name: LLM_MODEL
+      value: llama3.2:3b-instruct-fp16
     kubernetes:
+      containerPorts:
+      - containerPort: 8090
+        name: http
+        protocol: TCP
       imageSpec:
-        image: "mcp-server"
-        imageTag: "v1.0.0"
-        imageRegistry: "ghcr.io/example"
-        secret: $(IMAGE_REPO_SECRET)
+        image: beai-research-agent
+        imagePullPolicy: IfNotPresent
+        imageRegistry: registry.cr-system.svc.cluster.local:5000
+        imageTag: latest
       resources:
         limits:
-          cpu: "2"
-          memory: "4Gi"
-        requests:
           cpu: "1"
-          memory: "2Gi"
-      serviceType: "ClusterIP"
-      deployAfterBuild: true  
-    env:
-      - name: PORT
-        value: "10000"
-      - name: "IMAGE_REPO_SECRET"
-        valueFrom:
-          secretKeyRef:
-            name: "ghcr-token-secret" 
-            key: "token"  
-  
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 1Gi
+      servicePorts:
+      - name: http
+        port: 8008
+        protocol: TCP
+        targetPort: 8090
+      serviceType: ClusterIP
+    name: my-agent-deployment
+    namespace: kagenti-system
+  description: A research agent for information gathering
+  suspend: true
 ```
-### 5.3 Infrastructure Component
-Infrastructure components provide the foundational services required by agents and tools, such as databases, caches, observability tools, metrics etc. Such services can be deloyed with Helm charts or OLM.
 
-Example with Helm:
+### 3. Create a Platform to Orchestrate Multiple Components
+Use a sample Platform from the operator samples folder.
+```shell
+kubectl apply -f https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/config/samples/simple-dev-platform.yaml
+```
+The operator will lift the suspend flag allowing the k8s Component controller to proceed with the build and Component deployment. At this time you can observe the build process by watching pods in kagent-system namespace as follows:
 
-```YAML
+```shell
+watch kubectl get pods -n kagenti-system
+```
 
-apiVersion: agentic.platform.dev/v1alpha1
-kind: Component
+```shell
+Every 2.0s: kubectl get pods 
+NAMESPACE                    NAME                                                   READY   STATUS    RESTARTS   AGE
+kagenti-system               agentic-platform-controller-manager-57b9795689-c4gjd   1/1     Running   0          111m
+kagenti-system               research-agent-7c94bb8b67-rnkr8                        1/1     Running   0          41s
+
+```
+
+## Build Pipeline System
+
+### Template-Based Pipelines
+
+The operator currently includes one built-in pipeline template:
+
+`pipeline-tekton-dev:`Basic clone → verify → build pipeline for development
+
+In the future the two others will be available:
+
+`pipeline-tekton-preprod:` Adds security scanning for pre-production builds
+
+`pipeline-tekton-prod:` Includes compliance checks, testing, and image signing
+
+### Pipeline Configuration (pipeline-template-dev)
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: redis-cache
+  name: pipeline-template-dev
+  namespace: kagenti-system  
+  labels:
+    app.kubernetes.io/name: component-operator
+    app.kubernetes.io/component: pipeline-template
+    component.kagenti.ai/mode: dev
+data:
+  template.json: |
+    {
+      "name": "Development Pipeline",
+      "namespace": "kagenti-system",      
+      "description": "Basic pipeline for development builds",
+      "requiredParameters": [
+        "repo-url",
+        "revision",
+        "subfolder-path",
+        "image"
+      ],
+      "steps": [
+        {
+          "name": "github-clone",
+          "configMap": "github-clone-step",
+          "enabled": true,
+          "description": "Clone source code from GitHub repository",
+          "requiredParameters": ["repo-url"]
+        },
+        {
+          "name": "folder-verification",
+          "configMap": "check-subfolder-step",
+          "enabled": true,
+          "description": "Verify that the specified subfolder exists",
+          "requiredParameters": ["subfolder-path"]
+        },
+        {
+          "name": "kaniko-build",
+          "configMap": "kaniko-docker-build-step",
+          "enabled": true,
+          "description": "Build container image using Kaniko",
+          "requiredParameters": ["image"]
+        }
+      ],
+      "globalParameters": [
+        {
+          "name": "pipeline-timeout",
+          "value": "20m",
+          "description": "Overall pipeline timeout"
+        }
+      ]
+    }
+```
+
+## Component Types
+The Platform Operator supports three distinct component types, each designed for specific application roles and deployment patterns. `Each Component CR must specify exactly one type` - this mutual exclusivity is strictly enforced by the operator's webhook during component creation.
+
+### Agent Components
+
+```yaml
 spec:
-  infraComponent:
-    infraType: "Cache"
-    infraProvider: "Redis"
-    version: "7.0"
-
-  description: "Redis cache for agents"
-
-  deployerSpec:
-    name: redis
-    namespace: redis-system
-    helm:
-      chartName: "redis"
-      chartVersion: "17.3.14"
-      chartRepository: "https://charts.bitnami.com/bitnami"
-      releaseName: "redis-cache"
-      secret: $(REDIS_SECRET)
-    env:
-      - name: PORT
-        value: "10000"
-      - name: "REDIS_SECRET"
-        valueFrom:
-          secretKeyRef:
-            name: "redis-secret" 
-            key: "secret"
-  
+  agent:
+    build: # Build configuration
+  deployer: # Deployment method
 ```
-
-Example with OLM:
-
-```YAML
-
-apiVersion: agentic.platform.dev/v1alpha1
-kind: Component
-metadata:
-  name: prometheus
-
+### Tool Components
+```yaml
 spec:
-  infraComponent:
-    infraType: "Metrics"
-    infraProvider: "Prometheus"
-    version: "0.50.0"
-
-  description: "Prometheus for the agentic platform"
-
-  deployerSpec:
-    name: prometheus
-    namespace: prometheus-system
-
-    olm:
-      catalog: "certified-operators"
-      package: "prometheus-operator"
-      channel: "stable"
-      version: "0.50.0"
-      approvalStrategy: "Automatic"
-            
-```        
-
-## 6. Component Type Definitions
-This section details the Go struct definitions for the Component CRD specification and status. These definitions are typically used with Kubernetes controller-runtime.
-
-### 6.1 Component Spec
-
-```Go
-
-type ComponentSpec struct {
-    // Component Types
-    // +kubebuilder:validation:XValidation:rule="(has(self.agentComponent) ? 1 : 0) + (has(self.toolComponent) ? 1 : 0) + (has(self.infraComponent) ? 1 : 0) == 1",message="Exactly one component type must be specified"
-
-    // Union pattern: only one of the following components should be specified.
-    Agent *AgentComponent `json:"agentComponent,omitempty"`
-    // MCP Servers, Utilities, etc
-    Tool *ToolComponent `json:"toolComponent,omitempty"`
-    // Redis, Postgresql, Prometheus, etc
-    Infra *InfraComponent `json:"infraComponent,omitempty"`
-
-    // --------------------------
-
-    // Common fields for all component types
-
-    // Description is a human-readable description of the component
-    // +optional
-    Description string `json:"description,omitempty"`
-
-    // Deployment strategy for the component: Helm, K8s manifest(deployments), OLM (operators)
-    Deplopyer DeployerSpec `json:"deployerSpec"`
-
-    // Dependencies defines other components this agent depends on
-    // +optional
-    Dependencies []DependencySpec `json:"dependencies,omitempty"`
-}
+  tool:
+    toolType: "MCP"  # or "Utility"
+    build: # Build configuration
+  deployer: # Deployment method
+```
+### Infrastructure Components
+```yaml
+spec:
+  infra:
+    infraType: "Database"     # Database, Cache, Queue, etc.
+    infraProvider: "PostgreSQL"  # PostgreSQL, Redis, etc.
+    version: "13.0"
+  deployer: # Deployment method
 ```
 
-### 6.2 Agent Component
-```Go
+## Deployment Options
+The Platform Operator provides three flexible deployment methods to accommodate different application complexity levels and organizational preferences. `Each Component CR must specify exactly one deployment method` - this mutual exclusivity is strictly enforced by the operator's webhook to prevent conflicting deployment configurations.
 
-type AgentComponent struct {
-    // Agent specific attributes
+### Kubernetes Native
+Direct deployment using native Kubernetes resources like Deployments and Services. This method provides maximum control and transparency, making it ideal for applications that need fine-grained Kubernetes resource management or custom configurations.
 
-    // Build configuration for building the agent from source
-    // +optional
-    Build *BuildSpec `json:"buildSpec,omitempty"`
-}
-```
-### 6.3 Tool Component
-```Go
-
-type ToolComponent struct {
-    // tool specific attributes
-
-    // Build configuration for building the tool from source
-    // +optional
-    Build *BuildSpec `json:"buildSpec,omitempty"`
-
-    // ToolType specifies the type of tool
-    // MCP;Utility
-    ToolType string `json:"toolType"`
-}
-```
-
-### 6.4 Infrastructure Component
-```Go
-
-type InfraComponent struct {
-    // Infra specific attributes
-
-    // InfraType specifies the type of infrastructure
-    // Database;Cache;Queue;StorageService;SearchEngine
-    InfraType string `json:"infraType"`
-
-    // InfraProvider specifies the infrastructure provider
-    // PostgreSQL;MySQL;MongoDB;Redis;Kafka;ElasticSearch;MinIO
-    InfraProvider string `json:"infraProvider"`
-
-    // Version specifies the version of the infrastructure component
-    Version string `json:"version"`
-
-    // SecretRef reference to secrets containing credentials
-    // +optional
-    SecretRef *corev1.LocalObjectReference `json:"secretRef,omitempty"`
-}
-```
-
-### 6.5 Dependency Specification
-```Go
-
-// DependencySpec defines a dependency on another component
-type DependencySpec struct {
-    // Name is the name of the component
-    Name string `json:"name"`
-
-    // Kind is the kind of the component
-    // +kubebuilder:validation:Enum=Agent;Tool;Infra
-    Kind string `json:"kind"`
-
-    // Version is the version of the component
-    // +optional
-    Version string `json:"version,omitempty"`
-}
-```
-
-### 6.6 Deployer Specification
-```Go
-
-// DeployerSpec defines how to deploy a component
-type DeployerSpec struct {
-
-    // Union pattern: only one of the following components should be specified.Enforced by Validating WebHook.
-    Helm       *HelmSpec       `json:"helmSpec,omitempty"`
-    Kubernetes *KubernetesSpec `json:"kubernetesSpec,omitempty"`
-    Olm        *OlmSpec        `json:"olmSpec,omitempty"`
-    // Common deployment settings
-
-    // Name of the k8s resource
-    // +optional
-    Name string `json:"name,omitempty"`
-
-    // Namespace to deploy to, defaults to the namespace of the CR
-    // +optional
-    Namespace string `json:"namespace,omitempty"`
-
-    // Environment variables for the component
-    // +optional
-    Env []corev1.EnvVar `json:"env,omitempty"`
-
-    // DeployAfterBuild indicates whether to automatically deploy the component after build
-    // +optional
-    DeployAfterBuild bool `json:"deployAfterBuild,omitempty"`
-}
-
-// OlmSpec defines OLM operator deployment configuration
-type OlmSpec struct {
-...
-}
-
-// HelmSpec defines Helm deployment configuration
-type HelmSpec struct {
- ...
-}
-
-// KubernetesSpec defines K8s deployment configuration
-type KubernetesSpec struct {
- ...
-}
-```
-
-### 6.7 Build Specification
-```Go
-
-// BuildSpec defines how to build a component from source
-type BuildSpec struct {
-    // SourceRepository is the Git repository URL
-    SourceRepository string `json:"sourceRepository"`
-
-    // SourceRevision is the Git revision (branch, tag, commit)
-    SourceRevision string `json:"sourceRevision"`
-
-    // SourceSubfolder is the folder within the repository containing the source
-    // +optional
-    SourceSubfolder string `json:"sourceSubfolder,omitempty"`
-
-    // RepoUser is the username in the Git repository containing the source
-    // +kubebuilder:validation:Required
-    RepoUser string `json:"repoUser"`
-
-    // SourceCredentials is a reference to a secret containing Git credentials
-    // +optional
-    SourceCredentials *corev1.LocalObjectReference `json:"sourceCredentials,omitempty"`
-
-    // BuildArgs are arguments to pass to the build process
-    // +optional
-    BuildArgs []BuildArg `json:"buildArgs,omitempty"`
-
-    // BuildOutput specifies where to store build artifacts
-    // +optional
-    BuildOutput *BuildOutput `json:"buildOutput,omitempty"`
-
-    // CleanupAfterBuild indicates whether to automatically cleanup after build
-    // +optional
-    CleanupAfterBuild bool `json:"cleanupAfterBuild,omitempty"`
-}
-
-// BuildArg defines a build argument
-type BuildArg struct {
-    // Name of the build argument
-    Name string `json:"name"`
-
-    // Value of the build argument
-    Value string `json:"value"`
-}
-
-// BuildOutput defines where to store build artifacts
-type BuildOutput struct {
-    // Image is the name of the image to build
-    // +kubebuilder:validation:Required
-    Image string `json:"image"`
-
-    // ImageTag is the tag to apply to the built image
-    // +kubebuilder:validation:Required
-    ImageTag string `json:"imageTag"`
-
-    // ImageRegistry is the container registry where the image will be pushed
-    // +kubebuilder:validation:Required
-    ImageRegistry string `json:"imageRegistry"`
-}
-```
-
-## 7. Platform Type Definitions
-
-### 7.1 Platform Spec
-
-```go
-// PlatformSpec defines the desired state of a Platform
-type PlatformSpec struct {
-    // Description of the platform
-    Description string `json:"description,omitempty"`
-    
-    // Infrastructure components required by the platform
-    Infrastructure []PlatformComponentRef `json:"infrastructure,omitempty"`
-    
-    // Tools required by the platform
-    Tools []PlatformComponentRef `json:"tools,omitempty"`
-    
-    // Agents that will run on the platform
-    Agents []PlatformComponentRef `json:"agents,omitempty"`
-    
-    // Global configurations that apply to all components
-    GlobalConfig GlobalConfig `json:"globalConfig,omitempty"`
-}
-```
-### 7.2 PlatformComponentRef
-```go 
-// PlatformComponentRef defines a reference to a component
-type PlatformComponentRef struct {
-    // Name of the component in the platform
-    Name string `json:"name"`
-    
-    // Reference to the component resource
-    ComponentReference ComponentReference `json:"componentReference"`
-}
-```
-### 7.3 ComponentReference
-```go
-// ComponentReference identifies a component resource
-type ComponentReference struct {
-    // Name of the component resource
-    Name string `json:"name"`
-    
-    // Kind of the component (Component)
-    Kind string `json:"kind"`
-    
-    // API version of the component
-    // +optional
-    APIVersion string `json:"apiVersion,omitempty"`
-    
-    // Namespace of the component
-    // +optional
-    Namespace string `json:"namespace,omitempty"`
-}
-```
-### 7.4 GlobalConfig
-```go
-// GlobalConfig defines global configuration for all components
-type GlobalConfig struct {
-    // Namespace for all components
-    // +optional
-    Namespace string `json:"namespace,omitempty"`
-    
-    // Annotations to apply to all components
-    // +optional
-    Annotations map[string]string `json:"annotations,omitempty"`
-    
-    // Labels to apply to all components
-    // +optional
-    Labels map[string]string `json:"labels,omitempty"`
-}
+```yaml
+deployer:
+  kubernetes:
+    imageSpec:
+      image: "my-app"
+      imageTag: "latest"
+      imageRegistry: "registry.example.com"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
 
 ```
-## 8. Implementation Details
+
+### Helm Charts
+Chart-based deployment leveraging the Helm package manager for templating, versioning, and release management. Perfect for applications that benefit from parameterized deployments, version control, or when using existing community charts.
+```yaml
+deployer:
+  helm:
+    chartName: "my-chart"
+    chartVersion: "1.0.0"
+    chartRepoUrl: "https://charts.example.com"
+    parameters:
+      - name: "image.tag"
+        value: "v1.0.0"
+
+```
+### Operator Lifecycle Manager (OLM)
+Deployment through the Operator Lifecycle Manager for managing operators and their dependencies. Best suited for deploying operators that require subscription management, automatic updates, and complex dependency resolution. `This deployment option is currently not implemented.` 
+```yaml
+deployer:
+  olm:
+    packageName: "my-operator"
+    channel: "stable"
+    installPlanApproval: "Automatic"
+
+```
+
+## How It Works
+
+1. `Component Creation:` User creates Component CR with build and deployment configuration
+2. `Webhook Processing:` Mutating webhook automatically suspends component and injects pipeline template into it.
+3. `Platform Orchestration:` Platform controller manages component lifecycle and execution order
+4. `Build Execution:` Component controller triggers Tekton pipelines when components are activated
+5. `Deployment:` Components are deployed using their specified deployment method
+6. `Status Management:` Controllers monitor and update status throughout the lifecycle
+
+## Advanced Features
+### Environment-Specific Configuration
+* `Development:` Fast iteration with minimal validation
+* `Pre-production:` Security scanning and enhanced testing (TBI)
+* `Production:` Compliance checks, image signing, and comprehensive validation (TBI)
+
+### Dependency Management (TBI)
+
+* Platform-level dependency resolution
+* Automatic component ordering based on dependencies
+* Graceful handling of dependency failures
+
+
+## Implementation Details
 * Programming Language: golang
 * Operator Scaffolding: Kubebuilder will be used for project initialization
