@@ -322,7 +322,7 @@ deployer:
 
 ```
 ### Operator Lifecycle Manager (OLM)
-Deployment through the Operator Lifecycle Manager for managing operators and their dependencies. Best suited for deploying operators that require subscription management, automatic updates, and complex dependency resolution.
+Deployment through the Operator Lifecycle Manager for managing operators and their dependencies. Best suited for deploying operators that require subscription management, automatic updates, and complex dependency resolution. This deployment option is currently not implemented. 
 ```yaml
 deployer:
   olm:
@@ -335,7 +335,7 @@ deployer:
 ## How It Works
 
 1. `Component Creation:` User creates Component CR with build and deployment configuration
-2. `Webhook Processing:` Mutating webhook automatically suspends component and injects pipeline template
+2. `Webhook Processing:` Mutating webhook automatically suspends component and injects pipeline template into it.
 3. `Platform Orchestration:` Platform controller manages component lifecycle and execution order
 4. `Build Execution:` Component controller triggers Tekton pipelines when components are activated
 5. `Deployment:` Components are deployed using their specified deployment method
