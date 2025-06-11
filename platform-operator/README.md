@@ -10,7 +10,7 @@ The Platform Operator simplifies the deployment of complex applications by manag
 **Multi-Component Application Management**
 
 * Deploy and manage applications composed of multiple interconnected components
-* Orchestrate deployment order based on dependencies
+* Orchestrate deployment order based on dependencies (still to be implemented)
 * Centralized lifecycle management through Platform Custom Resources
 
 **Three Component Types**
