@@ -109,6 +109,8 @@ spec:
                       pipeline:
                         description: Pipeline specifies the pipeline configuration
                         properties:
+                          namespace:
+                            type: string
                           parameters:
                             description: Parameters contains additional parameters
                               to pass to the pipeline
@@ -191,6 +193,7 @@ spec:
                               type: object
                             type: array
                         required:
+                        - namespace
                         - steps
                         type: object
                       repoUser:
@@ -470,6 +473,8 @@ spec:
                           type: object
                         type: array
                       imageSpec:
+                        description: 'Union pattern: only one of the following Kubernetes
+                          deployment types should be specified.'
                         properties:
                           image:
                             description: Image is the name of the image to use
@@ -489,6 +494,48 @@ spec:
                         - image
                         - imageRegistry
                         - imageTag
+                        type: object
+                      manifest:
+                        properties:
+                          github:
+                            properties:
+                              authSecretRef:
+                                description: AuthSecretRef is a reference to a secret
+                                  containing GitHub credentials (e.g., Personal Access
+                                  Token)
+                                properties:
+                                  name:
+                                    default: ""
+                                    description: |-
+                                      Name of the referent.
+                                      This field is effectively required, but due to backwards compatibility is
+                                      allowed to be empty. Instances of this type with an empty value here are
+                                      almost certainly wrong.
+                                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    type: string
+                                type: object
+                                x-kubernetes-map-type: atomic
+                              path:
+                                description: Path is the path to the manifest file
+                                  within the repository (e.g., "deploy/my-app.yaml")
+                                type: string
+                              repository:
+                                description: Repository is the GitHub repository URL
+                                  (e.g., "https://github.com/owner/repo")
+                                type: string
+                              revision:
+                                default: main
+                                description: Revision is the Git revision (branch,
+                                  tag, or commit SHA)
+                                type: string
+                            required:
+                            - path
+                            - repository
+                            type: object
+                          namespace:
+                            type: string
+                          url:
+                            type: string
                         type: object
                       resources:
                         description: Resources is the compute resources required by
@@ -749,6 +796,8 @@ spec:
                       pipeline:
                         description: Pipeline specifies the pipeline configuration
                         properties:
+                          namespace:
+                            type: string
                           parameters:
                             description: Parameters contains additional parameters
                               to pass to the pipeline
@@ -831,6 +880,7 @@ spec:
                               type: object
                             type: array
                         required:
+                        - namespace
                         - steps
                         type: object
                       repoUser:

@@ -59,13 +59,15 @@ spec:
           type: RuntimeDefault
       containers:
       - command:
-        - /ko-app/cmd
+#        - /ko-app/cmd
+         - /manager
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
           - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
 
         image: controller:latest
+        imagePullPolicy: IfNotPresent
         name: manager
         ports: []
         securityContext:
@@ -89,11 +91,11 @@ spec:
         # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
         resources:
           limits:
-            cpu: 500m
-            memory: 128Mi
+            cpu: 1000m
+            memory: 512Mi
           requests:
             cpu: 10m
-            memory: 64Mi
+            memory: 128Mi
         volumeMounts: []
       volumes: []
       serviceAccountName: controller-manager

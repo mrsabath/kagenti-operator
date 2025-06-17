@@ -178,8 +178,7 @@ func (r *PlatformReconciler) reconcileComponents(ctx context.Context, platform *
 			logger.Error(err, "Failed to fetch component", "component", compRef.Name, "namespace", compRef.ComponentReference.Namespace)
 			return err
 		} else if err != nil {
-			logger.Error(err, "Platform component not found", "component", compRef.Name, "namespace", compRef.ComponentReference.Namespace)
-			return err
+			return nil
 		}
 		r.Log.Info("reconcileComponents +++++ ", "component", component.Name, "Namespace", component.Namespace)
 

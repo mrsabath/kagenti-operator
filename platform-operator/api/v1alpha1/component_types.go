@@ -21,6 +21,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +kubebuilder:printcolumn:name="Suspend",type=string,JSONPath=`.spec.suspend`
+
+//+kubebuilder:rbac:groups=kagenti.operator.dev,resources=components,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kagenti.operator.dev,resources=components/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kagenti.operator.dev,resources=components/finalizers,verbs=update
+
 type ComponentSpec struct {
 
 	// Component Types
@@ -318,7 +324,10 @@ type ParameterSpec struct {
 
 // KubernetesSpec defines Kubernetes manifest deployment
 type KubernetesSpec struct {
-	ImageSpec ImageSpec `json:"imageSpec,omitempty"`
+	// Union pattern: only one of the following Kubernetes deployment types should be specified.
+	ImageSpec *ImageSpec `json:"imageSpec,omitempty"`
+	// +optional
+	Manifest *ManifestSource `json:"manifest,omitempty"`
 
 	// Resources is the compute resources required by the container
 	// +optional
@@ -332,6 +341,32 @@ type KubernetesSpec struct {
 	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
 	// +optional
 	ServiceType string `json:"serviceType,omitempty"`
+}
+
+type ManifestSource struct {
+	GitHub *GitHubSource `json:"github,omitempty"`
+	URL    string        `json:"url,omitempty"`
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+}
+
+type GitHubSource struct {
+	// Repository is the GitHub repository URL (e.g., "https://github.com/owner/repo")
+	// +kubebuilder:validation:Required
+	Repository string `json:"repository"`
+
+	// Path is the path to the manifest file within the repository (e.g., "deploy/my-app.yaml")
+	// +kubebuilder:validation:Required
+	Path string `json:"path"`
+
+	// Revision is the Git revision (branch, tag, or commit SHA)
+	// +optional
+	// +kubebuilder:default="main"
+	Revision string `json:"revision,omitempty"`
+
+	// AuthSecretRef is a reference to a secret containing GitHub credentials (e.g., Personal Access Token)
+	// +optional
+	AuthSecretRef *corev1.LocalObjectReference `json:"authSecretRef,omitempty"`
 }
 
 type ImageSpec struct {
