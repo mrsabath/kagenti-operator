@@ -52,7 +52,6 @@ type ComponentCustomDefaulter struct {
 	Client client.Client
 }
 
-// SetupComponentWebhookWithManager registers the webhook for Component in the manager.
 func SetupComponentWebhookWithManager(mgr ctrl.Manager) error {
 	defaulter := &ComponentCustomDefaulter{
 		Client: mgr.GetClient(),
@@ -65,6 +64,7 @@ func SetupComponentWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.CustomDefaulter = &ComponentCustomDefaulter{}
 
+// Mutating webhook entry point
 func (d *ComponentCustomDefaulter) Default(ctx context.Context, obj runtime.Object) error {
 	component, ok := obj.(*kagentioperatordevv1alpha1.Component)
 
@@ -73,7 +73,7 @@ func (d *ComponentCustomDefaulter) Default(ctx context.Context, obj runtime.Obje
 	}
 	componentlog.Info("Mutating webbhook for Component", "name", component.GetName())
 
-	// Set suspend to true by default for new Component resources
+	// Set suspend to true by default for new Component resources.
 	if component.Spec.Suspend == nil {
 		suspend := true
 		component.Spec.Suspend = &suspend
@@ -221,12 +221,6 @@ func (d *ComponentCustomDefaulter) mergePipelineTemplate(template *kagentioperat
 		userParams[param.Name] = param.Value
 	}
 
-	//	// Add build spec fields as template variables
-	//	templateVars := d.createTemplateVariables(buildSpec)
-	//	for k, v := range templateVars {
-	//		userParams[k] = v
-	//	}
-
 	var pipelineSteps []kagentioperatordevv1alpha1.PipelineStepSpec
 
 	// Process each step in the template
@@ -261,34 +255,6 @@ func (d *ComponentCustomDefaulter) mergePipelineTemplate(template *kagentioperat
 	}
 
 	return pipeline, nil
-}
-func (d *ComponentCustomDefaulter) createTemplateVariables(buildSpec *kagentioperatordevv1alpha1.BuildSpec) map[string]string {
-	vars := make(map[string]string)
-
-	if buildSpec.SourceRepository != "" {
-		vars["SourceRepository"] = buildSpec.SourceRepository
-	}
-	if buildSpec.SourceRevision != "" {
-		vars["SourceRevision"] = buildSpec.SourceRevision
-	}
-	if buildSpec.SourceSubfolder != "" {
-		vars["SourceSubfolder"] = buildSpec.SourceSubfolder
-	}
-	if buildSpec.RepoUser != "" {
-		vars["RepoUser"] = buildSpec.RepoUser
-	}
-
-	if buildSpec.BuildOutput != nil {
-		vars["Image"] = buildSpec.BuildOutput.Image
-		vars["ImageTag"] = buildSpec.BuildOutput.ImageTag
-		vars["ImageRegistry"] = buildSpec.BuildOutput.ImageRegistry
-		vars["FullImageName"] = fmt.Sprintf("%s/%s:%s",
-			buildSpec.BuildOutput.ImageRegistry,
-			buildSpec.BuildOutput.Image,
-			buildSpec.BuildOutput.ImageTag)
-	}
-
-	return vars
 }
 
 // resolveTemplateValue resolves template variables in parameter values

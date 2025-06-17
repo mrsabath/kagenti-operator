@@ -23,6 +23,10 @@ import (
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
+//+kubebuilder:rbac:groups=kagenti.operator.dev,resources=platforms,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kagenti.operator.dev,resources=platforms/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kagenti.operator.dev,resources=platforms/finalizers,verbs=update
+
 // PlatformSpec defines the desired state of a Platform
 type PlatformSpec struct {
 	// Description of the platform

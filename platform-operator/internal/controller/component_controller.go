@@ -48,23 +48,17 @@ type ComponentReconciler struct {
 
 const componentFinalizer = "kagenti.operator.dev/finalizer"
 
-// +kubebuilder:rbac:groups=kagenti.operator.dev,resources=components,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kagenti.operator.dev,resources=components/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kagenti.operator.dev,resources=components/finalizers,verbs=update
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=services;configmaps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=pods;services;configmaps;secrets;serviceaccounts;persistentvolumeclaims;namespaces,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments;replicasets;statefulsets;daemonsets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=extensions,resources=deployments;replicasets;daemonsets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses;networkpolicies,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations;validatingwebhookconfigurations,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings;clusterroles;clusterrolebindings,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kagenti.operator.dev,resources=components;platforms,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kagenti.operator.dev,resources=components/status;platforms/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kagenti.operator.dev,resources=components/finalizers;platforms/finalizers,verbs=update
 // +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns;pipelines;clustertasks;customruns;stepactions;taskruns;tasks,verbs=get;list;watch;create;update;patch;delete
-
-// Permissions for standard Kubernetes resources in arbitrary namespaces
-// The absence of "namespace=" means these apply cluster-wide for namespaced resources
-// For Deployments (in the 'apps' API group)
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// For Services (in the core API group, which is represented by an empty string "")
-// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
-// For other resources like ConfigMaps, Secrets, etc.
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 func (r *ComponentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("controller", req.Name, "Namespace", req.Namespace)

@@ -17,7 +17,6 @@ limitations under the License.
 package deployer
 
 import (
-	//"context"
 	"fmt"
 
 	"github.com/go-logr/logr"

@@ -24,41 +24,26 @@ spec:
       team: ai-engineering
   
   infrastructure:
-    - name: istio-base
+    - name: phoenix
       componentReference:
-        name: istio
+        name: phoenix
         kind: Component
         apiVersion: agent.example.com/v1
         namespace: kagenti-system 
-
-    - name: istiod
-      componentReference:
-        name: istiod
-        kind: Component
-        apiVersion: agent.example.com/v1
-        namespace: kagenti-system 
-
-    - name: istio-cni
-      componentReference:
-        name: istio-cni
-        kind: Component
-        apiVersion: agent.example.com/v1
-        namespace: kagenti-system  
-
-    - name: istio-ztunnel
-      componentReference:
-        name: istio-ztunnel
-        kind: Component
-        apiVersion: agent.example.com/v1
-        namespace: kagenti-system           
 
   tools:
+      - name: test-server-weather
+        componentReference:
+          name: test-mcp-server
+          kind: Component
+          apiVersion: agent.example.com/v1
+          namespace: kagenti-system
   
   agents:
-    - name: research-agent
-      componentReference:
-        name: research-agent
-        kind: Component
-        apiVersion: agent.example.com/v1
-        namespace: kagenti-system
+      - name: research-agent
+        componentReference:
+          name: research-agent
+          kind: Component
+          apiVersion: agent.example.com/v1
+          namespace: kagenti-system
   
