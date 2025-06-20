@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-github/v63/github"
@@ -465,6 +466,10 @@ func (d *KubernetesDeployer) fetchAndApplyManifestsFromURL(ctx context.Context, 
 				obj.GetLabels()[k] = v
 			}
 		}
+
+		if err := controllerutil.SetControllerReference(component, obj, d.Client.Scheme()); err != nil {
+			return err
+		}
 		d.Log.Info("Applying manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace(), "annotations", obj.GetAnnotations())
 
 		if err := d.Client.Create(ctx, obj); err != nil {
@@ -497,22 +502,38 @@ func (d *KubernetesDeployer) fetchAndApplyManifestsFromGithub(ctx context.Contex
 	if err != nil {
 		return fmt.Errorf("invalid GitHub repository URL %s: %w", manifestSpec.Repository, err)
 	}
-
-	// Fetch manifest content from GitHub
-	fileContent, _, _, err := ghClient.Repositories.GetContents(
-		ctx,
-		owner,
-		repoName,
-		manifestSpec.Path,
-		&github.RepositoryContentGetOptions{
-			Ref: manifestSpec.Revision,
-		},
-	)
+	fileContent, err := d.fetchContentWithRetry(ctx, ghClient, owner, repoName, manifestSpec, 100)
 	if err != nil {
 		return fmt.Errorf("failed to get content for %s/%s at path %s (revision %s): %w",
 			owner, repoName, manifestSpec.Path, manifestSpec.Revision, err)
-	}
 
+	}
+	/*
+		maxRetries := 100
+		var fileContent *github.RepositoryContent
+		for i := 0; i < maxRetries; i++ {
+			// Fetch manifest content from GitHub
+			fileContent, _, response, err := ghClient.Repositories.GetContents(
+				ctx,
+				owner,
+				repoName,
+				manifestSpec.Path,
+				&github.RepositoryContentGetOptions{
+					Ref: manifestSpec.Revision,
+				},
+			)
+			if err != nil {
+				if response.StatusCode != 503 {
+					return fmt.Errorf("failed to get content for %s/%s at path %s (revision %s): %w",
+						owner, repoName, manifestSpec.Path, manifestSpec.Revision, err)
+
+				}
+				backoff := time.Duration(i+1) * 2 * time.Second
+				time.Sleep(backoff)
+
+			}
+		}
+	*/
 	if fileContent.Content == nil {
 		return fmt.Errorf("GitHub returned empty content for %s/%s at path %s", owner, repoName, manifestSpec.Path)
 	}
@@ -564,7 +585,9 @@ func (d *KubernetesDeployer) fetchAndApplyManifestsFromGithub(ctx context.Contex
 				obj.GetLabels()[k] = v
 			}
 		}
-
+		if err := controllerutil.SetControllerReference(component, obj, d.Client.Scheme()); err != nil {
+			return err
+		}
 		d.Log.Info("Applying manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace(), "annotations", obj.GetAnnotations())
 
 		if err := d.Client.Create(ctx, obj); err != nil {
@@ -585,6 +608,31 @@ func (d *KubernetesDeployer) fetchAndApplyManifestsFromGithub(ctx context.Contex
 
 	d.Log.Info("Successfully applied all manifests from GitHub", "repository", manifestSpec.Repository, "path", manifestSpec.Path)
 	return nil
+}
+func (d *KubernetesDeployer) fetchContentWithRetry(ctx context.Context, ghClient *github.Client, owner, repoName string, manifestSpec *platformv1alpha1.GitHubSource, maxRetries int) (*github.RepositoryContent, error) {
+	for i := 0; i < maxRetries; i++ {
+		// Fetch manifest content from GitHub
+		fileContent, _, response, err := ghClient.Repositories.GetContents(
+			ctx,
+			owner,
+			repoName,
+			manifestSpec.Path,
+			&github.RepositoryContentGetOptions{
+				Ref: manifestSpec.Revision,
+			},
+		)
+		if err != nil {
+			if response.StatusCode != 503 {
+				return nil, fmt.Errorf("failed to get content for %s/%s at path %s (revision %s): %w",
+					owner, repoName, manifestSpec.Path, manifestSpec.Revision, err)
+
+			}
+			backoff := time.Duration(i+1) * 2 * time.Second
+			time.Sleep(backoff)
+		}
+		return fileContent, nil
+	}
+	return nil, fmt.Errorf("max retries exceeded while trying to fetch content from Github repo")
 }
 
 func (d *KubernetesDeployer) getGitHubClient(ctx context.Context, component *platformv1alpha1.Component, secretRef *corev1.LocalObjectReference) (*github.Client, error) {
@@ -616,7 +664,7 @@ func (d *KubernetesDeployer) getSecretData(ctx context.Context, namespace, name 
 	return secret.Data, nil
 }
 
-// parse YAML manifest string into Kubernetes objects
+// parse YAML manifest string into Kubernetes (unstructured) objects
 func (d *KubernetesDeployer) parseKubernetesManifest(manifestContent string) ([]*unstructured.Unstructured, error) {
 	var objects []*unstructured.Unstructured
 	//d.Log.Info("parseKubernetesManifest", "raw manifest", manifestContent)
@@ -641,7 +689,7 @@ func (d *KubernetesDeployer) parseKubernetesManifest(manifestContent string) ([]
 		}
 
 		// Skip empty objects
-		if obj == nil || len(obj) == 0 {
+		if len(obj) == 0 {
 			docIndex++
 			continue
 		}

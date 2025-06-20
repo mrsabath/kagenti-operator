@@ -24,6 +24,13 @@ spec:
       team: ai-engineering
   
   infrastructure:
+    - name: gateway-api
+      componentReference:
+        name: gateway-api
+        kind: Component
+        apiVersion: agent.example.com/v1
+        namespace: kagenti-system 
+        
     - name: phoenix
       componentReference:
         name: phoenix
