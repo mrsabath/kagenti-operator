@@ -21,8 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// +kubebuilder:printcolumn:name="Suspend",type=string,JSONPath=`.spec.suspend`
-
 //+kubebuilder:rbac:groups=kagenti.operator.dev,resources=components,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kagenti.operator.dev,resources=components/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kagenti.operator.dev,resources=components/finalizers,verbs=update
@@ -438,8 +436,11 @@ type ComponentDeploymentStatus struct {
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+//+kubebuilder:printcolumn:name="Suspend",type=boolean,JSONPath=`.spec.suspend`
+//+kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 // Component is the Schema for the components API.
 type Component struct {
@@ -451,7 +452,6 @@ type Component struct {
 }
 
 // +kubebuilder:object:root=true
-
 // ComponentList contains a list of Component.
 type ComponentList struct {
 	metav1.TypeMeta `json:",inline"`

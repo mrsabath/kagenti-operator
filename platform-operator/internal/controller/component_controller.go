@@ -48,6 +48,9 @@ type ComponentReconciler struct {
 
 const componentFinalizer = "kagenti.operator.dev/finalizer"
 
+// +kubebuilder:printcolumn:name="Suspend",type=boolean,JSONPath=`.spec.suspend`
+// +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+
 //+kubebuilder:rbac:groups="",resources=pods;services;configmaps;secrets;serviceaccounts;persistentvolumeclaims;namespaces,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments;replicasets;statefulsets;daemonsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=extensions,resources=deployments;replicasets;daemonsets,verbs=get;list;watch;create;update;patch;delete

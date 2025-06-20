@@ -12,7 +12,7 @@ The Component CR represents the smallest deployable unit within the Kagenti plat
 The Platform CR provides a unified management layer for collections of Components. Its primary responsibility is applying global labels and annotations to each Component before creation, ensuring consistent metadata across all managed components. The Platform presents a unified view of all components within its scope, aggregating their status, health, and operational metrics into a single coherent interface. This simplified approach allows administrators to monitor entire application ecosystems from a single point of control while maintaining the modularity and independence of individual Components.
 
 
-### Component Types
+## Component Types
 Components are categorized into three distinct types based on their functional role:
 
 **Agent** - Represents AI/ML agents 
@@ -31,6 +31,7 @@ Each Component CR must specify exactly one type: Agent, Tool, or Infra. The oper
 Before installing the `kagenti-operator`, ensure you have:
 
 * **kubectl:** The Kubernetes command-line tool
+
 * **For building agents:**
   * Agent/Tool source code in a GitHub repository with a working Dockerfile
   * GitHub token for accessing repositories and pushing images to ghcr.io. Currently, the operator has been tested with ghcr.io repo only. Support for alternative image repos will be added soon.
@@ -38,12 +39,13 @@ Before installing the `kagenti-operator`, ensure you have:
 * **For deploying agents:**
   * Existing agent image in a container registry (ghcr.io, Docker Hub, etc.)
   * (Optional) Registry credentials if using private images
+  * helm installed
 
 
 
 ## Quick Start
 
-### 1. Install the Operator
+### Install the Operator
 In a new terminal, run:
 
 ```shell
@@ -52,7 +54,100 @@ curl -sSL https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platfo
 
 The above installs Kind k8s, local image registry, Tekton Pipeline runtime, Cert Manager, and finally the operator runtime. 
 
-### 2. Component Deployment Strategies
+### Deployment Process
+
+#### Step 1: Deploy Components First
+Apply your Component CRs to define the individual components of your platform. Assuming you have component definitions in a folder named ```components``` do:
+
+```bash 
+# Apply component definitions
+kubectl apply -f components/
+```
+```Note:``` Components will be created in a suspended state by default and will not deploy until activated by a Platform.
+
+#### Step 2: Deploy Platform
+
+Apply your Platform CR to activate and orchestrate the components. Assuming your platform is defined in ```platform.yaml``` do:
+```bash
+# Apply platform definition
+kubectl apply -f platform.yaml
+```
+The Platform controller will:
+
+* Apply global labels and annotations to each Component CR
+
+* Automatically lift the suspended flag from referenced components
+
+* Begin the deployment process for all components
+
+#### Step 3: Monitor Deployment
+Check the status of your platform and components:
+
+```bash
+# Check platform status
+kubectl get platforms -n <namespace>
+
+# Check component status
+k get components -A
+
+NAMESPACE        NAME              AGE     SUSPEND   READY
+kagenti-system   gateway-api       3m16s   false     True
+kagenti-system   phoenix           3m16s   false     True
+kagenti-system   research-agent    3m16s   false     True
+kagenti-system   test-mcp-server   3m16s   false     True
+
+# View detailed status
+kubectl describe platform <platform-name> -n <namespace>
+```
+
+
+### Uninstall the Operator
+To properly uninstall the Kagenti Platform Operator, you must follow a specific order to ensure all resources are cleaned up correctly.
+
+#### Step 1: Delete Platform Custom Resources
+```IMPORTANT:```You must delete Platform CR first, as they manage the lifecycle of Component CRs and related resources.
+
+```bash
+# List all Platform resources
+kubectl get platforms --all-namespaces
+
+# Delete all Platform resources
+kubectl delete platforms --all --all-namespaces
+
+# Wait for Platform resources to be fully deleted
+kubectl get platforms --all-namespaces
+```
+
+The Platform controller will automatically:
+
+* Delete all related Component CRs
+
+* Clean up child resources (Deployments, Services, ConfigMaps, etc.)
+
+* Remove finalizers once cleanup is complete
+
+#### Step 2: Verify Component Cleanup
+After deleting Platforms, verify that Component resources are also cleaned up:
+```bash 
+# Check that all Components are deleted
+kubectl get components --all-namespaces
+
+# If any Components remain, delete them manually
+kubectl delete components --all --all-namespaces
+```
+
+#### Step 3: Uninstall Helm Chart
+Once all Platform and Component CRs are deleted, you can safely uninstall the operator:
+
+```bash 
+# Find the Helm release name
+helm list -n kagenti-system
+
+# Uninstall the operator (replace with your actual release name)
+helm uninstall agentic-platform-controller-manager-xxx-xxx -n kagenti-system
+```
+
+## Component Deployment Strategies
 The Kagenti Component resource provides flexible deployment mechanisms to accommodate different application packaging and distribution patterns. Whether you're deploying third-party components with published manifests, custom applications stored in version control, containerized services, or packaged Helm charts, the Component spec supports multiple deployment strategies through its deployer configuration. 
 
 **Deploy from Manifest URL**
@@ -150,7 +245,7 @@ deployer:
     installPlanApproval: "Automatic"
 ```
 
-## 3. Platform Orchestration and Component Activation
+## Platform Orchestration and Component Activation
 The Platform controller serves as the orchestration layer that manages the lifecycle and metadata of Component resources. When a Component is applied to the cluster, the Kagenti operator webhook automatically adds a ```suspend: true``` flag to prevent immediate deployment. 
 
 The Platform controller is responsible for:

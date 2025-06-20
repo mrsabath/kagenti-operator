@@ -1,4 +1,4 @@
-apiVersion: kagenti.operator.dev.kagenti.operator.dev/v1alpha1
+apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   labels:

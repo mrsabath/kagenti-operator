@@ -47,6 +47,7 @@ func (r *PlatformReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	platform := &platformv1alpha1.Platform{}
 	if err := r.Client.Get(ctx, req.NamespacedName, platform); err != nil {
+		logger.Error(err, "Failed to fetch platform")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -68,7 +69,15 @@ func (r *PlatformReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	if !platform.ObjectMeta.DeletionTimestamp.IsZero() {
-		return r.deletePlatform(ctx, platform)
+		result, err := r.deletePlatform(ctx, platform)
+		if err != nil {
+			return result, err
+		}
+		if err := r.Client.Update(ctx, platform); err != nil {
+			logger.Error(err, "Unable to add finalizer to Platform")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: time.Second * 2}, nil
 	}
 
 	if err := r.reconcileComponents(ctx, platform, platform.Spec.Infrastructure, "infrastructure"); err != nil {
@@ -279,32 +288,50 @@ func (r *PlatformReconciler) updateComponentStatusList(statusList *[]platformv1a
 }
 func (r *PlatformReconciler) deletePlatform(ctx context.Context, platform *platformv1alpha1.Platform) (ctrl.Result, error) {
 	logger := r.Log.WithValues("platform", platform.Name, "Namespace", platform.Namespace)
-	logger.Info("Deleting platform")
+	logger.Info("Deleting platform ---")
 
 	allComponents := []platformv1alpha1.PlatformComponentRef{}
 	allComponents = append(allComponents, platform.Spec.Infrastructure...)
 	allComponents = append(allComponents, platform.Spec.Tools...)
 	allComponents = append(allComponents, platform.Spec.Agents...)
 
-	for _, compRef := range allComponents {
+	componentsRunning := len(allComponents)
+	logger.Info("Deleting platform", "Component count to delete", len(allComponents))
 
+	for _, compRef := range allComponents {
+		namespace := "default"
+		if compRef.ComponentReference.Namespace != "" {
+			namespace = compRef.ComponentReference.Namespace
+		}
 		component := &platformv1alpha1.Component{}
 		nn := types.NamespacedName{
-			Name:      compRef.Name,
-			Namespace: r.getNamespace(compRef.ComponentReference.Namespace, platform.Namespace),
+			Name:      compRef.ComponentReference.Name,
+			Namespace: namespace,
 		}
-		if err := r.Client.Get(ctx, nn, component); err != nil {
+		logger.Info("Deleting platform", "Component to delete", nn.Name, "Namespace", nn.Namespace)
+
+		if err := r.Client.Get(ctx, nn, component); err == nil {
 			if metav1.IsControlledBy(component, platform) {
 				logger.Info("Deleting component", "component", component.Name)
 				if err := r.Client.Delete(ctx, component); err != nil {
-					logger.Error(err, "Failed to delete component", "component", compRef.Name)
+					logger.Error(err, "Failed to delete component", "component", component.Name)
 					return ctrl.Result{}, err
 				}
-				return ctrl.Result{Requeue: true}, nil
+				//return ctrl.Result{Requeue: true}, nil
+				componentsRunning--
 			}
+		} else if client.IgnoreNotFound(err) != nil {
+			logger.Error(err, "Failed to fetch component", "component", nn.Name, "namespace", nn.Namespace)
+		} else {
+			// Not found
+			componentsRunning--
 		}
 	}
-	controllerutil.RemoveFinalizer(platform, platformFinalizer)
+	logger.Info("Platform completed cleanup", "components still running", componentsRunning)
+	if componentsRunning == 0 {
+		logger.Info("Platform completed cleanup - removing finalier")
+		controllerutil.RemoveFinalizer(platform, platformFinalizer)
+	}
 
 	return ctrl.Result{}, nil
 }
