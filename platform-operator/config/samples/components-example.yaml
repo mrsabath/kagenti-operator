@@ -37,8 +37,11 @@ spec:
       manifest:
         github:
            repository: https://github.com/kagenti/kagenti
-           path: kagenti/installer/src/resources/phoenix.yaml
+           path: kagenti/installer/app/resources/phoenix.yaml
            revision: main
+           authSecretRef:
+             name: github-token-secret
+
     env:
 ---
 

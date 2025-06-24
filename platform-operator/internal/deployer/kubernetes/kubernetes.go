@@ -466,9 +466,12 @@ func (d *KubernetesDeployer) fetchAndApplyManifestsFromURL(ctx context.Context, 
 				obj.GetLabels()[k] = v
 			}
 		}
-
-		if err := controllerutil.SetControllerReference(component, obj, d.Client.Scheme()); err != nil {
-			return err
+		d.Log.Info("Applying Ownershiop to manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace())
+		if obj.GetKind() != "CustomResourceDefinition" {
+			// (namespaced) Component cannot own a CRD
+			if err := controllerutil.SetControllerReference(component, obj, d.Client.Scheme()); err != nil {
+				return err
+			}
 		}
 		d.Log.Info("Applying manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace(), "annotations", obj.GetAnnotations())
 
@@ -649,6 +652,7 @@ func (d *KubernetesDeployer) getGitHubClient(ctx context.Context, component *pla
 			&oauth2.Token{AccessToken: token},
 		)
 		tc := oauth2.NewClient(ctx, ts)
+		d.Log.Info("getGitHubClient", "Github Client Authenticated", "true")
 		return github.NewClient(tc), nil
 	}
 	// Return unauthenticated client if no secret is provided (for public repos)
