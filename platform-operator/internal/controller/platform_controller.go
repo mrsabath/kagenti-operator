@@ -217,7 +217,6 @@ func (r *PlatformReconciler) updateComponentStatusFromComponent(ctx context.Cont
 	r.updateComponentStatusInPlatform(ctx, platform, componentName, componentType, status, errorMsg)
 }
 func (r *PlatformReconciler) setComponentOwner(ctx context.Context, platform *platformv1alpha1.Platform, component *platformv1alpha1.Component, compRef platformv1alpha1.PlatformComponentRef) error {
-	r.Log.Info("setComponentOwner ++++++++++++++")
 
 	if metav1.IsControlledBy(component, platform) {
 		return nil
@@ -317,7 +316,6 @@ func (r *PlatformReconciler) deletePlatform(ctx context.Context, platform *platf
 					logger.Error(err, "Failed to delete component", "component", component.Name)
 					return ctrl.Result{}, err
 				}
-				//return ctrl.Result{Requeue: true}, nil
 				componentsRunning--
 			}
 		} else if client.IgnoreNotFound(err) != nil {
