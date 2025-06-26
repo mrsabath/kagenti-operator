@@ -439,50 +439,57 @@ func (d *KubernetesDeployer) fetchAndApplyManifestsFromURL(ctx context.Context, 
 	}
 	// Apply each object
 	for _, obj := range objects {
-
-		mergedAnnotations := make(map[string]string)
-
-		// merge annotations
-		if obj.GetAnnotations() == nil {
-			for k, v := range component.Annotations {
-				mergedAnnotations[k] = v
-			}
-			obj.SetAnnotations(mergedAnnotations)
-		} else {
-			for k, v := range component.Annotations {
-				obj.GetAnnotations()[k] = v
-			}
-
+		rs, err := d.StatusChecker.CheckResourceStatus(ctx, obj)
+		if err != nil {
+			d.Log.Error(err, "StatusChecked failed to check object status")
 		}
-		mergedLabels := make(map[string]string)
-		// merge labels
-		if obj.GetLabels() == nil {
-			for k, v := range component.Labels {
-				mergedLabels[k] = v
-			}
-			obj.SetLabels(mergedLabels)
-		} else {
-			for k, v := range component.Labels {
-				obj.GetLabels()[k] = v
-			}
-		}
-		d.Log.Info("Applying Ownershiop to manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace())
-		if obj.GetKind() != "CustomResourceDefinition" {
-			// (namespaced) Component cannot own a CRD
-			if err := controllerutil.SetControllerReference(component, obj, d.Client.Scheme()); err != nil {
-				return err
-			}
-		}
-		d.Log.Info("Applying manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace(), "annotations", obj.GetAnnotations())
+		d.Log.Info("StatusChecker", "Object", rs.Name, "Namespace", rs.Namespace, "phase", rs.Phase, "ready", rs.Ready)
+		if rs.Phase == "NotFound" {
+			mergedAnnotations := make(map[string]string)
 
-		if err := d.Client.Create(ctx, obj); err != nil {
-			if errors.IsAlreadyExists(err) {
-				if err := d.Client.Update(ctx, obj); err != nil {
-					return fmt.Errorf("failed to update %s/%s: %w", obj.GetKind(), obj.GetName(), err)
+			// merge annotations
+			if obj.GetAnnotations() == nil {
+				for k, v := range component.Annotations {
+					mergedAnnotations[k] = v
 				}
+				obj.SetAnnotations(mergedAnnotations)
 			} else {
-				return fmt.Errorf("failed to create %s/%s: %w", obj.GetKind(), obj.GetName(), err)
+				for k, v := range component.Annotations {
+					obj.GetAnnotations()[k] = v
+				}
+
 			}
+			mergedLabels := make(map[string]string)
+			// merge labels
+			if obj.GetLabels() == nil {
+				for k, v := range component.Labels {
+					mergedLabels[k] = v
+				}
+				obj.SetLabels(mergedLabels)
+			} else {
+				for k, v := range component.Labels {
+					obj.GetLabels()[k] = v
+				}
+			}
+			d.Log.Info("Applying Ownershiop to manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace())
+			if obj.GetKind() != "CustomResourceDefinition" {
+				// (namespaced) Component cannot own a CRD
+				if err := controllerutil.SetControllerReference(component, obj, d.Client.Scheme()); err != nil {
+					return err
+				}
+			}
+			d.Log.Info("Applying manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace(), "annotations", obj.GetAnnotations())
+
+			if err := d.Client.Create(ctx, obj); err != nil {
+				if errors.IsAlreadyExists(err) {
+					if err := d.Client.Update(ctx, obj); err != nil {
+						return fmt.Errorf("failed to update %s/%s: %w", obj.GetKind(), obj.GetName(), err)
+					}
+				} else {
+					return fmt.Errorf("failed to create %s/%s: %w", obj.GetKind(), obj.GetName(), err)
+				}
+			}
+
 		}
 	}
 	d.Log.Info("Successfully applied all manifests from URL", "URL", manifestURL)
@@ -511,32 +518,7 @@ func (d *KubernetesDeployer) fetchAndApplyManifestsFromGithub(ctx context.Contex
 			owner, repoName, manifestSpec.Path, manifestSpec.Revision, err)
 
 	}
-	/*
-		maxRetries := 100
-		var fileContent *github.RepositoryContent
-		for i := 0; i < maxRetries; i++ {
-			// Fetch manifest content from GitHub
-			fileContent, _, response, err := ghClient.Repositories.GetContents(
-				ctx,
-				owner,
-				repoName,
-				manifestSpec.Path,
-				&github.RepositoryContentGetOptions{
-					Ref: manifestSpec.Revision,
-				},
-			)
-			if err != nil {
-				if response.StatusCode != 503 {
-					return fmt.Errorf("failed to get content for %s/%s at path %s (revision %s): %w",
-						owner, repoName, manifestSpec.Path, manifestSpec.Revision, err)
 
-				}
-				backoff := time.Duration(i+1) * 2 * time.Second
-				time.Sleep(backoff)
-
-			}
-		}
-	*/
 	if fileContent.Content == nil {
 		return fmt.Errorf("GitHub returned empty content for %s/%s at path %s", owner, repoName, manifestSpec.Path)
 	}
@@ -555,58 +537,65 @@ func (d *KubernetesDeployer) fetchAndApplyManifestsFromGithub(ctx context.Contex
 
 	// Apply each object
 	for _, obj := range objects {
+
 		if obj.GetNamespace() == "" {
 			if component.Spec.Deployer.Namespace != "" {
 				obj.SetNamespace(component.Spec.Deployer.Namespace)
 			}
 		}
 
-		mergedAnnotations := make(map[string]string)
-		d.Log.Info("Merging Annotations")
-		// merge annotations
-		if obj.GetAnnotations() == nil {
-			for k, v := range component.Annotations {
-				mergedAnnotations[k] = v
-			}
-			obj.SetAnnotations(mergedAnnotations)
-		} else {
-			for k, v := range component.Annotations {
-				obj.GetAnnotations()[k] = v
-			}
-
-		}
-		d.Log.Info("Merging Labels")
-		mergedLabels := make(map[string]string)
-		// merge labels
-		if obj.GetLabels() == nil {
-			for k, v := range component.Labels {
-				mergedLabels[k] = v
-			}
-			obj.SetLabels(mergedLabels)
-		} else {
-			for k, v := range component.Labels {
-				obj.GetLabels()[k] = v
-			}
-		}
-		if err := controllerutil.SetControllerReference(component, obj, d.Client.Scheme()); err != nil {
-			return err
-		}
-		d.Log.Info("Applying manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace(), "annotations", obj.GetAnnotations())
-
-		if err := d.Client.Create(ctx, obj); err != nil {
-			if errors.IsAlreadyExists(err) {
-				if err := d.Client.Update(ctx, obj); err != nil {
-					return fmt.Errorf("failed to update %s/%s: %w", obj.GetKind(), obj.GetName(), err)
-				}
-			} else {
-				return fmt.Errorf("failed to create %s/%s: %w", obj.GetKind(), obj.GetName(), err)
-			}
-		}
 		rs, err := d.StatusChecker.CheckResourceStatus(ctx, obj)
 		if err != nil {
 			d.Log.Error(err, "StatusChecked failed to check object status")
 		}
 		d.Log.Info("StatusChecker", "Object", rs.Name, "Namespace", rs.Namespace, "phase", rs.Phase, "ready", rs.Ready)
+
+		if rs.Phase == "NotFound" {
+			mergedAnnotations := make(map[string]string)
+			d.Log.Info("Merging Annotations")
+			// merge annotations
+			if obj.GetAnnotations() == nil {
+				for k, v := range component.Annotations {
+					mergedAnnotations[k] = v
+				}
+				obj.SetAnnotations(mergedAnnotations)
+			} else {
+				for k, v := range component.Annotations {
+					obj.GetAnnotations()[k] = v
+				}
+
+			}
+			d.Log.Info("Merging Labels")
+			mergedLabels := make(map[string]string)
+			// merge labels
+			if obj.GetLabels() == nil {
+				for k, v := range component.Labels {
+					mergedLabels[k] = v
+				}
+				obj.SetLabels(mergedLabels)
+			} else {
+				for k, v := range component.Labels {
+					obj.GetLabels()[k] = v
+				}
+			}
+			if obj.GetKind() != "CustomResourceDefinition" {
+				if err := controllerutil.SetControllerReference(component, obj, d.Client.Scheme()); err != nil {
+					return err
+				}
+			}
+			d.Log.Info("Applying manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace(), "annotations", obj.GetAnnotations())
+
+			if err := d.Client.Create(ctx, obj); err != nil {
+				if errors.IsAlreadyExists(err) {
+					if err := d.Client.Update(ctx, obj); err != nil {
+						return fmt.Errorf("failed to update %s/%s: %w", obj.GetKind(), obj.GetName(), err)
+					}
+				} else {
+					return fmt.Errorf("failed to create %s/%s: %w", obj.GetKind(), obj.GetName(), err)
+				}
+			}
+		}
+
 	}
 
 	d.Log.Info("Successfully applied all manifests from GitHub", "repository", manifestSpec.Repository, "path", manifestSpec.Path)
