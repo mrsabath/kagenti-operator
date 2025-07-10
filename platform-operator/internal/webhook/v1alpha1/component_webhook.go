@@ -183,7 +183,6 @@ func (d *ComponentCustomDefaulter) getPipelineTemplate(ctx context.Context, mode
 	return &template, nil
 }
 
-// validateRequiredParameters checks if all required parameters are provided
 func (d *ComponentCustomDefaulter) validateRequiredParameters(template *kagentioperatordevv1alpha1.PipelineTemplate, buildSpec *kagentioperatordevv1alpha1.BuildSpec) error {
 	userParams := make(map[string]string)
 	componentlog.Info("Mutating webbhook - validateRequiredParameters()")
