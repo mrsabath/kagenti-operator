@@ -247,9 +247,9 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 				Spec: corev1.PodSpec{
 					// Uncomment when using SA per Component
 					// ServiceAccountName: "<Whatever>",
-					InitContainers: []corev1.Container{
-						{},
-					},
+					//InitContainers: []corev1.Container{
+					//	{},
+					//},
 					Containers: []corev1.Container{
 						{
 							Name:            component.Name,
