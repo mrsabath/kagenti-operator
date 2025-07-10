@@ -21,7 +21,7 @@ data:
         default: "main"
     steps:
       - name: git-clone
-        image: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:latest
+        image: ghcr.io/tektoncd/github.com/tektoncd/pipeline/cmd/git-init:latest
         command:
           - /ko-app/git-init
         args:

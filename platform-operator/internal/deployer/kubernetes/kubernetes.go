@@ -245,6 +245,11 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
+					// Uncomment when using SA per Component
+					// ServiceAccountName: "<Whatever>",
+					InitContainers: []corev1.Container{
+						{},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:            component.Name,
@@ -264,9 +269,10 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 	if component.Annotations != nil {
 		deployment.ObjectMeta.Annotations = component.Annotations
 	}
-
-	if err := controllerutil.SetControllerReference(component, deployment, d.Client.Scheme()); err != nil {
-		return err
+	if component.Namespace == deployment.Namespace {
+		if err := controllerutil.SetControllerReference(component, deployment, d.Client.Scheme()); err != nil {
+			return err
+		}
 	}
 
 	existingDeployment := &appsv1.Deployment{}
