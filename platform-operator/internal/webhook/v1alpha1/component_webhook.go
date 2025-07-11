@@ -128,7 +128,7 @@ func (d *ComponentCustomDefaulter) processPipelineConfig(ctx context.Context, co
 	}
 
 	// Load pipeline template from ConfigMap
-	template, err := d.getPipelineTemplate(ctx, mode, component.Namespace)
+	template, err := d.getPipelineTemplate(ctx, mode, "kagenti-system")
 	if err != nil {
 		return fmt.Errorf("failed to get pipeline template for mode %s: %w", mode, err)
 	}
