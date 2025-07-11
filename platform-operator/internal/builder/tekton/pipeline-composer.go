@@ -112,7 +112,7 @@ func (pc *PipelineComposer) loadSteps(ctx context.Context, component *platformv1
 		configMap := &corev1.ConfigMap{}
 		err := pc.client.Get(ctx, types.NamespacedName{
 			Name:      stepSpec.ConfigMap,
-			Namespace: component.Namespace,
+			Namespace: "kagenti-system",
 		}, configMap)
 
 		if err != nil {
