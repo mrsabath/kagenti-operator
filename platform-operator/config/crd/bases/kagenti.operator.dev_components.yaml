@@ -15,15 +15,17 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
     - jsonPath: .spec.suspend
       name: Suspend
       type: boolean
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
-      name: READY
+      name: Ready
+      priority: 1
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      priority: 2
+      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:

@@ -35,6 +35,7 @@ import (
 	platformv1alpha1 "github.com/kagenti/operator/platform/api/v1alpha1"
 	"github.com/kagenti/operator/platform/internal/builder"
 	"github.com/kagenti/operator/platform/internal/deployer"
+	"github.com/kagenti/operator/platform/internal/deployer/kubernetes"
 )
 
 // ComponentReconciler reconciles a Component object
@@ -44,12 +45,10 @@ type ComponentReconciler struct {
 	Log             logr.Logger
 	Builder         builder.Builder
 	DeployerFactory *deployer.DeployerFactory
+	RBACManager     *kubernetes.RBACManager
 }
 
 const componentFinalizer = "kagenti.operator.dev/finalizer"
-
-// +kubebuilder:printcolumn:name="Suspend",type=boolean,JSONPath=`.spec.suspend`
-// +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 
 //+kubebuilder:rbac:groups="",resources=pods;services;configmaps;secrets;serviceaccounts;persistentvolumeclaims;namespaces,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments;replicasets;statefulsets;daemonsets,verbs=get;list;watch;create;update;patch;delete
