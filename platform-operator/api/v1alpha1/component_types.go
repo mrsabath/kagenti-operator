@@ -436,9 +436,9 @@ type ComponentDeploymentStatus struct {
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 }
 
-// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
-//+kubebuilder:printcolumn:name="Suspend",type=boolean,JSONPath=`.spec.suspend`
-//+kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="Suspend",type="boolean",JSONPath=".spec.suspend",priority=0
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status",priority=1
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",priority=2
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 

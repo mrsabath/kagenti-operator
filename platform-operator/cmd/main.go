@@ -229,6 +229,7 @@ func main() {
 			HelmDeployer: helm.NewHelmDeployer(mgr.GetClient(), ctrl.Log.WithName("deployers").WithName("HelmDeployer"), mgr.GetScheme()),
 			OLMDeployer:  olm.NewOLMDeployer(mgr.GetClient(), ctrl.Log.WithName("deployers").WithName("OLMDeployer"), mgr.GetScheme()),
 		},
+		RBACManager: kubernetes.NewRBACManager(mgr.GetClient(), mgr.GetScheme()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Component")
 		os.Exit(1)

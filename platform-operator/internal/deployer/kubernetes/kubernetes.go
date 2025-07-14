@@ -95,6 +95,16 @@ func (d *KubernetesDeployer) Deploy(ctx context.Context, component *platformv1al
 	if kubeSpec == nil {
 		return fmt.Errorf("missing expected Spec.Deployer.Kubernetes in the CR for component %s", component.Name)
 	}
+	labels := map[string]string{
+		"app.kubernetes.io/name":   component.Labels["app.kubernetes.io/name"],
+		"app.kubernetes.io/partOf": component.Name,
+	}
+	rbacConfig := GetComponentRBACConfig(namespace, component.Name, labels)
+	rbacManager := NewRBACManager(d.Client, d.Scheme)
+	if err := rbacManager.CreateRBACObjects(ctx, rbacConfig, component); err != nil {
+		logger.Error(err, "failed to create RBAC objects")
+		return fmt.Errorf("failed to create RBAC objects: %w", err)
+	}
 
 	// Determine deployment strategy based on ImageSpec or ManifestSpec
 	if kubeSpec.ImageSpec != nil {
@@ -245,8 +255,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					// Uncomment when using SA per Component
-					// ServiceAccountName: "<Whatever>",
+					ServiceAccountName: component.Name,
 					//InitContainers: []corev1.Container{
 					//	{},
 					//},
