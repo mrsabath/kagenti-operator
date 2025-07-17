@@ -256,9 +256,64 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: component.Name,
-					//InitContainers: []corev1.Container{
-					//	{},
-					//},
+					InitContainers: []corev1.Container{
+						{
+							Name:            "kagenti-client-registration",
+							Image:           "kagenti-client-registration:latest",
+							ImagePullPolicy: corev1.PullPolicy(kubeSpec.ImageSpec.ImagePullPolicy),
+							Resources:       component.Spec.Deployer.Kubernetes.Resources,
+							Env: []corev1.EnvVar{
+								{
+									Name: "KEYCLOAK_URL",
+									ValueFrom: &corev1.EnvVarSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "environments",
+											},
+											Key: "KEYCLOAK_URL",
+										},
+									},
+								},
+								{
+									Name: "KEYCLOAK_REALM",
+									ValueFrom: &corev1.EnvVarSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "environments",
+											},
+											Key: "KEYCLOAK_REALM",
+										},
+									},
+								},
+								{
+									Name: "KEYCLOAK_ADMIN_USERNAME",
+									ValueFrom: &corev1.EnvVarSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "environments",
+											},
+											Key: "KEYCLOAK_ADMIN_USERNAME",
+										},
+									},
+								},
+								{
+									Name: "KEYCLOAK_ADMIN_PASSWORD",
+									ValueFrom: &corev1.EnvVarSource{
+										ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "environments",
+											},
+											Key: "KEYCLOAK_ADMIN_PASSWORD",
+										},
+									},
+								},
+								{
+									Name:  "CLIENT_NAME",
+									Value: namespace + "/" + component.Name,
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:            component.Name,
