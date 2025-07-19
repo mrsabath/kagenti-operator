@@ -235,7 +235,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 	if d.EnableClientRegistration {
 		initContainers = append(initContainers, corev1.Container{
 			Name:            "kagenti-client-registration",
-			Image:           "kagenti-client-registration:latest",
+			Image:           "ghcr.io/kagenti/kagenti-client-registration:latest",
 			ImagePullPolicy: corev1.PullPolicy(kubeSpec.ImageSpec.ImagePullPolicy),
 			Resources:       component.Spec.Deployer.Kubernetes.Resources,
 			Env: []corev1.EnvVar{
