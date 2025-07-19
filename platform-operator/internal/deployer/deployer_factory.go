@@ -45,7 +45,7 @@ func NewDeployerFactory(client client.Client, log logr.Logger, scheme *runtime.S
 		Log:    log,
 		Scheme: scheme,
 	}
-	factory.KubeDeployer = kubernetes.NewKubernetesDeployer(client, log, scheme)
+	factory.KubeDeployer = kubernetes.NewKubernetesDeployer(client, log, scheme, true)
 	factory.HelmDeployer = helm.NewHelmDeployer(client, log, scheme)
 	factory.OLMDeployer = olm.NewOLMDeployer(client, log, scheme)
 
