@@ -49,18 +49,20 @@ var _ types.ComponentDeployer = (*KubernetesDeployer)(nil)
 
 type KubernetesDeployer struct {
 	client.Client
-	Scheme        *runtime.Scheme
-	Log           logr.Logger
-	StatusChecker StatusChecker
+	Scheme                   *runtime.Scheme
+	Log                      logr.Logger
+	StatusChecker            StatusChecker
+	EnableClientRegistration bool
 }
 
-func NewKubernetesDeployer(client client.Client, log logr.Logger, scheme *runtime.Scheme) *KubernetesDeployer {
+func NewKubernetesDeployer(client client.Client, log logr.Logger, scheme *runtime.Scheme, enableClientRegistration bool) *KubernetesDeployer {
 	log.Info("NewKubernetesDeployer -------------- ")
 	return &KubernetesDeployer{
-		Client:        client,
-		Log:           log,
-		Scheme:        scheme,
-		StatusChecker: *NewStatusChecker(client, log),
+		Client:                   client,
+		Log:                      log,
+		Scheme:                   scheme,
+		StatusChecker:            *NewStatusChecker(client, log),
+		EnableClientRegistration: enableClientRegistration,
 	}
 }
 func (b *KubernetesDeployer) GetName() string {
@@ -229,6 +231,65 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 			labels[k] = v
 		}
 	}
+	initContainers := []corev1.Container{}
+	if d.EnableClientRegistration {
+		initContainers = append(initContainers, corev1.Container{
+			Name:            "kagenti-client-registration",
+			Image:           "ghcr.io/kagenti/kagenti-client-registration:latest",
+			ImagePullPolicy: corev1.PullPolicy(kubeSpec.ImageSpec.ImagePullPolicy),
+			Resources:       component.Spec.Deployer.Kubernetes.Resources,
+			Env: []corev1.EnvVar{
+				{
+					Name: "KEYCLOAK_URL",
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "environments",
+							},
+							Key: "KEYCLOAK_URL",
+						},
+					},
+				},
+				{
+					Name: "KEYCLOAK_REALM",
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "environments",
+							},
+							Key: "KEYCLOAK_REALM",
+						},
+					},
+				},
+				{
+					Name: "KEYCLOAK_ADMIN_USERNAME",
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "environments",
+							},
+							Key: "KEYCLOAK_ADMIN_USERNAME",
+						},
+					},
+				},
+				{
+					Name: "KEYCLOAK_ADMIN_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "environments",
+							},
+							Key: "KEYCLOAK_ADMIN_PASSWORD",
+						},
+					},
+				},
+				{
+					Name:  "CLIENT_NAME",
+					Value: namespace + "/" + component.Name,
+				},
+			},
+		})
+	}
 	image := fmt.Sprintf("%s/%s:%s",
 		kubeSpec.ImageSpec.ImageRegistry,
 		kubeSpec.ImageSpec.Image,
@@ -256,9 +317,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: component.Name,
-					//InitContainers: []corev1.Container{
-					//	{},
-					//},
+					InitContainers:     initContainers,
 					Containers: []corev1.Container{
 						{
 							Name:            component.Name,
