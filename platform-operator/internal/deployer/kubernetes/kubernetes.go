@@ -231,6 +231,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 			labels[k] = v
 		}
 	}
+	clientName := namespace + "/" + component.Name
 	initContainers := []corev1.Container{}
 	if d.EnableClientRegistration {
 		initContainers = append(initContainers, corev1.Container{
@@ -285,7 +286,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 				},
 				{
 					Name:  "CLIENT_NAME",
-					Value: namespace + "/" + component.Name,
+					Value: clientName,
 				},
 			},
 		})
@@ -296,6 +297,14 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		kubeSpec.ImageSpec.ImageTag,
 	)
 	gracePeriodSeconds := int64(300)
+	mainEnvs := component.Spec.Deployer.Env
+	mainEnvs = append(mainEnvs,[]corev1.EnvVar{
+		 	{
+				Name:  "CLIENT_NAME",
+				Value: clientName,
+			}
+		}
+	)
 	deployment := &appsv1.Deployment{
 
 		ObjectMeta: metav1.ObjectMeta{
@@ -324,7 +333,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 							Image:           image,
 							ImagePullPolicy: corev1.PullPolicy(kubeSpec.ImageSpec.ImagePullPolicy),
 							Resources:       component.Spec.Deployer.Kubernetes.Resources,
-							Env:             component.Spec.Deployer.Env,
+							Env:             mainEnvs,
 							Ports:           containerPorts,
 						},
 					},
