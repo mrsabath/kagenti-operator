@@ -41,6 +41,7 @@ import (
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -231,12 +232,11 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 			labels[k] = v
 		}
 	}
-	clientName := namespace + "/" + component.Name
 	initContainers := []corev1.Container{}
 	if d.EnableClientRegistration {
 		initContainers = append(initContainers, corev1.Container{
 			Name:            "kagenti-client-registration",
-			Image:           "ghcr.io/kagenti/kagenti-client-registration:latest",
+			Image:           "kagenti-client-registration",
 			ImagePullPolicy: corev1.PullPolicy(kubeSpec.ImageSpec.ImagePullPolicy),
 			Resources:       component.Spec.Deployer.Kubernetes.Resources,
 			Env: []corev1.EnvVar{
@@ -247,7 +247,8 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: "environments",
 							},
-							Key: "KEYCLOAK_URL",
+							Key:      "KEYCLOAK_URL",
+							Optional: ptr.To(true),
 						},
 					},
 				},
@@ -286,7 +287,11 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 				},
 				{
 					Name:  "CLIENT_NAME",
-					Value: clientName,
+					Value: component.Name,
+				},
+				{
+					Name:  "NAMESPACE",
+					Value: namespace,
 				},
 			},
 		})
@@ -297,13 +302,16 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		kubeSpec.ImageSpec.ImageTag,
 	)
 	gracePeriodSeconds := int64(300)
+
+	clientId := namespace + "/" + component.Name
 	mainEnvs := component.Spec.Deployer.Env
 	mainEnvs = append(mainEnvs, []corev1.EnvVar{
 		{
 			Name:  "CLIENT_NAME",
-			Value: clientName,
+			Value: clientId,
 		},
 	}...)
+
 	deployment := &appsv1.Deployment{
 
 		ObjectMeta: metav1.ObjectMeta{
