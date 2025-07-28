@@ -298,13 +298,12 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 	)
 	gracePeriodSeconds := int64(300)
 	mainEnvs := component.Spec.Deployer.Env
-	mainEnvs = append(mainEnvs,[]corev1.EnvVar{
-		 	{
-				Name:  "CLIENT_NAME",
-				Value: clientName,
-			}
-		}
-	)
+	mainEnvs = append(mainEnvs, []corev1.EnvVar{
+		{
+			Name:  "CLIENT_NAME",
+			Value: clientName,
+		},
+	}...)
 	deployment := &appsv1.Deployment{
 
 		ObjectMeta: metav1.ObjectMeta{
