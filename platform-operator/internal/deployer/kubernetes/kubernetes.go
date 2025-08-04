@@ -345,6 +345,11 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 						},
 					},
 					TerminationGracePeriodSeconds: &gracePeriodSeconds,
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{
+							Name: "ghcr-secret",
+						},
+					},
 				},
 			},
 		},
