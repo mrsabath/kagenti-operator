@@ -4,7 +4,9 @@
 - 🚫 No bug fixes or security patches  
 - 🚫 No support provided
 - ✅ Repository remains available for reference
+- ✅ Recommended alternative is platform-operator available here: (https://github.com/kagenti/kagenti-operator/tree/main/platform-operator)
 
+  
 # Kubernetes Operator for BeeAI Agent Management and Build Automation 
 
 ## 1. Proposal
