@@ -1,3 +1,10 @@
+⚠️ END OF LIFE NOTICE ⚠️
+**This project has reached End of Life and will be archived at the end of Sept 2025
+- 🚫 No further updates or releases
+- 🚫 No bug fixes or security patches  
+- 🚫 No support provided
+- ✅ Repository remains available for reference
+
 # Kubernetes Operator for BeeAI Agent Management and Build Automation 
 
 ## 1. Proposal
