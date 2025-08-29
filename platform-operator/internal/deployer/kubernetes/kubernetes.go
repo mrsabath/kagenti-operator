@@ -109,8 +109,18 @@ func (d *KubernetesDeployer) Deploy(ctx context.Context, component *platformv1al
 		return fmt.Errorf("failed to create RBAC objects: %w", err)
 	}
 
-	// Determine deployment strategy based on ImageSpec or ManifestSpec
-	if kubeSpec.ImageSpec != nil {
+	// Determine deployment strategy based on PodSpectTemplate, ImageSpec or ManifestSpec
+	if kubeSpec.PodTemplateSpec != nil {
+		logger.Info("Deploying component from PodTemplateSpec")
+		if err := d.createDeployment(ctx, component, namespace); err != nil {
+			logger.Error(err, "Failed to create Deployment from PodTemplateSpec")
+			return fmt.Errorf("failed to create deployment from PodTemplateSpec: %w", err)
+		}
+		if err := d.createService(ctx, component, namespace); err != nil {
+			logger.Error(err, "Failed to create Service from PodTemplateSpec")
+			return fmt.Errorf("failed to create service from PodTemplateSpec: %w", err)
+		}
+	} else if kubeSpec.ImageSpec != nil {
 		logger.Info("Deploying component from ImageSpec")
 		if err := d.createDeployment(ctx, component, namespace); err != nil {
 			logger.Error(err, "Failed to create Deployment from ImageSpec")
@@ -232,12 +242,16 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 			labels[k] = v
 		}
 	}
+	imagePullPolicy := "IfNotPresent"
+	if kubeSpec.ImageSpec != nil {
+		imagePullPolicy = kubeSpec.ImageSpec.ImagePullPolicy
+	}
 	initContainers := []corev1.Container{}
 	if d.EnableClientRegistration {
 		initContainers = append(initContainers, corev1.Container{
 			Name:            "kagenti-client-registration",
 			Image:           "ghcr.io/kagenti/kagenti/client-registration:latest",
-			ImagePullPolicy: corev1.PullPolicy(kubeSpec.ImageSpec.ImagePullPolicy),
+			ImagePullPolicy: corev1.PullPolicy(imagePullPolicy),
 			Resources:       component.Spec.Deployer.Kubernetes.Resources,
 			Env: []corev1.EnvVar{
 				{
@@ -300,11 +314,14 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 			},
 		})
 	}
-	image := fmt.Sprintf("%s/%s:%s",
-		kubeSpec.ImageSpec.ImageRegistry,
-		kubeSpec.ImageSpec.Image,
-		kubeSpec.ImageSpec.ImageTag,
-	)
+	image := ""
+	if kubeSpec.ImageSpec != nil {
+		image = fmt.Sprintf("%s/%s:%s",
+			kubeSpec.ImageSpec.ImageRegistry,
+			kubeSpec.ImageSpec.Image,
+			kubeSpec.ImageSpec.ImageTag,
+		)
+	}
 	gracePeriodSeconds := int64(300)
 
 	clientId := namespace + "/" + component.Name
@@ -324,6 +341,56 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		},
 	}...)
 
+	template := corev1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: labels,
+		},
+		Spec: corev1.PodSpec{
+			ServiceAccountName: component.Name,
+			InitContainers:     initContainers,
+			Containers: []corev1.Container{
+				{
+					Name:            component.Name,
+					Image:           image,
+					ImagePullPolicy: corev1.PullPolicy(imagePullPolicy),
+					Resources:       component.Spec.Deployer.Kubernetes.Resources,
+					Env:             mainEnvs,
+					Ports:           containerPorts,
+					VolumeMounts:    component.Spec.Deployer.Kubernetes.VolumeMounts,
+				},
+			},
+			TerminationGracePeriodSeconds: &gracePeriodSeconds,
+			ImagePullSecrets: []corev1.LocalObjectReference{
+				{
+					Name: "ghcr-secret",
+				},
+			},
+			Volumes: component.Spec.Deployer.Kubernetes.Volumes,
+		},
+	}
+	// if user provided PodTemplateSpec, use it instead of the default one
+	if component.Spec.Deployer.Kubernetes.PodTemplateSpec != nil {
+		// Merge initContainers into the user provided PodTemplateSpec
+		template = *component.Spec.Deployer.Kubernetes.PodTemplateSpec
+		template.ObjectMeta = metav1.ObjectMeta{
+			Labels: labels,
+		}
+
+		if len(template.Spec.InitContainers) > 0 {
+			template.Spec.InitContainers = append(initContainers, template.Spec.InitContainers...)
+		} else {
+			template.Spec.InitContainers = initContainers
+		}
+		// Merge mainEnvs into each container's Env
+		for containerInx := range template.Spec.Containers {
+			if len(mainEnvs) > 0 {
+				template.Spec.Containers[containerInx].Env = append(mainEnvs, template.Spec.Containers[containerInx].Env...)
+			} else {
+				template.Spec.Containers[containerInx].Env = mainEnvs
+			}
+		}
+	}
+
 	deployment := &appsv1.Deployment{
 
 		ObjectMeta: metav1.ObjectMeta{
@@ -339,31 +406,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					"app.kubernetes.io/name": component.Name,
 				},
 			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
-				},
-				Spec: corev1.PodSpec{
-					ServiceAccountName: component.Name,
-					InitContainers:     initContainers,
-					Containers: []corev1.Container{
-						{
-							Name:            component.Name,
-							Image:           image,
-							ImagePullPolicy: corev1.PullPolicy(kubeSpec.ImageSpec.ImagePullPolicy),
-							Resources:       component.Spec.Deployer.Kubernetes.Resources,
-							Env:             mainEnvs,
-							Ports:           containerPorts,
-						},
-					},
-					TerminationGracePeriodSeconds: &gracePeriodSeconds,
-					ImagePullSecrets: []corev1.LocalObjectReference{
-						{
-							Name: "ghcr-secret",
-						},
-					},
-				},
-			},
+			Template: template,
 		},
 	}
 

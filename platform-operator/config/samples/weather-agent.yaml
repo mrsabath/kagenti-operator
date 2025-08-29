@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kagenti
+---
+apiVersion: kagenti.operator.dev/v1alpha1
+kind: Component
+metadata:
+  name: weather-agent
+  namespace: kagenti
+
+spec:
+  description: "A weather agent for fetching current weather in a given location"
+  suspend: false
+  agent:
+    build:
+      mode: dev
+      pipeline:
+        parameters:
+          - name: github-token-secret
+            value: "github-credentials"  
+          - name: repo-url
+            value: "github.com/kagenti/agent-examples.git"
+          - name: revision
+            value: "main"
+          - name: subfolder-path
+            value: "a2a/weather_service"
+          - name: image
+            value: "registry.cr-system.svc.cluster.local:5000/weather-agent:latest"
+      cleanupAfterBuild: true
+ 
+  deployer:
+    name: "weather-agent"
+    namespace: kagenti 
+    deployAfterBuild: true
+    kubernetes:
+      imageSpec:
+        image: "weather-agent"
+        imageTag: "latest"
+        imageRegistry: "registry.cr-system.svc.cluster.local:5000"
+        imagePullPolicy: "IfNotPresent"
+      containerPorts:
+        - name: "http"
+          containerPort: 8090
+          protocol: "TCP"
+      servicePorts:
+        - name: "http"
+          port: 8008
+          targetPort: 8090
+          protocol: "TCP"   
+      resources:
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+      serviceType: "ClusterIP"
+
+      volumes:
+        - name: config
+          configMap:
+            name: weather-config
+      volumeMounts:
+        - name: config
+          mountPath: /etc/config	    
+    env:
+      - name: HOST
+        value: "0.0.0.0"  
+      - name: LLM_API_BASE
+        value: "http://host.docker.internal:11434/v1"
+      - name: LLM_API_KEY
+        value: "dummy"  
+      - name: LLM_MODEL
+        value: "llama3.2:3b-instruct-fp16"
+

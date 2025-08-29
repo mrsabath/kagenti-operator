@@ -322,23 +322,33 @@ type ParameterSpec struct {
 
 // KubernetesSpec defines Kubernetes manifest deployment
 type KubernetesSpec struct {
-	// Union pattern: only one of the following Kubernetes deployment types should be specified.
+	// +optional
 	ImageSpec *ImageSpec `json:"imageSpec,omitempty"`
 	// +optional
 	Manifest *ManifestSource `json:"manifest,omitempty"`
+	// +optional
+	PodTemplateSpec *corev1.PodTemplateSpec `json:"podTemplateSpec,omitempty"`
 
 	// Resources is the compute resources required by the container
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// +optional
+	Replicas *int32 `json:"replicas,omitempty"`
 
+	// ContainerPorts defines the ports to expose from the container
+	// +optional
 	ContainerPorts []corev1.ContainerPort `json:"containerPorts,omitempty"`
-
+	// +optional
 	ServicePorts []corev1.ServicePort `json:"servicePorts,omitempty"`
 
 	// ServiceType is the type of service to create
 	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
 	// +optional
 	ServiceType string `json:"serviceType,omitempty"`
+	// +optional
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
+	// +optional
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
 type ManifestSource struct {
