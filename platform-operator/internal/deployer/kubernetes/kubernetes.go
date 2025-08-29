@@ -290,6 +290,10 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					Value: component.Name,
 				},
 				{
+					Name:  "CLIENT_ID",
+					Value: "spiffe://localtest.me/sa/" + component.Name,
+				},
+				{
 					Name:  "NAMESPACE",
 					Value: namespace,
 				},
@@ -309,6 +313,14 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		{
 			Name:  "CLIENT_NAME",
 			Value: clientId,
+		},
+		{
+			Name:  "CLIENT_ID",
+			Value: "spiffe://localtest.me/sa/" + component.Name,
+		},
+		{
+			Name:  "NAMESPACE",
+			Value: namespace,
 		},
 	}...)
 
