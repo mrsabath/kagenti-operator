@@ -1,12 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kaniko-docker-build-step
+  name: kaniko-docker-build-step-local
   namespace: kagenti-system  
   labels:
     kagenti.operator.dev/tekton: step 
 data:
-
   task-spec.yaml: |
     params:
       - name: DOCKERFILE
@@ -25,8 +24,8 @@ data:
         description: Path to the subfolder to use as build context
       - name: registry-secret
         type: string
-        description: Name of the secret containing registry credentials
-        default: "ghcr-token"
+        description: Name of the secret containing registry credentials (unused for local)
+        default: ""
     steps:
       - name: docker-build
         image: gcr.io/kaniko-project/executor:v1.9.1
@@ -36,19 +35,7 @@ data:
           - --destination=$(params.image)
           - --skip-tls-verify=$(params.SKIP_TLS_VERIFY)
           - --verbosity=trace
-        env:
-          - name: DOCKER_CONFIG
-            value: /kaniko/.docker
-        volumeMounts:
-          - name: docker-config
-            mountPath: /kaniko/.docker
-            readOnly: true
-    volumes:
-      - name: docker-config
-        secret:
-          secretName: $(params.registry-secret)
-          items:
-          - key: .dockerconfigjson
-            path: config.json
+        # No volumeMounts or DOCKER_CONFIG for local registry
+    # No volumes section for local registry
     workspaces:
       - name: source
