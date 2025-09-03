@@ -22,10 +22,6 @@ data:
       - name: subfolder-path
         type: string
         description: Path to the subfolder to use as build context
-      - name: registry-secret
-        type: string
-        description: Name of the secret containing registry credentials (unused for local)
-        default: ""
     steps:
       - name: docker-build
         image: gcr.io/kaniko-project/executor:v1.9.1
