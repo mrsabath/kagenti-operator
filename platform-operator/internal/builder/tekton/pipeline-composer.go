@@ -164,6 +164,7 @@ func (pc *PipelineComposer) createPipelineTasks(steps map[string]*StepDefinition
 					Params:     pc.getTaskParams(stepDefinition.Parameters),
 					Steps:      stepDefinition.TaskSpec.Steps,
 					Workspaces: stepDefinition.TaskSpec.Workspaces,
+					Volumes:    stepDefinition.TaskSpec.Volumes,
 				},
 			},
 			Workspaces: []tektonv1.WorkspacePipelineTaskBinding{

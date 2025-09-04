@@ -173,7 +173,7 @@ type BuildSpec struct {
 	// Mode specifies which pipeline template to use (dev, preprod, prod)
 	// This will be used to fetch the pipeline template from ConfigMap
 	// +optional
-	// +kubebuilder:validation:Enum=dev;preprod;prod;custom
+	// +kubebuilder:validation:Enum=dev;dev-local;dev-external;preprod;prod;custom
 	// +kubebuilder:default=dev
 	Mode string `json:"mode,omitempty"`
 }
