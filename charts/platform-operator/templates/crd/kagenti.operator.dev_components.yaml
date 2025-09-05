@@ -114,6 +114,8 @@ spec:
                           This will be used to fetch the pipeline template from ConfigMap
                         enum:
                         - dev
+                        - dev-local
+                        - dev-external
                         - preprod
                         - prod
                         - custom
@@ -10848,6 +10850,8 @@ spec:
                           This will be used to fetch the pipeline template from ConfigMap
                         enum:
                         - dev
+                        - dev-local
+                        - dev-external
                         - preprod
                         - prod
                         - custom
