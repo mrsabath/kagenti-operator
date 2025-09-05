@@ -355,6 +355,10 @@ func (v *ComponentCustomValidator) validateComponentSpec(component *kagentiopera
 	deployerErrors := v.validateDeployerSpec(&component.Spec.Deployer)
 	errors = append(errors, deployerErrors...)
 
+	// Validate deployer - only one deployment method should be specified
+	deployerErrors = v.validateKubernetesSpec(&component.Spec.Deployer)
+	errors = append(errors, deployerErrors...)
+
 	return errors
 }
 
@@ -378,5 +382,62 @@ func (v *ComponentCustomValidator) validateDeployerSpec(deployer *kagentioperato
 	} else if deployerCount > 1 {
 		errors = append(errors, "only one deployer method can be specified (helm, kubernetes, and olm are mutually exclusive)")
 	}
+	return errors
+}
+
+// validateDeployerSpec validates the DeployerSpec for mutually exclusive deployment methods
+func (v *ComponentCustomValidator) validateKubernetesSpec(deployer *kagentioperatordevv1alpha1.DeployerSpec) []string {
+	var errors []string
+
+	kubeDeployCount := 0
+	if deployer.Kubernetes.ImageSpec != nil {
+		kubeDeployCount++
+	}
+	if deployer.Kubernetes.Manifest != nil {
+		kubeDeployCount++
+	}
+	if deployer.Kubernetes.PodTemplateSpec != nil {
+		kubeDeployCount++
+	}
+
+	if kubeDeployCount == 0 {
+		errors = append(errors, "exactly one kubernetes deployment method must be specified (image, manifest, or podTemplateSpec)")
+	} else if kubeDeployCount > 1 {
+		errors = append(errors, "only one kubernetes deployer method can be specified ( image, manifest, or podTemplateSpec are mutually exclusive)")
+	}
+	// If PodTemplateSpec is used, ensure other fields (except Replicas) are not specified
+	if deployer.Kubernetes.PodTemplateSpec != nil {
+		var conflictingFields []string
+
+		// Check for conflicting resource specifications
+		if deployer.Kubernetes.Resources.Limits != nil || deployer.Kubernetes.Resources.Requests != nil {
+			conflictingFields = append(conflictingFields, "resources")
+		}
+
+		if len(deployer.Kubernetes.ContainerPorts) > 0 {
+			conflictingFields = append(conflictingFields, "containerPorts")
+		}
+
+		if len(deployer.Kubernetes.ServicePorts) > 0 {
+			conflictingFields = append(conflictingFields, "servicePorts")
+		}
+
+		if deployer.Kubernetes.ServiceType != "" {
+			conflictingFields = append(conflictingFields, "serviceType")
+		}
+
+		if len(deployer.Kubernetes.Volumes) > 0 {
+			conflictingFields = append(conflictingFields, "volumes")
+		}
+
+		if len(deployer.Kubernetes.VolumeMounts) > 0 {
+			conflictingFields = append(conflictingFields, "volumeMounts")
+		}
+
+		if len(conflictingFields) > 0 {
+			errors = append(errors, fmt.Sprintf("when PodTemplateSpec is specified, the following fields should be omitted (define them in PodTemplateSpec instead): %v. Only 'replicas' field is allowed alongside PodTemplateSpec", conflictingFields))
+		}
+	}
+
 	return errors
 }

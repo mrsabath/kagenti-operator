@@ -321,24 +321,41 @@ type ParameterSpec struct {
 }
 
 // KubernetesSpec defines Kubernetes manifest deployment
+// +kubebuilder:validation:XValidation:rule="[has(self.imageSpec), has(self.manifest), has(self.podTemplateSpec)].filter(x, x).size() == 1",message="exactly one of imageSpec, manifest, or podTemplateSpec must be specified"
 type KubernetesSpec struct {
-	// Union pattern: only one of the following Kubernetes deployment types should be specified.
+	// +optional
 	ImageSpec *ImageSpec `json:"imageSpec,omitempty"`
 	// +optional
 	Manifest *ManifestSource `json:"manifest,omitempty"`
+	// PodTemplateSpec provides complete control over Pod specification.
+	// When specified, this field takes precedence over all other configuration
+	// fields except Replicas. All other fields (ImageSpec, Resources, ContainerPorts,
+	// ServicePorts, ServiceType, Volumes, VolumeMounts) should be omitted
+	// as they will be ignored in favor of the PodTemplateSpec configuration.
+	// Mutually exclusive with ImageSpec and Manifest deployment modes.
+	// +optional
+	PodTemplateSpec *corev1.PodTemplateSpec `json:"podTemplateSpec,omitempty"`
 
 	// Resources is the compute resources required by the container
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// +optional
+	Replicas *int32 `json:"replicas,omitempty"`
 
+	// ContainerPorts defines the ports to expose from the container
+	// +optional
 	ContainerPorts []corev1.ContainerPort `json:"containerPorts,omitempty"`
-
+	// +optional
 	ServicePorts []corev1.ServicePort `json:"servicePorts,omitempty"`
 
 	// ServiceType is the type of service to create
 	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
 	// +optional
 	ServiceType string `json:"serviceType,omitempty"`
+	// +optional
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
+	// +optional
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
 type ManifestSource struct {

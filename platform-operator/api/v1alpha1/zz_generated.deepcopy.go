@@ -503,7 +503,17 @@ func (in *KubernetesSpec) DeepCopyInto(out *KubernetesSpec) {
 		*out = new(ManifestSource)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.PodTemplateSpec != nil {
+		in, out := &in.PodTemplateSpec, &out.PodTemplateSpec
+		*out = new(v1.PodTemplateSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	in.Resources.DeepCopyInto(&out.Resources)
+	if in.Replicas != nil {
+		in, out := &in.Replicas, &out.Replicas
+		*out = new(int32)
+		**out = **in
+	}
 	if in.ContainerPorts != nil {
 		in, out := &in.ContainerPorts, &out.ContainerPorts
 		*out = make([]v1.ContainerPort, len(*in))
@@ -512,6 +522,20 @@ func (in *KubernetesSpec) DeepCopyInto(out *KubernetesSpec) {
 	if in.ServicePorts != nil {
 		in, out := &in.ServicePorts, &out.ServicePorts
 		*out = make([]v1.ServicePort, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Volumes != nil {
+		in, out := &in.Volumes, &out.Volumes
+		*out = make([]v1.Volume, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.VolumeMounts != nil {
+		in, out := &in.VolumeMounts, &out.VolumeMounts
+		*out = make([]v1.VolumeMount, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

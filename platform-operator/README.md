@@ -210,6 +210,48 @@ spec:
         imagePullPolicy: "IfNotPresent"
         ...
 ```
+**Deploy from Docker Image using PodTemplateSpec**
+The PodTemplateSpec field provides complete control over Pod specification in Kubernetes deployments. When specified, it takes precedence over all other configuration fields except Replicas, enabling advanced deployment scenarios that require full access to Kubernetes Pod capabilities.
+```yaml
+apiVersion: kagenti.operator.dev/v1alpha1
+kind: Component
+metadata:
+  name: test-mcp-server
+  namespace: kagenti-system
+spec:
+  tool:
+  ...
+  deployer:
+    kubernetes:
+      replicas: 2
+      podTemplateSpec:
+        spec:
+          containers:
+          - name: tool
+            image: test-mcp-server
+        ...
+```
+***Validation Rules***
+
+The following validation rules apply when using PodTemplateSpec:
+
+`Mutual Exclusivity:` Only one of ImageSpec, Manifest, or PodTemplateSpec can be specified
+
+`Field Conflicts:` When PodTemplateSpec is specified, these fields must be omitted:
+- ImageSpec
+- Resources
+- ContainerPorts
+- ServicePorts
+- ServiceType
+- Volumes
+- VolumeMounts
+
+
+`Required Fields:` PodTemplateSpec.spec.containers must contain at least one container
+
+`Allowed Fields:` Only Replicas can be specified alongside PodTemplateSpec
+
+
 **Deploy from Helm Chart**
 This deployment strategy leverages Helm charts from public or private repositories to install complex applications with their dependencies. It's especially powerful for deploying established software packages like databases, monitoring tools, or other infrastructure components that benefit from Helm's templating and configuration management capabilities. You can customize deployments through chart parameters while letting Helm handle the resource orchestration and lifecycle management.
 ```yaml 
