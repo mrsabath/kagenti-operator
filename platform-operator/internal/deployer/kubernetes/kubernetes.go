@@ -109,7 +109,7 @@ func (d *KubernetesDeployer) Deploy(ctx context.Context, component *platformv1al
 		return fmt.Errorf("failed to create RBAC objects: %w", err)
 	}
 
-	// Determine deployment strategy based on PodSpectTemplate, ImageSpec or ManifestSpec
+	// Determine deployment strategy based on PodTemplateSpec, ImageSpec or ManifestSpec
 	if kubeSpec.PodTemplateSpec != nil {
 		logger.Info("Deploying component from PodTemplateSpec")
 		if err := d.createDeployment(ctx, component, namespace); err != nil {

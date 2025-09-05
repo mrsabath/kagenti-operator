@@ -56,15 +56,6 @@ spec:
     - name: GITHUB_SECRET_NAME
       value: github-token-secret
     kubernetes:
-      containerPorts:
-      - containerPort: 8000
-        name: http
-        protocol: TCP
-      imageSpec:
-        image: weather-service
-        imagePullPolicy: Always
-        imageRegistry: registry.cr-system.svc.cluster.local:5000
-        imageTag: v0.0.1
       resources:
         limits:
           cpu: 500m
@@ -72,11 +63,23 @@ spec:
         requests:
           cpu: 100m
           memory: 256Mi
-      servicePorts:
-      - name: http
-        port: 8000
-        protocol: TCP
-        targetPort: 8000
+      podTemplateSpec:
+        spec:
+          containers:
+          - name: agent
+            image: registry.cr-system.svc.cluster.local:5000/weather-service:v0.0.1
+            imagePullPolicy: Always
+            ports:
+              - containerPort: 8000
+                name: http
+                protocol: TCP
+            volumeMounts:
+              - name: config
+                mountPath: /etc/config
+          volumes:
+          - name: config
+            configMap:
+              name: environments
     name: weather-service
     namespace: kagenti
   description: Agent 'weather-service' built from UI.
