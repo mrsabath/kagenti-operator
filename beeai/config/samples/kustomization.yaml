@@ -1,5 +1,0 @@
-## Append samples of your project ##
-resources:
-- beeai_v1_agent.yaml
-- beeai_v1_agentbuild.yaml
-# +kubebuilder:scaffold:manifestskustomizesamples

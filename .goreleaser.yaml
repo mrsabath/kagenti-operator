@@ -1,20 +1,5 @@
 version: 2
 builds:
-- id: "beeai"
-  dir: beeai
-  main: ./cmd
-  binary: ./bin/beeai-manager
-  goos:
-  - linux
-  - darwin
-  goarch:
-  - amd64
-  - arm64
-  ignore:
-  - goos: darwin
-    goarch: ppc64le
-  env:
-  - CGO_ENABLED=0
 - id: "platform-operator" 
   dir: platform-operator  
   main: ./cmd  
@@ -31,24 +16,8 @@ builds:
   env: 
   - CGO_ENABLED=0  
 archives:
-- ids: [beeai,platform-operator]
+- ids: [platform-operator]
 kos:
-  - id: "beeai-ko"       
-    repositories: 
-    - ghcr.io/kagenti/kagenti-operator/beeai-operator
-    working_dir: beeai
-    main: ./cmd
-    build: beeai
-    tags:
-    - '{{.Version}}'
-    - latest
-    bare: true
-    preserve_import_paths: false
-    platforms:
-    - linux/amd64
-    - linux/arm64
-    env:
-    - CGO_ENABLED=0
   - id: "platform-operator-ko"
     repositories:
     - ghcr.io/kagenti/kagenti-operator/platform-operator 
