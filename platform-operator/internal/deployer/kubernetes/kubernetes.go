@@ -391,7 +391,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 				},
 				{
 					Name:            "kagenti-client-registration",
-					Image:           "kagenti-client-registration-test:latest",
+					Image:           "ghcr.io/kagenti/kagenti/client-registration:latest",
 					ImagePullPolicy: corev1.PullPolicy(imagePullPolicy),
 					// Wait until /opt/jwt_svid.token appears, then exec
 					Command: []string{
@@ -461,6 +461,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
+							// This is how client registration accesses the SVID
 							Name:      "svid-output",
 							MountPath: "/opt",
 						},
