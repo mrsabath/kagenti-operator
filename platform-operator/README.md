@@ -303,7 +303,7 @@ The Platform controller is responsible for:
 This approach ensures that Components are deployed in a controlled, consistent manner with proper metadata and build configurations, while maintaining the flexibility of individual Component deployment strategies.
 
 ```yaml
-aapiVersion: kagenti.operator.dev/v1alpha1
+apiVersion: kagenti.operator.dev/v1alpha1
 kind: Platform
 metadata:
   name: ai-development-platform
