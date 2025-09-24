@@ -450,14 +450,6 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 							Name:  "CLIENT_NAME",
 							Value: component.Name,
 						},
-						{
-							Name:  "CLIENT_ID",
-							Value: "spiffe://localtest.me/sa/" + component.Name,
-						},
-						{
-							Name:  "NAMESPACE",
-							Value: namespace,
-						},
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
