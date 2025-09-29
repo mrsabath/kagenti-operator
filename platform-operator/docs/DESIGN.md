@@ -211,7 +211,7 @@ spec:
 ```      
 
 ### 5.2 Tool Component
-Tool components are services that agents can utilize to interact with external systems or provide specific functionalities, such as Model Context Protocal Servers(MCP).
+Tool components are services that agents can utilize to interact with external systems or provide specific functionalities, such as Model Context Protocol Servers (MCP).
 
 Example:
 
@@ -264,7 +264,7 @@ spec:
   
 ```
 ### 5.3 Infrastructure Component
-Infrastructure components provide the foundational services required by agents and tools, such as databases, caches, observability tools, metrics etc. Such services can be deloyed with Helm charts or OLM.
+Infrastructure components provide the foundational services required by agents and tools, such as databases, caches, observability tools, metrics etc. Such services can be deployed with Helm charts or OLM.
 
 Example with Helm:
 
@@ -359,7 +359,7 @@ type ComponentSpec struct {
     Description string `json:"description,omitempty"`
 
     // Deployment strategy for the component: Helm, K8s manifest(deployments), OLM (operators)
-    Deplopyer DeployerSpec `json:"deployerSpec"`
+    Deployer DeployerSpec `json:"deployer"`
 
     // Dependencies defines other components this agent depends on
     // +optional
