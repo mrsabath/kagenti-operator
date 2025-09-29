@@ -1,6 +1,4 @@
 ## Kagenti Operator ##
-**An easy way to deploy and manage AI Agents in Kubernetes**
-
 
 The `Kagenti Operator` is a Kubernetes operator that manages AI Agent lifecycle supporting deployments from existing images or from source code. 
 
@@ -52,6 +50,7 @@ The operator is designed with two Custom Resources (CRs) to seperate build conce
  - **KagentiAgentBuild CR** Manages the build phase, orchestrating Tekton Pipelines to build container images from source 
 
 ### Documentation ###
+- [Design](docs/operator.md)
 - API Reference
 - Installation Guide
 - User Guide
