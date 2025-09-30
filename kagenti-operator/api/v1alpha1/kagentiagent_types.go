@@ -33,7 +33,7 @@ type KagentiAgentSpec struct {
 	// as they will be ignored in favor of the PodTemplateSpec configuration.
 	// Mutually exclusive with ImageSpec deployment mode.
 	// +required
-	PodTemplateSpec *corev1.PodTemplateSpec `json:"podTemplateSpec,omitempty"`
+	PodTemplateSpec *corev1.PodTemplateSpec `json:"podTemplateSpec"`
 	// Replicas is the desired number of agent replicas.
 	// +optional
 	// +kubebuilder:default=1
