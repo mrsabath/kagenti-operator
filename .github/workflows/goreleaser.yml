@@ -27,6 +27,9 @@ jobs:
       with:
         go-version: v1.22
 
+    - name: Tidy Go Modules
+      run: go mod tidy
+    
     - name: Delete non-semver tags
       run: 'git tag -d $(git tag -l | grep -v "^v")'
 
