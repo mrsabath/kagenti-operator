@@ -7,4 +7,23 @@ layout:
 - go.kubebuilder.io/v4
 projectName: kagenti-operator
 repo: github.com/kagenti/operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kagenti.dev
+  group: agent
+  kind: KagentiAgent
+  path: github.com/kagenti/operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kagenti.dev
+  group: agent
+  kind: KagentiAgentBuild
+  path: github.com/kagenti/operator/api/v1alpha1
+  version: v1alpha1
 version: "3"
