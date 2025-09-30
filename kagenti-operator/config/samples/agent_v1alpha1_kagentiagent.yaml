@@ -1,0 +1,9 @@
+apiVersion: agent.kagenti.dev/v1alpha1
+kind: KagentiAgent
+metadata:
+  labels:
+    app.kubernetes.io/name: kagenti-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: kagentiagent-sample
+spec:
+  # TODO(user): Add fields here

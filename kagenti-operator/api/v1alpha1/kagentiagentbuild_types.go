@@ -1,0 +1,243 @@
+/*
+Copyright 2025.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1alpha1
+
+import (
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// KagentiAgentBuildSpec defines the desired state of KagentiAgentBuild.
+type KagentiAgentBuildSpec struct {
+	// SourceRepository is the Git repository URL
+	// +optional
+	SourceRepository string `json:"sourceRepository,omitempty"`
+
+	// SourceRevision is the Git revision (branch, tag, commit)
+	// +optional
+	SourceRevision string `json:"sourceRevision,omitempty"`
+
+	// SourceSubfolder is the folder within the repository containing the source
+	// +optional
+	SourceSubfolder string `json:"sourceSubfolder,omitempty"`
+
+	// RepoUser is the username in the Git repository containing the source
+	// +optional
+	RepoUser string `json:"repoUser,omitempty"`
+
+	// SourceCredentials is a reference to a secret containing Git credentials
+	// +optional
+	SourceCredentials *corev1.LocalObjectReference `json:"sourceCredentials,omitempty"`
+
+	// Pipeline specifies the pipeline configuration
+	// +optional
+	Pipeline PipelineSpec `json:"pipeline"`
+
+	// BuildArgs are arguments to pass to the build process
+	// +optional
+	BuildArgs []ParameterSpec `json:"buildArgs,omitempty"`
+
+	// BuildOutput specifies where to store build artifacts
+	// +optional
+	BuildOutput *BuildOutput `json:"buildOutput,omitempty"`
+
+	// CleanupAfterBuild indicates whether to automatically cleanup after build
+	// +optional
+	// +kubebuilder:default=true
+	CleanupAfterBuild bool `json:"cleanupAfterBuild,omitempty"`
+
+	// Mode specifies which pipeline template to use (dev, dev-local, dev-external, preprod, prod, custom)
+	// This will be used to fetch the pipeline template from ConfigMap
+	// +optional
+	// +kubebuilder:validation:Enum=dev;dev-local;dev-external;preprod;prod;custom
+	// +kubebuilder:default=dev
+	Mode string `json:"mode,omitempty"`
+}
+
+// PipelineSpec defines how the pipeline should be configured
+type PipelineSpec struct {
+	// Namespace is the namespace where the pipeline steps ConfigMaps are located
+	Namespace string `json:"namespace"`
+
+	// Steps is an ordered list of pipeline steps to execute
+	Steps []PipelineStepSpec `json:"steps"`
+
+	// Parameters contains additional parameters to pass to the pipeline
+	Parameters []ParameterSpec `json:"parameters,omitempty"`
+}
+
+// PipelineStepSpec defines a single step in the pipeline
+type PipelineStepSpec struct {
+	// Name is the identifier for the step
+	Name string `json:"name"`
+
+	// ConfigMap references the ConfigMap containing the step definition
+	ConfigMap string `json:"configMap"`
+
+	// Enabled indicates whether this step should be included in the pipeline
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Parameters contains step-specific parameters that override global parameters
+	// +optional
+	Parameters []ParameterSpec `json:"parameters,omitempty"`
+
+	// RequiredParameters lists parameter names that users must provide
+	// +optional
+	RequiredParameters []string `json:"requiredParameters,omitempty"`
+}
+
+// PipelineTemplate represents the structure stored in ConfigMaps
+// This is what gets stored in the ConfigMap and merged with user parameters
+type PipelineTemplate struct {
+	// Metadata about the template
+	Name        string `json:"name"`
+	Namespace   string `json:"namespace"`
+	Description string `json:"description"`
+
+	// Template steps with default parameters
+	Steps []PipelineStepTemplate `json:"steps"`
+
+	// Global template parameters that apply to all steps
+	// +optional
+	GlobalParameters []ParameterSpec `json:"globalParameters,omitempty"`
+
+	// Required user parameters that must be provided
+	// +optional
+	RequiredParameters []string `json:"requiredParameters,omitempty"`
+}
+
+// PipelineStepTemplate is a step in the template with default parameters
+type PipelineStepTemplate struct {
+	// Name is the identifier for the step
+	Name string `json:"name"`
+
+	// ConfigMap references the ConfigMap containing the step definition
+	ConfigMap string `json:"configMap"`
+
+	// Enabled indicates whether this step should be included by default
+	// +optional
+	// +kubebuilder:default=true
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// DefaultParameters contains default parameters for this step
+	// Users can override these by providing parameters with the same name
+	// +optional
+	DefaultParameters []ParameterSpec `json:"defaultParameters,omitempty"`
+
+	// RequiredParameters lists parameter names that users must provide
+	// +optional
+	RequiredParameters []string `json:"requiredParameters,omitempty"`
+
+	// Description explains what this step does
+	// +optional
+	Description string `json:"description,omitempty"`
+}
+
+// Parameter defines an argument
+type ParameterSpec struct {
+	// Name of the  argument
+	Name string `json:"name"`
+
+	// Value of the argument
+	Value string `json:"value"`
+
+	// Required indicates if this parameter must be provided by the user
+	// Only used in pipeline templates, not in user-provided parameters
+	// +optional
+	Required *bool `json:"required,omitempty"`
+
+	// Description provides help text for the parameter
+	// +optional
+	Description string `json:"description,omitempty"`
+}
+
+// BuildOutput defines where to store build artifacts
+type BuildOutput struct {
+	// Image is the name of the image to build
+	// +kubebuilder:validation:Required
+	Image string `json:"image"`
+
+	// ImageTag is the tag to apply to the built image
+	// +kubebuilder:validation:Required
+	ImageTag string `json:"imageTag"`
+
+	// ImageRegistry is the container registry where the image will be pushed
+	// +kubebuilder:validation:Required
+	ImageRegistry string `json:"imageRegistry"`
+
+	// ImageRepoCredentials is a reference to a secret containing registry credentials
+	// +optional
+	ImageRepoCredentials *corev1.LocalObjectReference `json:"sourceCredentials,omitempty"`
+}
+
+type LifecycleBuildPhase string
+
+const (
+	PhaseBuilding       LifecycleBuildPhase = "Building"
+	BuildPhaseSucceeded LifecycleBuildPhase = "Succeeded"
+	BuildPhaseFailed    LifecycleBuildPhase = "Failed"
+)
+
+// KagentiAgentBuildStatus defines the observed state of KagentiAgentBuild.
+type KagentiAgentBuildStatus struct {
+	// Current build phase: Pending, Building, Succeeded, Failed
+	Phase LifecycleBuildPhase `json:"phase,omitempty"`
+
+	// Build Message
+	Message string `json:"message,omitempty"`
+
+	// PipelineRun name
+	PipelineRunName string `json:"pipelineRunName,omitempty"`
+
+	// Last build time
+	LastBuildTime *metav1.Time `json:"lastBuildTime,omitempty"`
+
+	// pipeline completion time
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+
+	BuiltImage string `json:"builtImage,omitempty"`
+
+	// Conditions represent overall status
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+
+// KagentiAgentBuild is the Schema for the kagentiagentbuilds API.
+type KagentiAgentBuild struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   KagentiAgentBuildSpec   `json:"spec,omitempty"`
+	Status KagentiAgentBuildStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// KagentiAgentBuildList contains a list of KagentiAgentBuild.
+type KagentiAgentBuildList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []KagentiAgentBuild `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&KagentiAgentBuild{}, &KagentiAgentBuildList{})
+}

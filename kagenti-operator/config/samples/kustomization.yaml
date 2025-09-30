@@ -1,0 +1,5 @@
+## Append samples of your project ##
+resources:
+- agent_v1alpha1_kagentiagent.yaml
+- agent_v1alpha1_kagentiagentbuild.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples
