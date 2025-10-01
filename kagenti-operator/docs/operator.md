@@ -1,15 +1,15 @@
 # Kagenti Operator
-This document presents a proposal for a Kubernetes Operator to automate the lifecycle management of AI agents within a Kubernetes cluster. This operator will manage two Custom Resources (CRs): `KagentiAgent` and `KagentiAgentBuild`.
+This document presents a proposal for a Kubernetes Operator to automate the lifecycle management of AI agents within a Kubernetes cluster. This operator will manage two Custom Resources (CRs): `Agent` and `AgentBuild`.
 
-The `KagentiAgent` CR defines the desired state of a AI agent, including its container image, environment variables, and resource requirements. The operator will reconcile `KagentiAgent` resources by ensuring a corresponding Kubernetes Deployment and Service exist with the specified configurations.
+The `Agent` CR defines the desired state of a AI agent, including its container image, environment variables, and resource requirements. The operator will reconcile `Agent` resources by ensuring a corresponding Kubernetes Deployment and Service exist with the specified configurations.
 
-The `KagentiAgentBuild` CR defines the specifications for building and publishing a container image for a AI agent. Upon creation or update of an `KagentiAgentBuild` resource, the operator will trigger a Tekton pipeline to automate pulling source code, building a Docker image, and pushing it to a specified image registry. Secure access to private repositories is managed through a reference to a Kubernetes Secret containing a GitHub token. Once the build finishes, the controller reconcilling `KagentiAgentBuild` CR will create `KagentiAgent` CustomResource.
+The `AgentBuild` CR defines the specifications for building and publishing a container image for a AI agent. Upon creation or update of an `AgentBuild` resource, the operator will trigger a Tekton pipeline to automate pulling source code, building a Docker image, and pushing it to a specified image registry. Secure access to private repositories is managed through a reference to a Kubernetes Secret containing a GitHub token. Once the build finishes, the controller reconcilling `AgentBuild` CR will create `Agent` CustomResource.
 
 ## 2. Goals
 
-* Automate the creation and management of Kubernetes Deployments and Services based on `KagentiAgent` CR specifications for AI agents.
+* Automate the creation and management of Kubernetes Deployments and Services based on `Agent` CR specifications for AI agents.
 * Provide a declarative way to define and manage AI agents.
-* Automate the container image building and publishing process for BeeAI agents triggered by `KagentiAgentBuild` CRs.
+* Automate the container image building and publishing process for BeeAI agents triggered by `AgentBuild` CRs.
 * Integrate with Tekton Pipelines for the image building workflow, consisting of pull, build, and push tasks.
 * Securely manage GitHub repository access using a referenced Kubernetes Secret.
 * Lock down agent pods with read-only filesystem
@@ -41,20 +41,20 @@ graph TD;
         Operator[Operator] 
         style Operator fill:#ffe0b2,stroke:#fb8c00
 
-        KagentiAgentCRD["KagentiAgent CRD"] 
-        style KagentiAgentCRD fill:#e1f5fe,stroke:#039be5
+        AgentCRD["Agent CRD"] 
+        style AgentCRD fill:#e1f5fe,stroke:#039be5
 
-        KagentiAgentBuildCRD["KagentiAgentBuild CRD"]
-        style KagentiAgentBuildCRD fill:#fce4ec,stroke:#e91e63
+        AgentBuildCRD["AgentBuild CRD"]
+        style AgentBuildCRD fill:#fce4ec,stroke:#e91e63
 
-        Operator -- Reacts to --> KagentiAgentCRD
-        Operator -- Reacts to --> KagentiAgentBuildCRD
+        Operator -- Reacts to --> AgentCRD
+        Operator -- Reacts to --> AgentBuildCRD
 
-        KagentiAgentBuildCRD -->|Triggers| Tekton_Pipeline
-        KagentiAgentCRD --> |Creates| Service_Service[Service]
+        AgentBuildCRD -->|Triggers| Tekton_Pipeline
+        AgentCRD --> |Creates| Service_Service[Service]
         style Service_Service fill:#dcedc8,stroke:#689f38
 
-        KagentiAgentCRD --> |Creates| Deployment_Deployment[Deployment]
+        AgentCRD --> |Creates| Deployment_Deployment[Deployment]
         style Deployment_Deployment fill:#d1c4e9,stroke:#7e57c2
     end
 ```    
