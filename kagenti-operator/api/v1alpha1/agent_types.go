@@ -27,11 +27,6 @@ type AgentSpec struct {
 	// +optional
 	Description string `json:"description,omitempty"`
 	// PodTemplateSpec provides complete control over Pod specification.
-	// When specified, this field takes precedence over all other configuration
-	// fields except Replicas. All other fields (ImageSpec, Resources, ContainerPorts,
-	// ServicePorts, ServiceType, Volumes, VolumeMounts) should be omitted
-	// as they will be ignored in favor of the PodTemplateSpec configuration.
-	// Mutually exclusive with ImageSpec deployment mode.
 	// +required
 	PodTemplateSpec *corev1.PodTemplateSpec `json:"podTemplateSpec"`
 	// Replicas is the desired number of agent replicas.
@@ -59,7 +54,7 @@ const (
 
 // AgentDeploymentStatus represents the status of the agent deployment
 type DeploymentStatus struct {
-	// Current deployment phase: PhasePending, PhaseDeploying, PhaseReady, PhaseFailed
+	// Current deployment phase: PhaseDeploying, PhaseReady, PhaseFailed
 	Phase LifecyclePhase `json:"phase,omitempty"`
 	// Deployment message
 	DeploymentMessage string `json:"deploymentMessage,omitempty"`
