@@ -26,8 +26,8 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds
-  - kagentiagents
+  - Agentbuilds
+  - Agents
   verbs:
   - create
   - delete
@@ -39,15 +39,15 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds/finalizers
-  - kagentiagents/finalizers
+  - Agentbuilds/finalizers
+  - Agents/finalizers
   verbs:
   - update
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds/status
-  - kagentiagents/status
+  - Agentbuilds/status
+  - Agents/status
   verbs:
   - get
   - patch

@@ -21,8 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// KagentiAgentSpec defines the desired state of KagentiAgent.
-type KagentiAgentSpec struct {
+// AgentSpec defines the desired state of Agent.
+type AgentSpec struct {
 	// Description is a human-readable description of the agent
 	// +optional
 	Description string `json:"description,omitempty"`
@@ -40,8 +40,8 @@ type KagentiAgentSpec struct {
 	Replicas *int32 `json:"replicas,omitempty"`
 }
 
-// KagentiAgentStatus defines the observed state of KagentiAgent.
-type KagentiAgentStatus struct {
+// AgentStatus defines the observed state of Agent.
+type AgentStatus struct {
 	// Conditions represent overall status
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
@@ -74,24 +74,24 @@ type DeploymentStatus struct {
 // +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.deploymentStatus.phase",description="Deployment Phase"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
-// KagentiAgent is the Schema for the kagentiagents API.
-type KagentiAgent struct {
+// Agent is the Schema for the Agents API.
+type Agent struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KagentiAgentSpec   `json:"spec,omitempty"`
-	Status KagentiAgentStatus `json:"status,omitempty"`
+	Spec   AgentSpec   `json:"spec,omitempty"`
+	Status AgentStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// KagentiAgentList contains a list of KagentiAgent.
-type KagentiAgentList struct {
+// AgentList contains a list of Agent.
+type AgentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []KagentiAgent `json:"items"`
+	Items           []Agent `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&KagentiAgent{}, &KagentiAgentList{})
+	SchemeBuilder.Register(&Agent{}, &AgentList{})
 }

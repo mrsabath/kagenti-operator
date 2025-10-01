@@ -36,30 +36,30 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// KagentiAgentReconciler reconciles a KagentiAgent object
-type KagentiAgentReconciler struct {
+// AgentReconciler reconciles a Agent object
+type AgentReconciler struct {
 	client.Client
 	Scheme                   *runtime.Scheme
 	EnableClientRegistration bool
 }
 
 var (
-	logger = ctrl.Log.WithName("controller").WithName("KagentiAgent")
+	logger = ctrl.Log.WithName("controller").WithName("Agent")
 )
 
 const AGENT_FINALIZER = "agent.kagenti.dev/finalizer"
 
-// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=kagentiagents,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=kagentiagents/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=kagentiagents/finalizers,verbs=update
+// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=Agents,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=Agents/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=Agents/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 
-func (r *KagentiAgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger.Info("Reconciling KagentiAgent", "namespacedName", req.NamespacedName)
+func (r *AgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger.Info("Reconciling Agent", "namespacedName", req.NamespacedName)
 
-	agent := &agentv1alpha1.KagentiAgent{}
+	agent := &agentv1alpha1.Agent{}
 	err := r.Get(ctx, req.NamespacedName, agent)
 	if err != nil {
 		// The object might have been deleted after the reconcile request.
@@ -91,14 +91,14 @@ func (r *KagentiAgentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	return ctrl.Result{}, nil
 }
 
-func (r *KagentiAgentReconciler) reconcileAgentDeployment(ctx context.Context, agent *agentv1alpha1.KagentiAgent) (ctrl.Result, error) {
+func (r *AgentReconciler) reconcileAgentDeployment(ctx context.Context, agent *agentv1alpha1.Agent) (ctrl.Result, error) {
 	deploymentName := agent.Name
 	deployment := &appsv1.Deployment{}
 
 	err := r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: agent.Namespace}, deployment)
 	if err != nil && errors.IsNotFound(err) {
 		deployment = r.createDeploymentForAgent(agent)
-		logger.Info("Creating KagentiAgent Deployment", "deploymentName", deploymentName)
+		logger.Info("Creating Agent Deployment", "deploymentName", deploymentName)
 
 		data, err := json.MarshalIndent(deployment, "", "  ")
 		if err != nil {
@@ -108,26 +108,26 @@ func (r *KagentiAgentReconciler) reconcileAgentDeployment(ctx context.Context, a
 		logger.Info("Deployment spec: " + string(data))
 
 		if err := controllerutil.SetControllerReference(agent, deployment, r.Scheme); err != nil {
-			logger.Error(err, "Unable to set controller reference for KagentiAgent Deployment")
+			logger.Error(err, "Unable to set controller reference for Agent Deployment")
 			return ctrl.Result{}, err
 		}
 
 		if err := r.Create(ctx, deployment); err != nil {
-			logger.Error(err, "Unable to create KagentiAgent Deployment")
+			logger.Error(err, "Unable to create Agent Deployment")
 			return ctrl.Result{}, err
 		}
 
 		if err := r.initializeComponentStatus(ctx, agent); err != nil {
-			logger.Error(err, "Unable to initialize KagentiAgent status after deployment creation")
+			logger.Error(err, "Unable to initialize Agent status after deployment creation")
 			return ctrl.Result{}, err
 		}
 		//		if err := r.Status().Update(ctx, agent); err != nil {
-		//			logger.Error(err, "Unable to update KagentiAgent status after deployment creation")
+		//			logger.Error(err, "Unable to update Agent status after deployment creation")
 		//			return ctrl.Result{}, err
 		//		}
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	} else if err != nil {
-		logger.Error(err, "Failed to get KagentiAgent Deployment")
+		logger.Error(err, "Failed to get Agent Deployment")
 		return ctrl.Result{}, err
 	}
 
@@ -162,7 +162,7 @@ func (r *KagentiAgentReconciler) reconcileAgentDeployment(ctx context.Context, a
 			})
 
 			if err := r.Status().Update(ctx, agent); err != nil {
-				logger.Error(err, "Failed to update KagentiAgent status for not ready deployment")
+				logger.Error(err, "Failed to update Agent status for not ready deployment")
 				return ctrl.Result{}, err
 			}
 		}
@@ -171,7 +171,7 @@ func (r *KagentiAgentReconciler) reconcileAgentDeployment(ctx context.Context, a
 
 	return ctrl.Result{}, nil
 }
-func (r *KagentiAgentReconciler) initializeComponentStatus(ctx context.Context, agent *agentv1alpha1.KagentiAgent) error {
+func (r *AgentReconciler) initializeComponentStatus(ctx context.Context, agent *agentv1alpha1.Agent) error {
 	now := metav1.Now()
 	agent.Status.Conditions = []metav1.Condition{
 		{
@@ -191,7 +191,7 @@ func (r *KagentiAgentReconciler) initializeComponentStatus(ctx context.Context, 
 
 	return r.Client.Status().Update(ctx, agent)
 }
-func (r *KagentiAgentReconciler) createDeploymentForAgent(agent *agentv1alpha1.KagentiAgent) *appsv1.Deployment {
+func (r *AgentReconciler) createDeploymentForAgent(agent *agentv1alpha1.Agent) *appsv1.Deployment {
 	labels := map[string]string{
 		"app":        agent.Name,
 		"controller": "agent-operator",
@@ -372,7 +372,7 @@ func hasVolume(podSpec *corev1.PodSpec, volumeName string) bool {
 	return false
 }
 
-func (r *KagentiAgentReconciler) reconcileAgentService(ctx context.Context, agent *agentv1alpha1.KagentiAgent) (ctrl.Result, error) {
+func (r *AgentReconciler) reconcileAgentService(ctx context.Context, agent *agentv1alpha1.Agent) (ctrl.Result, error) {
 	serviceName := agent.Name + "-service"
 	service := &corev1.Service{}
 
@@ -401,7 +401,7 @@ func (r *KagentiAgentReconciler) reconcileAgentService(ctx context.Context, agen
 	return ctrl.Result{}, nil
 }
 
-func (r *KagentiAgentReconciler) createServiceForAgent(agent *agentv1alpha1.KagentiAgent) *corev1.Service {
+func (r *AgentReconciler) createServiceForAgent(agent *agentv1alpha1.Agent) *corev1.Service {
 	labels := map[string]string{
 		"app":        agent.Name,
 		"controller": "agent-operator",
@@ -426,16 +426,16 @@ func (r *KagentiAgentReconciler) createServiceForAgent(agent *agentv1alpha1.Kage
 	}
 }
 
-func (r *KagentiAgentReconciler) handleDeletion(ctx context.Context, agent *agentv1alpha1.KagentiAgent) (ctrl.Result, error) {
+func (r *AgentReconciler) handleDeletion(ctx context.Context, agent *agentv1alpha1.Agent) (ctrl.Result, error) {
 	if controllerutil.ContainsFinalizer(agent, AGENT_FINALIZER) {
 		// Delete Deployment and associated Service objects
 		deployment := &appsv1.Deployment{}
 		deploymentName := agent.Name
 		err := r.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: agent.Namespace}, deployment)
 		if err == nil {
-			logger.Info("Deleting deployment for KagentiAgent", "deploymentName", deploymentName)
+			logger.Info("Deleting deployment for Agent", "deploymentName", deploymentName)
 			if err := r.Delete(ctx, deployment); err != nil && !errors.IsNotFound(err) {
-				logger.Error(err, "Failed to delete deployment for KagentiAgent", "deploymentName", deploymentName)
+				logger.Error(err, "Failed to delete deployment for Agent", "deploymentName", deploymentName)
 				return ctrl.Result{}, err
 			}
 		} else if !errors.IsNotFound(err) {
@@ -447,7 +447,7 @@ func (r *KagentiAgentReconciler) handleDeletion(ctx context.Context, agent *agen
 		serviceName := agent.Name
 		err = r.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: agent.Namespace}, service)
 		if err == nil {
-			logger.Info("Deleting service for KagentiAgent", "serviceName", serviceName)
+			logger.Info("Deleting service for Agent", "serviceName", serviceName)
 			if err := r.Delete(ctx, service); err != nil && !errors.IsNotFound(err) {
 				logger.Error(err, "Failed to delete service for Agent", "serviceName", serviceName)
 				return ctrl.Result{}, err
@@ -458,19 +458,19 @@ func (r *KagentiAgentReconciler) handleDeletion(ctx context.Context, agent *agen
 		}
 		controllerutil.RemoveFinalizer(agent, AGENT_FINALIZER)
 		if err := r.Update(ctx, agent); err != nil {
-			logger.Error(err, "Failed to remove finalizer from KagentiAgent")
+			logger.Error(err, "Failed to remove finalizer from Agent")
 			return ctrl.Result{}, err
 		}
-		logger.Info("Removed finalizer from KagentiAgent")
+		logger.Info("Removed finalizer from Agent")
 	}
 
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *KagentiAgentReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *AgentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&agentv1alpha1.KagentiAgent{}).
-		Named("kagentiagent").
+		For(&agentv1alpha1.Agent{}).
+		Named("Agent").
 		Complete(r)
 }

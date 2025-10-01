@@ -21,8 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// KagentiAgentBuildSpec defines the desired state of KagentiAgentBuild.
-type KagentiAgentBuildSpec struct {
+// AgentBuildSpec defines the desired state of AgentBuild.
+type AgentBuildSpec struct {
 	// SourceRepository is the Git repository URL
 	// +optional
 	SourceRepository string `json:"sourceRepository,omitempty"`
@@ -193,8 +193,8 @@ const (
 	BuildPhaseFailed    LifecycleBuildPhase = "Failed"
 )
 
-// KagentiAgentBuildStatus defines the observed state of KagentiAgentBuild.
-type KagentiAgentBuildStatus struct {
+// AgentBuildStatus defines the observed state of AgentBuild.
+type AgentBuildStatus struct {
 	// Current build phase: Pending, Building, Succeeded, Failed
 	Phase LifecycleBuildPhase `json:"phase,omitempty"`
 
@@ -220,24 +220,24 @@ type KagentiAgentBuildStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// KagentiAgentBuild is the Schema for the kagentiagentbuilds API.
-type KagentiAgentBuild struct {
+// AgentBuild is the Schema for the Agentbuilds API.
+type AgentBuild struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KagentiAgentBuildSpec   `json:"spec,omitempty"`
-	Status KagentiAgentBuildStatus `json:"status,omitempty"`
+	Spec   AgentBuildSpec   `json:"spec,omitempty"`
+	Status AgentBuildStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// KagentiAgentBuildList contains a list of KagentiAgentBuild.
-type KagentiAgentBuildList struct {
+// AgentBuildList contains a list of AgentBuild.
+type AgentBuildList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []KagentiAgentBuild `json:"items"`
+	Items           []AgentBuild `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&KagentiAgentBuild{}, &KagentiAgentBuildList{})
+	SchemeBuilder.Register(&AgentBuild{}, &AgentBuildList{})
 }
