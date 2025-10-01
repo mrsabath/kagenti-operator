@@ -23,59 +23,56 @@ import (
 
 // AgentBuildSpec defines the desired state of AgentBuild.
 type AgentBuildSpec struct {
-	// SourceRepository is the Git repository URL
-	// +optional
-	SourceRepository string `json:"sourceRepository,omitempty"`
-
-	// SourceRevision is the Git revision (branch, tag, commit)
-	// +optional
-	SourceRevision string `json:"sourceRevision,omitempty"`
-
-	// SourceSubfolder is the folder within the repository containing the source
-	// +optional
-	SourceSubfolder string `json:"sourceSubfolder,omitempty"`
-
-	// RepoUser is the username in the Git repository containing the source
-	// +optional
-	RepoUser string `json:"repoUser,omitempty"`
-
-	// SourceCredentials is a reference to a secret containing Git credentials
-	// +optional
-	SourceCredentials *corev1.LocalObjectReference `json:"sourceCredentials,omitempty"`
-
+	// Source specifies the source code related configuration
+	// +required
+	SourceSpec SourceSpec `json:"source"`
 	// Pipeline specifies the pipeline configuration
 	// +optional
 	Pipeline PipelineSpec `json:"pipeline"`
-
 	// BuildArgs are arguments to pass to the build process
 	// +optional
 	BuildArgs []ParameterSpec `json:"buildArgs,omitempty"`
-
 	// BuildOutput specifies where to store build artifacts
 	// +optional
 	BuildOutput *BuildOutput `json:"buildOutput,omitempty"`
-
 	// CleanupAfterBuild indicates whether to automatically cleanup after build
 	// +optional
 	// +kubebuilder:default=true
 	CleanupAfterBuild bool `json:"cleanupAfterBuild,omitempty"`
-
 	// Mode specifies which pipeline template to use (dev, dev-local, dev-external, preprod, prod, custom)
 	// This will be used to fetch the pipeline template from ConfigMap
 	// +optional
 	// +kubebuilder:validation:Enum=dev;dev-local;dev-external;preprod;prod;custom
 	// +kubebuilder:default=dev
 	Mode string `json:"mode,omitempty"`
+	// Metadata specifies labels and annotations to be added to the agent
+	// +optional
+	MetadataSpec `json:",inline"`
+}
+type SourceSpec struct {
+	// SourceRepository is the Git repository URL
+	// +optional
+	SourceRepository string `json:"sourceRepository,omitempty"`
+	// SourceRevision is the Git revision (branch, tag, commit)
+	// +optional
+	SourceRevision string `json:"sourceRevision,omitempty"`
+	// SourceSubfolder is the folder within the repository containing the source
+	// +optional
+	SourceSubfolder string `json:"sourceSubfolder,omitempty"`
+	// RepoUser is the username in the Git repository containing the source
+	// +optional
+	RepoUser string `json:"repoUser,omitempty"`
+	// SourceCredentials is a reference to a secret containing Git credentials
+	// +optional
+	SourceCredentials *corev1.LocalObjectReference `json:"sourceCredentials,omitempty"`
 }
 
 // PipelineSpec defines how the pipeline should be configured
 type PipelineSpec struct {
 	// Namespace is the namespace where the pipeline steps ConfigMaps are located
 	Namespace string `json:"namespace"`
-
 	// Steps is an ordered list of pipeline steps to execute
 	Steps []PipelineStepSpec `json:"steps"`
-
 	// Parameters contains additional parameters to pass to the pipeline
 	Parameters []ParameterSpec `json:"parameters,omitempty"`
 }
@@ -84,18 +81,14 @@ type PipelineSpec struct {
 type PipelineStepSpec struct {
 	// Name is the identifier for the step
 	Name string `json:"name"`
-
 	// ConfigMap references the ConfigMap containing the step definition
 	ConfigMap string `json:"configMap"`
-
 	// Enabled indicates whether this step should be included in the pipeline
 	// +optional
 	Enabled *bool `json:"enabled,omitempty"`
-
 	// Parameters contains step-specific parameters that override global parameters
 	// +optional
 	Parameters []ParameterSpec `json:"parameters,omitempty"`
-
 	// RequiredParameters lists parameter names that users must provide
 	// +optional
 	RequiredParameters []string `json:"requiredParameters,omitempty"`
@@ -108,14 +101,11 @@ type PipelineTemplate struct {
 	Name        string `json:"name"`
 	Namespace   string `json:"namespace"`
 	Description string `json:"description"`
-
 	// Template steps with default parameters
 	Steps []PipelineStepTemplate `json:"steps"`
-
 	// Global template parameters that apply to all steps
 	// +optional
 	GlobalParameters []ParameterSpec `json:"globalParameters,omitempty"`
-
 	// Required user parameters that must be provided
 	// +optional
 	RequiredParameters []string `json:"requiredParameters,omitempty"`
@@ -125,24 +115,19 @@ type PipelineTemplate struct {
 type PipelineStepTemplate struct {
 	// Name is the identifier for the step
 	Name string `json:"name"`
-
 	// ConfigMap references the ConfigMap containing the step definition
 	ConfigMap string `json:"configMap"`
-
 	// Enabled indicates whether this step should be included by default
 	// +optional
 	// +kubebuilder:default=true
 	Enabled *bool `json:"enabled,omitempty"`
-
 	// DefaultParameters contains default parameters for this step
 	// Users can override these by providing parameters with the same name
 	// +optional
 	DefaultParameters []ParameterSpec `json:"defaultParameters,omitempty"`
-
 	// RequiredParameters lists parameter names that users must provide
 	// +optional
 	RequiredParameters []string `json:"requiredParameters,omitempty"`
-
 	// Description explains what this step does
 	// +optional
 	Description string `json:"description,omitempty"`
@@ -152,15 +137,12 @@ type PipelineStepTemplate struct {
 type ParameterSpec struct {
 	// Name of the  argument
 	Name string `json:"name"`
-
 	// Value of the argument
 	Value string `json:"value"`
-
 	// Required indicates if this parameter must be provided by the user
 	// Only used in pipeline templates, not in user-provided parameters
 	// +optional
 	Required *bool `json:"required,omitempty"`
-
 	// Description provides help text for the parameter
 	// +optional
 	Description string `json:"description,omitempty"`
@@ -171,15 +153,12 @@ type BuildOutput struct {
 	// Image is the name of the image to build
 	// +kubebuilder:validation:Required
 	Image string `json:"image"`
-
 	// ImageTag is the tag to apply to the built image
 	// +kubebuilder:validation:Required
 	ImageTag string `json:"imageTag"`
-
 	// ImageRegistry is the container registry where the image will be pushed
 	// +kubebuilder:validation:Required
 	ImageRegistry string `json:"imageRegistry"`
-
 	// ImageRepoCredentials is a reference to a secret containing registry credentials
 	// +optional
 	ImageRepoCredentials *corev1.LocalObjectReference `json:"sourceCredentials,omitempty"`
@@ -197,21 +176,15 @@ const (
 type AgentBuildStatus struct {
 	// Current build phase: Pending, Building, Succeeded, Failed
 	Phase LifecycleBuildPhase `json:"phase,omitempty"`
-
 	// Build Message
 	Message string `json:"message,omitempty"`
-
 	// PipelineRun name
 	PipelineRunName string `json:"pipelineRunName,omitempty"`
-
 	// Last build time
 	LastBuildTime *metav1.Time `json:"lastBuildTime,omitempty"`
-
 	// pipeline completion time
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
-
-	BuiltImage string `json:"builtImage,omitempty"`
-
+	BuiltImage     string       `json:"builtImage,omitempty"`
 	// Conditions represent overall status
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`

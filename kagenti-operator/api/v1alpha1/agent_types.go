@@ -33,6 +33,17 @@ type AgentSpec struct {
 	// +optional
 	// +kubebuilder:default=1
 	Replicas *int32 `json:"replicas,omitempty"`
+	// Metadata specifies labels and annotations to be added to the agent
+	// +optional
+	MetadataSpec `json:",inline"`
+}
+type MetadataSpec struct {
+	// Labels to be added to this agent
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+	// Annotations to be added to this agent
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // AgentStatus defines the observed state of Agent.
