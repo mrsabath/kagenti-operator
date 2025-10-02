@@ -3,13 +3,13 @@ This document presents a proposal for a Kubernetes Operator to automate the life
 
 The `Agent` CR defines the desired state of a AI agent, including its container image, environment variables, and resource requirements. The operator will reconcile `Agent` resources by ensuring a corresponding Kubernetes Deployment and Service exist with the specified configurations.
 
-The `AgentBuild` CR defines the specifications for building and publishing a container image for a AI agent. Upon creation or update of an `AgentBuild` resource, the operator will trigger a Tekton pipeline to automate pulling source code, building a Docker image, and pushing it to a specified image registry. Secure access to private repositories is managed through a reference to a Kubernetes Secret containing a GitHub token. Once the build finishes, the controller reconcilling `AgentBuild` CR will create `Agent` CustomResource.
+The `AgentBuild` CR defines the specifications for building and publishing a container image for a AI agent. Upon creation or update of an `AgentBuild` resource, the operator will trigger a Tekton pipeline to automate pulling source code, building a Docker image, and pushing it to a specified image registry. Secure access to private repositories is managed through a reference to a Kubernetes Secret containing a GitHub token. 
 
 ## 2. Goals
 
 * Automate the creation and management of Kubernetes Deployments and Services based on `Agent` CR specifications for AI agents.
 * Provide a declarative way to define and manage AI agents.
-* Automate the container image building and publishing process for BeeAI agents triggered by `AgentBuild` CRs.
+* Automate the container image building and publishing process for AI agents triggered by `AgentBuild` CRs.
 * Integrate with Tekton Pipelines for the image building workflow, consisting of pull, build, and push tasks.
 * Securely manage GitHub repository access using a referenced Kubernetes Secret.
 * Lock down agent pods with read-only filesystem

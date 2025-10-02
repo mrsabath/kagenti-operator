@@ -36,7 +36,30 @@ type AgentSpec struct {
 	// Metadata specifies labels and annotations to be added to the agent
 	// +optional
 	MetadataSpec `json:",inline"`
+	// ImageSource specifies the container image or build reference for the agent
+	// +optional
+	ImageSource ImageSource `json:"imageSource"`
 }
+
+// +kubebuilder:validation:Union
+//
+//	ImageSource specifies the container image or build reference for the agent
+//
+// +required
+type ImageSource struct {
+	// Image is the container image to use for the agent. This is used when BuildRef is not specified.
+	// +optional
+	Image *string `json:"image,omitempty"`
+	// BuildRef specifies the AgentBuild used for building the agent image from source code.
+	// +optional
+	BuildRef *BuildRef `json:"buildRef,omitempty"`
+}
+type BuildRef struct {
+	// Name of the AgentBuild resource to use for building the agent image
+	// +optional
+	Name string `json:"name,omitempty"`
+}
+
 type MetadataSpec struct {
 	// Labels to be added to this agent
 	// +optional
