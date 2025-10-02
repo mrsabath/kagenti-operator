@@ -199,7 +199,7 @@ func (d *KubernetesDeployer) Delete(ctx context.Context, component *platformv1al
 			return err
 		}
 	}
-	logger.Info("Component's Kubernetes resources deleted succesfully")
+	logger.Info("Component's Kubernetes resources deleted successfully")
 
 	return nil
 }
@@ -312,8 +312,15 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					Value: namespace,
 				},
 			},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "shared-data",
+					MountPath: "/shared",
+				},
+			},			
 		})
 	}
+
 	image := ""
 	if kubeSpec.ImageSpec != nil {
 		image = fmt.Sprintf("%s/%s:%s",
@@ -341,6 +348,17 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		},
 	}...)
 
+	sharedVolume := corev1.Volume{
+		Name: "shared-data",
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	}
+	sharedMount := corev1.VolumeMount{
+		Name:      "shared-data",
+		MountPath: "/shared",
+	}
+
 	template := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: labels,
@@ -356,7 +374,10 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					Resources:       component.Spec.Deployer.Kubernetes.Resources,
 					Env:             mainEnvs,
 					Ports:           containerPorts,
-					VolumeMounts:    component.Spec.Deployer.Kubernetes.VolumeMounts,
+					VolumeMounts:    append(
+						component.Spec.Deployer.Kubernetes.VolumeMounts,
+						sharedMount,
+					),
 				},
 			},
 			TerminationGracePeriodSeconds: &gracePeriodSeconds,
@@ -365,7 +386,10 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					Name: "ghcr-secret",
 				},
 			},
-			Volumes: component.Spec.Deployer.Kubernetes.Volumes,
+			Volumes: append(
+				component.Spec.Deployer.Kubernetes.Volumes,
+				sharedVolume,
+			),
 		},
 	}
 	// if user provided PodTemplateSpec, use it instead of the default one
@@ -388,7 +412,16 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 			} else {
 				template.Spec.Containers[containerInx].Env = mainEnvs
 			}
+
+			// ensure sharedMount is applied even if user overrides PodTemplateSpec
+			template.Spec.Containers[containerInx].VolumeMounts = append(
+				template.Spec.Containers[containerInx].VolumeMounts,
+				sharedMount,
+			)
 		}
+
+		// ensure sharedVolume is added
+		template.Spec.Volumes = append(template.Spec.Volumes, sharedVolume)
 	}
 
 	deployment := &appsv1.Deployment{
@@ -430,6 +463,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 	return nil
 
 }
+
 func (d *KubernetesDeployer) createService(ctx context.Context, component *platformv1alpha1.Component, namespace string) error {
 
 	kubeSpec := component.Spec.Deployer.Kubernetes
@@ -621,7 +655,7 @@ func (d *KubernetesDeployer) fetchAndApplyManifestsFromURL(ctx context.Context, 
 					obj.GetLabels()[k] = v
 				}
 			}
-			d.Log.Info("Applying Ownershiop to manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace())
+			d.Log.Info("Applying Ownership to manifest object", "kind", obj.GetKind(), "name", obj.GetName(), "namespace", obj.GetNamespace())
 			if obj.GetKind() != "CustomResourceDefinition" {
 				// (namespaced) Component cannot own a CRD
 				if err := controllerutil.SetControllerReference(component, obj, d.Client.Scheme()); err != nil {
