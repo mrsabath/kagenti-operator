@@ -37,15 +37,13 @@ type AgentSpec struct {
 	// +optional
 	MetadataSpec `json:",inline"`
 	// ImageSource specifies the container image or build reference for the agent
-	// +optional
+	// +required
 	ImageSource ImageSource `json:"imageSource"`
 }
 
 // +kubebuilder:validation:Union
 //
 //	ImageSource specifies the container image or build reference for the agent
-//
-// +required
 type ImageSource struct {
 	// Image is the container image to use for the agent. This is used when BuildRef is not specified.
 	// +optional
