@@ -311,7 +311,7 @@ deployer:
 
 ## Platform Orchestration and Component Activation
 
-The Platform controller serves as the orchestration layer that manages the lifecycle and metadata of Component resources. When a Component is applied to the cluster, the Kagenti operator webhook automatically adds a ```suspend: true``` flag to prevent immediate deployment.
+The Platform controller serves as the orchestration layer that manages the lifecycle and metadata of Component resources. When a Component is applied to the cluster, the Kagenti operator webhook automatically adds a `suspend: true` flag to prevent immediate deployment.
 
 The Platform controller is responsible for:
 
