@@ -3,27 +3,31 @@
 A Kubernetes operator designed to deploy and manage multi-component applications, incorporating Tekton build pipelines and lifecycle orchestration.
 
 ## Overview
-The Platform Operator simplifies the deployment of complex applications by managing collections of components through two key Custom Resources: Platform and Component. 
+
+The Platform Operator simplifies the deployment of complex applications by managing collections of components through two key Custom Resources: Platform and Component.
 
 ### Component Custom Resource
+
 The Component CR represents the smallest deployable unit within the Kagenti platform. Each Component encapsulates a single application or service along with its deployment configuration, build instructions, and runtime specifications. Components are self-contained entities that can be deployed independently, making them highly modular and reusable across different platforms and environments.
 
 ### Platform Custom Resource
+
 The Platform CR provides a unified management layer for collections of Components. Its primary responsibility is applying global labels and annotations to each Component before creation, ensuring consistent metadata across all managed components. The Platform presents a unified view of all components within its scope, aggregating their status, health, and operational metrics into a single coherent interface. This simplified approach allows administrators to monitor entire application ecosystems from a single point of control while maintaining the modularity and independence of individual Components.
 
-
 ## Component Types
+
 Components are categorized into three distinct types based on their functional role:
 
-**Agent** - Represents AI/ML agents 
+**Agent** - Represents AI/ML agents
 
-**Tool** - Encompasses utilities, MCP (Model Context Protocol) servers, and supporting services that provide functionality to other components. 
+**Tool** - Encompasses utilities, MCP (Model Context Protocol) servers, and supporting services that provide functionality to other components.
 
-**Infrastructure** - Contains foundational services such as databases, caches, message queues, storage systems, and other backend services that provide essential capabilities for the platform. 
+**Infrastructure** - Contains foundational services such as databases, caches, message queues, storage systems, and other backend services that provide essential capabilities for the platform.
 
 Each Component CR must specify exactly one type: Agent, Tool, or Infra. The operator will reject any Component that either lacks a type definition or attempts to define multiple types.
 
 ## Architecture
+
 ![Architecture Overview](docs/images/kagenti-arch.png)
 
 ## Prerequisites
@@ -41,37 +45,40 @@ Before installing the `kagenti-operator`, ensure you have:
   * (Optional) Registry credentials if using private images
   * helm installed
 
-
-
 ## Quick Start
 
 ### Install the Operator
+
 In a new terminal, run:
 
 ```shell
 curl -sSL https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/scripts/install.sh | bash
 ```
 
-The above installs Kind k8s, local image registry, Tekton Pipeline runtime, Cert Manager, and finally the operator runtime. 
+The above installs Kind k8s, local image registry, Tekton Pipeline runtime, Cert Manager, and finally the operator runtime.
 
 ### Deployment Process
 
 #### Step 1: Deploy Components First
+
 Apply your Component CRs to define the individual components of your platform. Assuming you have component definitions in a folder named ```components``` do:
 
-```bash 
+```bash
 # Apply component definitions
 kubectl apply -f components/
 ```
+
 ```Note:``` Components will be created in a suspended state by default and will not deploy until activated by a Platform.
 
 #### Step 2: Deploy Platform
 
 Apply your Platform CR to activate and orchestrate the components. Assuming your platform is defined in ```platform.yaml``` do:
+
 ```bash
 # Apply platform definition
 kubectl apply -f platform.yaml
 ```
+
 The Platform controller will:
 
 * Apply global labels and annotations to each Component CR
@@ -81,6 +88,7 @@ The Platform controller will:
 * Begin the deployment process for all components
 
 #### Step 3: Monitor Deployment
+
 Check the status of your platform and components:
 
 ```bash
@@ -100,11 +108,12 @@ kagenti-system   test-mcp-server   3m16s   false     True
 kubectl describe platform <platform-name> -n <namespace>
 ```
 
-
 ### Uninstall the Operator
+
 To properly uninstall the Kagenti Platform Operator, you must follow a specific order to ensure all resources are cleaned up correctly.
 
 #### Step 1: Delete Platform Custom Resources
+
 ```IMPORTANT:```You must delete Platform CR first, as they manage the lifecycle of Component CRs and related resources.
 
 ```bash
@@ -127,8 +136,10 @@ The Platform controller will automatically:
 * Remove finalizers once cleanup is complete
 
 #### Step 2: Verify Component Cleanup
+
 After deleting Platforms, verify that Component resources are also cleaned up:
-```bash 
+
+```bash
 # Check that all Components are deleted
 kubectl get components --all-namespaces
 
@@ -137,9 +148,10 @@ kubectl delete components --all --all-namespaces
 ```
 
 #### Step 3: Uninstall Helm Chart
+
 Once all Platform and Component CRs are deleted, you can safely uninstall the operator:
 
-```bash 
+```bash
 # Find the Helm release name
 helm list -n kagenti-system
 
@@ -148,10 +160,12 @@ helm uninstall agentic-platform-controller-manager-xxx-xxx -n kagenti-system
 ```
 
 ## Component Deployment Strategies
-The Kagenti Component resource provides flexible deployment mechanisms to accommodate different application packaging and distribution patterns. Whether you're deploying third-party components with published manifests, custom applications stored in version control, containerized services, or packaged Helm charts, the Component spec supports multiple deployment strategies through its deployer configuration. 
+
+The Kagenti Component resource provides flexible deployment mechanisms to accommodate different application packaging and distribution patterns. Whether you're deploying third-party components with published manifests, custom applications stored in version control, containerized services, or packaged Helm charts, the Component spec supports multiple deployment strategies through its deployer configuration.
 
 **Deploy from Manifest URL**
 This option fetches and applies a Kubernetes manifest directly from a web URL. It's ideal for deploying stable releases or official installations where the manifest is hosted remotely. The operator downloads the YAML from the specified URL and applies it to the cluster.
+
 ```yaml
 apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
@@ -172,6 +186,7 @@ spec:
 
 **Deploy from GitHub Repository**
 This approach retrieves manifests from a specific file path within a GitHub repository at a given revision. It offers version control integration and is a good choice for deploying custom configurations or components stored in Git repositories. You can specify exact commits, branches, or tags, providing precise control over which version gets deployed.
+
 ```yaml
 apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
@@ -190,8 +205,10 @@ spec:
            revision: main
     env:
 ```
+
 **Deploy from Docker Image**
 This method creates Kubernetes resources directly from a container image specification rather than pre-written manifests. The operator generates the necessary Deployment and Service objects and applies to the cluster. It's particularly useful for custom applications or when you want the operator to handle the Kubernetes resource creation automatically from container metadata.
+
 ```yaml
 apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
@@ -210,8 +227,10 @@ spec:
         imagePullPolicy: "IfNotPresent"
         ...
 ```
+
 **Deploy from Docker Image using PodTemplateSpec**
 The PodTemplateSpec field provides complete control over Pod specification in Kubernetes deployments. When specified, it takes precedence over all other configuration fields except Replicas, enabling advanced deployment scenarios that require full access to Kubernetes Pod capabilities.
+
 ```yaml
 apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
@@ -231,6 +250,7 @@ spec:
             image: test-mcp-server
         ...
 ```
+
 ***Validation Rules***
 
 The following validation rules apply when using PodTemplateSpec:
@@ -238,23 +258,23 @@ The following validation rules apply when using PodTemplateSpec:
 `Mutual Exclusivity:` Only one of ImageSpec, Manifest, or PodTemplateSpec can be specified
 
 `Field Conflicts:` When PodTemplateSpec is specified, these fields must be omitted:
-- ImageSpec
-- Resources
-- ContainerPorts
-- ServicePorts
-- ServiceType
-- Volumes
-- VolumeMounts
 
+* ImageSpec
+* Resources
+* ContainerPorts
+* ServicePorts
+* ServiceType
+* Volumes
+* VolumeMounts
 
 `Required Fields:` PodTemplateSpec.spec.containers must contain at least one container
 
 `Allowed Fields:` Only Replicas can be specified alongside PodTemplateSpec
 
-
 **Deploy from Helm Chart**
 This deployment strategy leverages Helm charts from public or private repositories to install complex applications with their dependencies. It's especially powerful for deploying established software packages like databases, monitoring tools, or other infrastructure components that benefit from Helm's templating and configuration management capabilities. You can customize deployments through chart parameters while letting Helm handle the resource orchestration and lifecycle management.
-```yaml 
+
+```yaml
 apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
@@ -270,8 +290,10 @@ spec:
       parameters:
         ...
 ```
+
 **Deploy via Open Lifecycle Manager (OLM)**
-Deployment through the OLM for managing operators and their dependencies. Best suited for deploying operators that require subscription management, automatic updates, and complex dependency resolution. `This deployment option is currently not implemented.` 
+Deployment through the OLM for managing operators and their dependencies. Best suited for deploying operators that require subscription management, automatic updates, and complex dependency resolution. `This deployment option is currently not implemented.`
+
 ```yaml
 apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
@@ -288,7 +310,8 @@ deployer:
 ```
 
 ## Platform Orchestration and Component Activation
-The Platform controller serves as the orchestration layer that manages the lifecycle and metadata of Component resources. When a Component is applied to the cluster, the Kagenti operator webhook automatically adds a ```suspend: true``` flag to prevent immediate deployment. 
+
+The Platform controller serves as the orchestration layer that manages the lifecycle and metadata of Component resources. When a Component is applied to the cluster, the Kagenti operator webhook automatically adds a `suspend: true` flag to prevent immediate deployment.
 
 The Platform controller is responsible for:
 
@@ -326,11 +349,8 @@ tools:
 agents:
     - name: research-agent
 ```
-You can find an example of a Platform CR here:  https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/config/samples/platform-example.yaml and a matching component configuration is here: https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/config/samples/components-example.yaml
 
-
-
-
+You can find an example of a Platform CR here:  <https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/config/samples/platform-example.yaml> and a matching component configuration is here: <https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/config/samples/components-example.yaml>
 
 ## Build Pipeline System
 
@@ -351,7 +371,7 @@ If you don't specify a mode, the operator defaults to ```dev```.
 
 Below is an example Component which requires a build from source:
 
-```yaml 
+```yaml
 apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
@@ -375,7 +395,6 @@ spec:
 ```
 
 **Current Build Pipeline (Development Mode)**
-
 The default dev pipeline runs these Tekton steps:
 
 ```Clone``` - Downloads your code from GitHub
@@ -386,5 +405,39 @@ The default dev pipeline runs these Tekton steps:
 
 This system lets you use simple development builds while you're coding, then can automatically get more rigorous security and quality checks when you're ready to deploy to production environments.
 
-You can find the sample steps and template here:  https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/config/samples/tekton
+You can find the sample steps and template here:  <https://raw.githubusercontent.com/kagenti/kagenti-operator/main/platform-operator/config/samples/tekton>
 
+## Operator Development and Testing
+
+1. Fork the repository and create a new branch
+1. Modify the operator code to fit your needs
+   * e.g. the code for managing the deployed agents and tools is in [./internal/deployer/kubernetes/kubernetes.go](./internal/deployer/kubernetes/kubernetes.go) file
+1. [Install Kagenti](https://github.com/kagenti/kagenti/blob/v0.0.4-alpha.18/docs/demos.md#installation)
+1. Uninstall the `kagenti-operator`:
+
+   * ```console
+     helm uninstall kagenti-platform-operator -n kagenti-system
+     ```
+
+   * Sometimes this removes operator crds. When you get errors about missing crds,
+     just install them manually with: `kubectl create -f config/crds/bases/`
+
+1. switch to your new operator branch
+1. execute operator cleanup, build, and deployment:
+
+    ```console
+     cd kagenti-operator/platform-operator
+     ./scripts/cleanup.sh
+     make ko-local-build
+     make install-local-chart
+    ```
+
+1. If you get any errors loading external libraries:
+
+    ```console
+     go clean -cache
+     go clean -modcache
+     go mod tidy
+    ```
+
+      Then try the build again
