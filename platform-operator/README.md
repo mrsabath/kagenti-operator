@@ -411,7 +411,7 @@ You can find the sample steps and template here:  <https://raw.githubusercontent
 
 1. Fork the repository and create a new branch
 1. Modify the operator code to fit your needs
-   * e.g. the code for managing the deployed agents and tools is [./internal/deployer/kubernetes/kubernetes.go](./internal/deployer/kubernetes/kubernetes.go) file
+   * e.g. the code for managing the deployed agents and tools is in [./internal/deployer/kubernetes/kubernetes.go](./internal/deployer/kubernetes/kubernetes.go) file
 1. [Install Kagenti](https://github.com/kagenti/kagenti/blob/v0.0.4-alpha.18/docs/demos.md#installation)
 1. Uninstall the `kagenti-operator`:
 
@@ -419,7 +419,7 @@ You can find the sample steps and template here:  <https://raw.githubusercontent
      helm uninstall kagenti-platform-operator -n kagenti-system
      ```
 
-1. * Sometimes this removes operator crds. When you get errors about missing crds,
+   * Sometimes this removes operator crds. When you get errors about missing crds,
      just install them manually with: `kubectl create -f config/crds/bases/`
 
 1. switch to your new operator branch
