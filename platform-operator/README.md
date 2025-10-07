@@ -356,7 +356,7 @@ You can find an example of a Platform CR here:  <https://raw.githubusercontent.c
 
 ### Template-Based Pipelines
 
-The operator comes with a ready-to-use build template that automatically creates Docker images from your GitHub source code. This template is stored in a ConfigMap and automatically installed when you set up the operator.
+The operator comes with a ready-to-use build template that automatically creates Docker images from your GitHub source code. This template is stored in a ConfigMap and is automatically installed when you set up the operator.
 
 **How Pipeline Selection Works**
 The operator chooses which pipeline to use based on a simple mode setting in your Component configuration:
