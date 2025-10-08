@@ -4,14 +4,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.1
-  name: kagentiagents.agent.kagenti.dev
+  name: agents.agent.kagenti.dev
 spec:
   group: agent.kagenti.dev
   names:
-    kind: KagentiAgent
-    listKind: KagentiAgentList
-    plural: kagentiagents
-    singular: kagentiagent
+    kind: Agent
+    listKind: AgentList
+    plural: agents
+    singular: agent
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -33,7 +33,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: KagentiAgent is the Schema for the kagentiagents API.
+        description: Agent is the Schema for the Agents API.
         properties:
           apiVersion:
             description: |-
@@ -53,7 +53,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: KagentiAgentSpec defines the desired state of KagentiAgent.
+            description: AgentSpec defines the desired state of Agent.
             properties:
               description:
                 description: Description is a human-readable description of the agent
@@ -8095,7 +8095,7 @@ spec:
             - podTemplateSpec
             type: object
           status:
-            description: KagentiAgentStatus defines the observed state of KagentiAgent.
+            description: AgentStatus defines the observed state of Agent.
             properties:
               conditions:
                 description: Conditions represent overall status

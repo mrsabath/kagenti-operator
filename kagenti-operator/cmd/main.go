@@ -202,18 +202,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.KagentiAgentReconciler{
+	if err = (&controller.AgentReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KagentiAgent")
+		setupLog.Error(err, "unable to create controller", "controller", "Agent")
 		os.Exit(1)
 	}
-	if err = (&controller.KagentiAgentBuildReconciler{
+	if err = (&controller.AgentBuildReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KagentiAgentBuild")
+		setupLog.Error(err, "unable to create controller", "controller", "AgentBuild")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

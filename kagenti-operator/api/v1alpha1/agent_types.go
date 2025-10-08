@@ -21,27 +21,54 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// KagentiAgentSpec defines the desired state of KagentiAgent.
-type KagentiAgentSpec struct {
+// AgentSpec defines the desired state of Agent.
+type AgentSpec struct {
 	// Description is a human-readable description of the agent
 	// +optional
 	Description string `json:"description,omitempty"`
 	// PodTemplateSpec provides complete control over Pod specification.
-	// When specified, this field takes precedence over all other configuration
-	// fields except Replicas. All other fields (ImageSpec, Resources, ContainerPorts,
-	// ServicePorts, ServiceType, Volumes, VolumeMounts) should be omitted
-	// as they will be ignored in favor of the PodTemplateSpec configuration.
-	// Mutually exclusive with ImageSpec deployment mode.
 	// +required
-	PodTemplateSpec *corev1.PodTemplateSpec `json:"podTemplateSpec,omitempty"`
+	PodTemplateSpec *corev1.PodTemplateSpec `json:"podTemplateSpec"`
 	// Replicas is the desired number of agent replicas.
 	// +optional
 	// +kubebuilder:default=1
 	Replicas *int32 `json:"replicas,omitempty"`
+	// Metadata specifies labels and annotations to be added to the agent
+	// +optional
+	MetadataSpec `json:",inline"`
+	// ImageSource specifies the container image or build reference for the agent
+	// +required
+	ImageSource ImageSource `json:"imageSource"`
 }
 
-// KagentiAgentStatus defines the observed state of KagentiAgent.
-type KagentiAgentStatus struct {
+// +kubebuilder:validation:Union
+//
+//	ImageSource specifies the container image or build reference for the agent
+type ImageSource struct {
+	// Image is the container image to use for the agent. This is used when BuildRef is not specified.
+	// +optional
+	Image *string `json:"image,omitempty"`
+	// BuildRef specifies the AgentBuild used for building the agent image from source code.
+	// +optional
+	BuildRef *BuildRef `json:"buildRef,omitempty"`
+}
+type BuildRef struct {
+	// Name of the AgentBuild resource to use for building the agent image
+	// +optional
+	Name string `json:"name,omitempty"`
+}
+
+type MetadataSpec struct {
+	// Labels to be added to this agent
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+	// Annotations to be added to this agent
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// AgentStatus defines the observed state of Agent.
+type AgentStatus struct {
 	// Conditions represent overall status
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
@@ -59,7 +86,7 @@ const (
 
 // AgentDeploymentStatus represents the status of the agent deployment
 type DeploymentStatus struct {
-	// Current deployment phase: PhasePending, PhaseDeploying, PhaseReady, PhaseFailed
+	// Current deployment phase: PhaseDeploying, PhaseReady, PhaseFailed
 	Phase LifecyclePhase `json:"phase,omitempty"`
 	// Deployment message
 	DeploymentMessage string `json:"deploymentMessage,omitempty"`
@@ -74,24 +101,24 @@ type DeploymentStatus struct {
 // +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.deploymentStatus.phase",description="Deployment Phase"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
-// KagentiAgent is the Schema for the kagentiagents API.
-type KagentiAgent struct {
+// Agent is the Schema for the Agents API.
+type Agent struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KagentiAgentSpec   `json:"spec,omitempty"`
-	Status KagentiAgentStatus `json:"status,omitempty"`
+	Spec   AgentSpec   `json:"spec,omitempty"`
+	Status AgentStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// KagentiAgentList contains a list of KagentiAgent.
-type KagentiAgentList struct {
+// AgentList contains a list of Agent.
+type AgentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []KagentiAgent `json:"items"`
+	Items           []Agent `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&KagentiAgent{}, &KagentiAgentList{})
+	SchemeBuilder.Register(&Agent{}, &AgentList{})
 }

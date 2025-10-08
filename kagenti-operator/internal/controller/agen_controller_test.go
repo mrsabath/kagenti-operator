@@ -30,7 +30,7 @@ import (
 	agentv1alpha1 "github.com/kagenti/operator/api/v1alpha1"
 )
 
-var _ = Describe("KagentiAgent Controller", func() {
+var _ = Describe("Agent Controller", func() {
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
@@ -40,13 +40,13 @@ var _ = Describe("KagentiAgent Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		kagentiagent := &agentv1alpha1.KagentiAgent{}
+		Agent := &agentv1alpha1.Agent{}
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind KagentiAgent")
-			err := k8sClient.Get(ctx, typeNamespacedName, kagentiagent)
+			By("creating the custom resource for the Kind Agent")
+			err := k8sClient.Get(ctx, typeNamespacedName, Agent)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &agentv1alpha1.KagentiAgent{
+				resource := &agentv1alpha1.Agent{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -59,16 +59,16 @@ var _ = Describe("KagentiAgent Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &agentv1alpha1.KagentiAgent{}
+			resource := &agentv1alpha1.Agent{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance KagentiAgent")
+			By("Cleanup the specific resource instance Agent")
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &KagentiAgentReconciler{
+			controllerReconciler := &AgentReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
 			}

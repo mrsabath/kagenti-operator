@@ -28,26 +28,26 @@ graph TD;
         Operator[Operator] 
         style Operator fill:#ffe0b2,stroke:#fb8c00
 
-        KagentiAgentCRD["KagentiAgent CRD"] 
-        style KagentiAgentCRD fill:#e1f5fe,stroke:#039be5
+        AgentCRD["Agent CRD"] 
+        style AgentCRD fill:#e1f5fe,stroke:#039be5
 
-        KagentiAgentBuildCRD["KagentiAgentBuild CRD"]
-        style KagentiAgentBuildCRD fill:#fce4ec,stroke:#e91e63
+        AgentBuildCRD["AgentBuild CRD"]
+        style AgentBuildCRD fill:#fce4ec,stroke:#e91e63
 
-        Operator -- Reacts to --> KagentiAgentCRD
-        Operator -- Reacts to --> KagentiAgentBuildCRD
+        Operator -- Reacts to --> AgentCRD
+        Operator -- Reacts to --> AgentBuildCRD
 
-        KagentiAgentBuildCRD -->|Triggers| Tekton_Pipeline
-        KagentiAgentCRD --> |Creates| Service_Service[Service]
+        AgentBuildCRD -->|Triggers| Tekton_Pipeline
+        AgentCRD --> |Creates| Service_Service[Service]
         style Service_Service fill:#dcedc8,stroke:#689f38
 
-        KagentiAgentCRD --> |Creates| Deployment_Deployment[Deployment]
+        AgentCRD --> |Creates| Deployment_Deployment[Deployment]
         style Deployment_Deployment fill:#d1c4e9,stroke:#7e57c2
     end
 ```    
 The operator is designed with two Custom Resources (CRs) to seperate build concerns from deployment concerns: 
- - **KagentiAgent CR** Manages the deployment and lifecycle of AI Agents using container images
- - **KagentiAgentBuild CR** Manages the build phase, orchestrating Tekton Pipelines to build container images from source 
+ - **Agent CR** Manages the deployment and lifecycle of AI Agents using container images
+ - **AgentBuild CR** Manages the build phase, orchestrating Tekton Pipelines to build container images from source 
 
 ### Documentation ###
 - [Design](docs/operator.md)

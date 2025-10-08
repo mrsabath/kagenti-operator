@@ -5,9 +5,16 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - agent.kagenti.dev
+  - ""
   resources:
-  - kagentiagents
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - services
   verbs:
   - create
   - delete
@@ -19,14 +26,41 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagents/finalizers
+  - Agentbuilds
+  - Agents
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - agent.kagenti.dev
+  resources:
+  - Agentbuilds/finalizers
+  - Agents/finalizers
   verbs:
   - update
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagents/status
+  - Agentbuilds/status
+  - Agents/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

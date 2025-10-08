@@ -1,9 +1,22 @@
 apiVersion: agent.kagenti.dev/v1alpha1
-kind: KagentiAgent
+kind: Agent
 metadata:
   labels:
     app.kubernetes.io/name: kagenti-operator
     app.kubernetes.io/managed-by: kustomize
-  name: kagentiagent-sample
+  name: agent-sample
 spec:
-  # TODO(user): Add fields here
+  description: "Sample Kagenti Agent"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: kagenti-agent
+ #         image: "ghcr.io/kagenti/agent-examples/weather_service:v0.0.1-alpha.2"
+          image: "ghcr.io/cwiklik/weather-tool:latest"
+          imagePullPolicy: Always
+#          command: ["/bin/sh", "-c", "ls -la /app && sleep 3600"]
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+  replicas: 1

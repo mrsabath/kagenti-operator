@@ -18,44 +18,42 @@ package controller
 
 import (
 	"context"
-
 	agentv1alpha1 "github.com/kagenti/operator/api/v1alpha1"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// KagentiAgentReconciler reconciles a KagentiAgent object
-type KagentiAgentReconciler struct {
+// AgentReconciler reconciles a Agent object
+type AgentReconciler struct {
 	client.Client
 	Scheme                   *runtime.Scheme
 	EnableClientRegistration bool
 }
 
 var (
-	logger = ctrl.Log.WithName("controller").WithName("KagentiAgent")
+	logger = ctrl.Log.WithName("controller").WithName("Agent")
 )
 
 const AGENT_FINALIZER = "agent.kagenti.dev/finalizer"
 
-// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=kagentiagents,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=kagentiagents/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=kagentiagents/finalizers,verbs=update
+// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=Agents,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=Agents/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=Agents/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 
-func (r *KagentiAgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger.Info("Reconciling KagentiAgent", "namespacedName", req.NamespacedName)
+func (r *AgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger.Info("Reconciling Agent", "namespacedName", req.NamespacedName)
 
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *KagentiAgentReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *AgentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&agentv1alpha1.KagentiAgent{}).
-		Named("kagentiagent").
+		For(&agentv1alpha1.Agent{}).
+		Named("Agent").
 		Complete(r)
 }
