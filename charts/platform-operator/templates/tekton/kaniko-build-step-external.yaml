@@ -28,7 +28,7 @@ data:
         default: "quay-registry-secret"
     steps:
       - name: docker-build
-        image: gcr.io/kaniko-project/executor:v1.9.1
+        image: quay.io/strimzi/kaniko-executor:0.48.0
         args:
           - --dockerfile=$(params.DOCKERFILE)
           - --context=$(workspaces.source.path)/$(params.subfolder-path)
