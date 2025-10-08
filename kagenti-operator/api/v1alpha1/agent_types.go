@@ -39,6 +39,10 @@ type AgentSpec struct {
 	// ImageSource specifies the container image or build reference for the agent
 	// +required
 	ImageSource ImageSource `json:"imageSource"`
+	// ServicePorts specifies the service ports to expose for the agent
+	// +optional
+	// +kubebuilder:default={{name: "http", port: 8080, protocol: "TCP"}}
+	ServicePorts []corev1.ServicePort `json:"servicePorts,omitempty"`
 }
 
 // +kubebuilder:validation:Union

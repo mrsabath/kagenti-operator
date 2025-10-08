@@ -21,15 +21,15 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"strings"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	//_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -64,6 +64,8 @@ func main() {
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
+	var enableClientRegistration bool
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -81,6 +83,8 @@ func main() {
 	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+	flag.BoolVar(&enableClientRegistration, "enable-client-registration", true,
+		"If set, Kagenti will register clients (agents and tools) in Keycloak")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -179,8 +183,13 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                metricsServerOptions,
+		Scheme:  scheme,
+		Metrics: metricsServerOptions,
+		// Cache that will be used to create the default Cache. By default, the cache
+		// will watch and list requested objects in all namespaces.
+		Cache: cache.Options{
+			DefaultNamespaces: getNamespacesToWatch(),
+		},
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
@@ -203,8 +212,9 @@ func main() {
 	}
 
 	if err = (&controller.AgentReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:                   mgr.GetClient(),
+		Scheme:                   mgr.GetScheme(),
+		EnableClientRegistration: enableClientRegistration,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Agent")
 		os.Exit(1)
@@ -248,4 +258,21 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+func getNamespacesToWatch() map[string]cache.Config {
+
+	// NAMESPACES2WATCH specifies the namespace(s) to watch.
+	// If undefined, the operator will run with cluster scope.
+	namespace, found := os.LookupEnv("NAMESPACES2WATCH")
+	if !found {
+		return nil
+	}
+
+	namespaces := make(map[string]cache.Config)
+	if namespace != "" {
+		for _, ns := range strings.Split(namespace, ",") {
+			namespaces[ns] = cache.Config{}
+		}
+	}
+	return namespaces
 }
