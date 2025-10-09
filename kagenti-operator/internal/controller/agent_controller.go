@@ -512,9 +512,10 @@ func (r *AgentReconciler) createDeploymentForAgent(ctx context.Context, agent *a
 
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      agent.Name,
-			Namespace: agent.Namespace,
-			Labels:    labels,
+			Name:        agent.Name,
+			Namespace:   agent.Namespace,
+			Labels:      labels,
+			Annotations: agent.Annotations,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
