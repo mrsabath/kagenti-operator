@@ -7,6 +7,17 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - configmaps
+  - pods
+  - pods/log
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - events
   verbs:
   - create
@@ -14,6 +25,7 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - serviceaccounts
   - services
   verbs:
   - create
@@ -26,8 +38,8 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - Agentbuilds
-  - Agents
+  - agentbuilds
+  - agents
   verbs:
   - create
   - delete
@@ -39,15 +51,15 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - Agentbuilds/finalizers
-  - Agents/finalizers
+  - agentbuilds/finalizers
+  - agents/finalizers
   verbs:
   - update
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - Agentbuilds/status
-  - Agents/status
+  - agentbuilds/status
+  - agents/status
   verbs:
   - get
   - patch
@@ -56,6 +68,19 @@ rules:
   - apps
   resources:
   - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  - roles
   verbs:
   - create
   - delete

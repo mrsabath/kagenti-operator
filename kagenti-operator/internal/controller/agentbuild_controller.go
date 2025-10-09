@@ -33,9 +33,9 @@ type AgentBuildReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=Agentbuilds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=Agentbuilds/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=Agentbuilds/finalizers,verbs=update
+// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=agentbuilds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=agentbuilds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=agent.kagenti.dev,resources=agentbuilds/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

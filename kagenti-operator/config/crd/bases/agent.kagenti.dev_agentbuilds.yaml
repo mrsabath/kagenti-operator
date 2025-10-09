@@ -39,6 +39,11 @@ spec:
           spec:
             description: AgentBuildSpec defines the desired state of AgentBuild.
             properties:
+              annotations:
+                additionalProperties:
+                  type: string
+                description: Annotations to be added to this agent
+                type: object
               buildArgs:
                 description: BuildArgs are arguments to pass to the build process
                 items:
@@ -101,6 +106,11 @@ spec:
                 description: CleanupAfterBuild indicates whether to automatically
                   cleanup after build
                 type: boolean
+              labels:
+                additionalProperties:
+                  type: string
+                description: Labels to be added to this agent
+                type: object
               mode:
                 default: dev
                 description: |-
@@ -203,35 +213,42 @@ spec:
                 - namespace
                 - steps
                 type: object
-              repoUser:
-                description: RepoUser is the username in the Git repository containing
-                  the source
-                type: string
-              sourceCredentials:
-                description: SourceCredentials is a reference to a secret containing
-                  Git credentials
+              source:
+                description: Source specifies the source code related configuration
                 properties:
-                  name:
-                    default: ""
-                    description: |-
-                      Name of the referent.
-                      This field is effectively required, but due to backwards compatibility is
-                      allowed to be empty. Instances of this type with an empty value here are
-                      almost certainly wrong.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                  repoUser:
+                    description: RepoUser is the username in the Git repository containing
+                      the source
+                    type: string
+                  sourceCredentials:
+                    description: SourceCredentials is a reference to a secret containing
+                      Git credentials
+                    properties:
+                      name:
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  sourceRepository:
+                    description: SourceRepository is the Git repository URL
+                    type: string
+                  sourceRevision:
+                    description: SourceRevision is the Git revision (branch, tag,
+                      commit)
+                    type: string
+                  sourceSubfolder:
+                    description: SourceSubfolder is the folder within the repository
+                      containing the source
                     type: string
                 type: object
-                x-kubernetes-map-type: atomic
-              sourceRepository:
-                description: SourceRepository is the Git repository URL
-                type: string
-              sourceRevision:
-                description: SourceRevision is the Git revision (branch, tag, commit)
-                type: string
-              sourceSubfolder:
-                description: SourceSubfolder is the folder within the repository containing
-                  the source
-                type: string
+            required:
+            - source
             type: object
           status:
             description: AgentBuildStatus defines the observed state of AgentBuild.
