@@ -93,7 +93,8 @@ The complete lifecycle follows this orchestrated pattern:
 - Merges user parameters with step defaults.
 - Launches PipelineRun with proper configuration.
 - Monitors build progress and updates AgentBuild CR status.
-- On succesfull container image push, the agentbuild_controller creates Agent CustomResource in Kubernetes
+- On succesfull container image push, the agentbuild_controller records container image URL in the AgentBuild CR status
+- 
 
 ### Template-Based Pipelines
 The operator comes with a ready-to-use build template that automatically creates Docker images from your GitHub source code. This template is stored in a ConfigMap and is automatically installed when you set up the operator.
