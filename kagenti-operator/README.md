@@ -58,7 +58,7 @@ graph TD;
         end
         
         AgentBuildController -->|Triggers| Tekton_Pipeline
-        AgentBuildController -->|Creates| AgentCRD
+    
     end
 ```    
 The operator is designed with two Custom Resources (CRs) to seperate build concerns from deployment concerns: 

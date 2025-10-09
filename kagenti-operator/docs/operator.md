@@ -71,7 +71,7 @@ graph TD;
         end
         
         AgentBuildController -->|Triggers| Tekton_Pipeline
-        AgentBuildController -->|Creates| AgentCRD
+        
     end
 ```    
 
