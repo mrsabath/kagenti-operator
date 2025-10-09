@@ -8,12 +8,12 @@ The `AgentBuild` CR defines the specifications for building and publishing a con
 
 ## Goals
 
-* Automate the creation and management of Kubernetes Deployments and Services based on `Agent` CR specifications for AI agents.
-* Provide a declarative way to define and manage AI agents.
+* Automate the creation and management of Kubernetes Deployments and Services based on `Agent` CR specifications for AI agents
+* Support deployment of AI Agents from existing container images or from source code in Github
 * Automate the container image building and publishing process for AI agents triggered by `AgentBuild` CRs.
 * Integrate with Tekton Pipelines for the image building workflow, consisting of pull, build, and push tasks.
 * Securely manage GitHub repository access using a referenced Kubernetes Secret.
-* Lock down agent pods with read-only filesystem
+* Lock down agent pods with read-only filesystem with minimal priviledges
 * Support cluster-wide as well as namespaced scope deployment
 
 ## Deployment Modes
