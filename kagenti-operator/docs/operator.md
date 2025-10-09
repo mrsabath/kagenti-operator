@@ -5,7 +5,7 @@ The `Agent` CR defines the desired state of a AI agent, including its container 
 
 The `AgentBuild` CR defines the specifications for building and publishing a container image for a AI agent. Upon creation or update of an `AgentBuild` resource, the operator will trigger a Tekton pipeline to automate pulling source code, building a Docker image, and pushing it to a specified image registry. Secure access to private repositories is managed through a reference to a Kubernetes Secret containing a GitHub token. 
 
-## 2. Goals
+## Goals
 
 * Automate the creation and management of Kubernetes Deployments and Services based on `Agent` CR specifications for AI agents.
 * Provide a declarative way to define and manage AI agents.
@@ -13,8 +13,12 @@ The `AgentBuild` CR defines the specifications for building and publishing a con
 * Integrate with Tekton Pipelines for the image building workflow, consisting of pull, build, and push tasks.
 * Securely manage GitHub repository access using a referenced Kubernetes Secret.
 * Lock down agent pods with read-only filesystem
+* Support cluster-wide as well as namespaced scope deployment
 
-## 3. Proposed Design
+## Deployment Modes
+The kagenti operator supports both cluster-wide and namespaced deployment modes. In cluster-wide, it uses ClusterRoleBinding to watch and reconcile resources across all namespaces. For stricter isolation, it can run in namespaced scope using RoleBinding in specific namespaces, allowing the operator to only manage resources in explicitely authorized namespaces while maintaining least-priviledge access controls. 
+
+## Proposed Design
 
 ```mermaid
 graph TD;
