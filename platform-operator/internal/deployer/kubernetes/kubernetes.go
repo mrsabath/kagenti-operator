@@ -246,80 +246,6 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 	if kubeSpec.ImageSpec != nil {
 		imagePullPolicy = kubeSpec.ImageSpec.ImagePullPolicy
 	}
-	initContainers := []corev1.Container{}
-	if d.EnableClientRegistration {
-		initContainers = append(initContainers, corev1.Container{
-			Name:            "kagenti-client-registration",
-			Image:           "ghcr.io/kagenti/kagenti/client-registration:latest",
-			ImagePullPolicy: corev1.PullPolicy(imagePullPolicy),
-			Resources:       component.Spec.Deployer.Kubernetes.Resources,
-			Env: []corev1.EnvVar{
-				{
-					Name: "KEYCLOAK_URL",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "environments",
-							},
-							Key:      "KEYCLOAK_URL",
-							Optional: ptr.To(true),
-						},
-					},
-				},
-				{
-					Name: "KEYCLOAK_REALM",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "environments",
-							},
-							Key: "KEYCLOAK_REALM",
-						},
-					},
-				},
-				{
-					Name: "KEYCLOAK_ADMIN_USERNAME",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "environments",
-							},
-							Key: "KEYCLOAK_ADMIN_USERNAME",
-						},
-					},
-				},
-				{
-					Name: "KEYCLOAK_ADMIN_PASSWORD",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "environments",
-							},
-							Key: "KEYCLOAK_ADMIN_PASSWORD",
-						},
-					},
-				},
-				{
-					Name:  "CLIENT_NAME",
-					Value: component.Name,
-				},
-				{
-					Name:  "CLIENT_ID",
-					Value: "spiffe://localtest.me/sa/" + component.Name,
-				},
-				{
-					Name:  "NAMESPACE",
-					Value: namespace,
-				},
-			},
-			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "shared-data",
-					MountPath: "/shared",
-				},
-			},
-		})
-	}
 
 	image := ""
 	if kubeSpec.ImageSpec != nil {
@@ -481,6 +407,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 			Volumes: append(
 				component.Spec.Deployer.Kubernetes.Volumes,
 				[]corev1.Volume{
+					sharedVolume,
 					{
 						Name: "spiffe-helper-config",
 						VolumeSource: corev1.VolumeSource{
