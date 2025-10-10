@@ -383,6 +383,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 							Name:      "svid-output",
 							MountPath: "/opt",
 						},
+						sharedMount,
 					},
 				},
 				{
