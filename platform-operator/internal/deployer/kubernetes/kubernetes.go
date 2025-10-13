@@ -246,80 +246,6 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 	if kubeSpec.ImageSpec != nil {
 		imagePullPolicy = kubeSpec.ImageSpec.ImagePullPolicy
 	}
-	initContainers := []corev1.Container{}
-	if d.EnableClientRegistration {
-		initContainers = append(initContainers, corev1.Container{
-			Name:            "kagenti-client-registration",
-			Image:           "ghcr.io/kagenti/kagenti/client-registration:latest",
-			ImagePullPolicy: corev1.PullPolicy(imagePullPolicy),
-			Resources:       component.Spec.Deployer.Kubernetes.Resources,
-			Env: []corev1.EnvVar{
-				{
-					Name: "KEYCLOAK_URL",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "environments",
-							},
-							Key:      "KEYCLOAK_URL",
-							Optional: ptr.To(true),
-						},
-					},
-				},
-				{
-					Name: "KEYCLOAK_REALM",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "environments",
-							},
-							Key: "KEYCLOAK_REALM",
-						},
-					},
-				},
-				{
-					Name: "KEYCLOAK_ADMIN_USERNAME",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "environments",
-							},
-							Key: "KEYCLOAK_ADMIN_USERNAME",
-						},
-					},
-				},
-				{
-					Name: "KEYCLOAK_ADMIN_PASSWORD",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "environments",
-							},
-							Key: "KEYCLOAK_ADMIN_PASSWORD",
-						},
-					},
-				},
-				{
-					Name:  "CLIENT_NAME",
-					Value: component.Name,
-				},
-				{
-					Name:  "CLIENT_ID",
-					Value: "spiffe://localtest.me/sa/" + component.Name,
-				},
-				{
-					Name:  "NAMESPACE",
-					Value: namespace,
-				},
-			},
-			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "shared-data",
-					MountPath: "/shared",
-				},
-			},			
-		})
-	}
 
 	image := ""
 	if kubeSpec.ImageSpec != nil {
@@ -365,8 +291,101 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		},
 		Spec: corev1.PodSpec{
 			ServiceAccountName: component.Name,
-			InitContainers:     initContainers,
 			Containers: []corev1.Container{
+				{
+					Name:  "spiffe-helper",
+					Image: "ghcr.io/spiffe/spiffe-helper:nightly",
+					Command: []string{
+						"/spiffe-helper",
+						"-config=/etc/spiffe-helper/helper.conf",
+						"run",
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "spiffe-helper-config",
+							MountPath: "/etc/spiffe-helper",
+						},
+						{
+							Name:      "spire-agent-socket",
+							MountPath: "/spiffe-workload-api",
+						},
+						{
+							Name:      "svid-output",
+							MountPath: "/opt",
+						},
+					},
+				},
+				{
+					Name:            "kagenti-client-registration",
+					Image:           "ghcr.io/kagenti/kagenti/client-registration:latest",
+					ImagePullPolicy: corev1.PullPolicy(imagePullPolicy),
+					// Wait until /opt/jwt_svid.token appears, then exec
+					Command: []string{
+						"/bin/sh",
+						"-c",
+						// TODO: tail -f /dev/null allows the container to stay alive. Change this to be a job.
+						"while [ ! -f /opt/jwt_svid.token ]; do echo waiting for SVID; sleep 1; done; python client_registration.py; tail -f /dev/null",
+					},
+					Env: []corev1.EnvVar{
+						{
+							Name: "KEYCLOAK_URL",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "environments",
+									},
+									Key:      "KEYCLOAK_URL",
+									Optional: ptr.To(true),
+								},
+							},
+						},
+						{
+							Name: "KEYCLOAK_REALM",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "environments",
+									},
+									Key: "KEYCLOAK_REALM",
+								},
+							},
+						},
+						{
+							Name: "KEYCLOAK_ADMIN_USERNAME",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "environments",
+									},
+									Key: "KEYCLOAK_ADMIN_USERNAME",
+								},
+							},
+						},
+						{
+							Name: "KEYCLOAK_ADMIN_PASSWORD",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "environments",
+									},
+									Key: "KEYCLOAK_ADMIN_PASSWORD",
+								},
+							},
+						},
+						{
+							Name:  "CLIENT_NAME",
+							Value: component.Name,
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							// This is how client registration accesses the SVID
+							Name:      "svid-output",
+							MountPath: "/opt",
+						},
+						sharedMount,
+					},
+				},
 				{
 					Name:            component.Name,
 					Image:           image,
@@ -374,7 +393,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					Resources:       component.Spec.Deployer.Kubernetes.Resources,
 					Env:             mainEnvs,
 					Ports:           containerPorts,
-					VolumeMounts:    append(
+					VolumeMounts: append(
 						component.Spec.Deployer.Kubernetes.VolumeMounts,
 						sharedMount,
 					),
@@ -388,23 +407,44 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 			},
 			Volumes: append(
 				component.Spec.Deployer.Kubernetes.Volumes,
-				sharedVolume,
+				[]corev1.Volume{
+					sharedVolume,
+					{
+						Name: "spiffe-helper-config",
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "spiffe-helper-config",
+								},
+							},
+						},
+					},
+					{
+						Name: "spire-agent-socket",
+						VolumeSource: corev1.VolumeSource{
+							HostPath: &corev1.HostPathVolumeSource{
+								Path: "/run/spire/agent-sockets",
+							},
+						},
+					},
+					{
+						Name: "svid-output",
+						VolumeSource: corev1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{},
+						},
+					},
+				}...,
 			),
 		},
 	}
+
 	// if user provided PodTemplateSpec, use it instead of the default one
 	if component.Spec.Deployer.Kubernetes.PodTemplateSpec != nil {
-		// Merge initContainers into the user provided PodTemplateSpec
 		template = *component.Spec.Deployer.Kubernetes.PodTemplateSpec
 		template.ObjectMeta = metav1.ObjectMeta{
 			Labels: labels,
 		}
 
-		if len(template.Spec.InitContainers) > 0 {
-			template.Spec.InitContainers = append(initContainers, template.Spec.InitContainers...)
-		} else {
-			template.Spec.InitContainers = initContainers
-		}
 		// Merge mainEnvs into each container's Env
 		for containerInx := range template.Spec.Containers {
 			if len(mainEnvs) > 0 {
