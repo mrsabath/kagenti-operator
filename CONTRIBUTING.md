@@ -8,6 +8,11 @@ We can't wait to collaborate with you!
 
 ## Contributing Code
 
+### Developer's Guide
+
+Please follow our [Developer's Guide](./docs/dev-guide.md) where you can find comprehensive instructions
+for common development operations.
+
 ### Issues
 
 Prioritization for pull requests is given to those that address and resolve existing GitHub issues. Utilize the available issue labels to identify meaningful and relevant issues to work on.
