@@ -83,6 +83,7 @@ type AgentStatus struct {
 type LifecyclePhase string
 
 const (
+	PhasePending   LifecyclePhase = "Pending"
 	PhaseDeploying LifecyclePhase = "Deploying"
 	PhaseReady     LifecyclePhase = "Ready"
 	PhaseFailed    LifecyclePhase = "Failed"

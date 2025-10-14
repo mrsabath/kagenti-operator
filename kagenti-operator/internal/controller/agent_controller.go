@@ -276,7 +276,7 @@ func (r *AgentReconciler) getContainerImage(ctx context.Context, agent *agentv1a
 	}
 	return "", nil
 }
-func (r *AgentReconciler) addKeycloakRegistrationClient(agent *agentv1alpha1.Agent, podTemplateSpec *corev1.PodTemplateSpec) error {
+func (r *AgentReconciler) addIdentityContainers(agent *agentv1alpha1.Agent, podTemplateSpec *corev1.PodTemplateSpec) error {
 	if len(agent.Spec.PodTemplateSpec.Spec.Containers) == 0 {
 		return fmt.Errorf("no containers defined in PodTemplateSpec")
 	}
