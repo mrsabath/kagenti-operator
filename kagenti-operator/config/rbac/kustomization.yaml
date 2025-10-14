@@ -28,3 +28,7 @@ resources:
 - agent_admin_role.yaml
 - agent_editor_role.yaml
 - agent_viewer_role.yaml
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)

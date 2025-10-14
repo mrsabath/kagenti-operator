@@ -22,6 +22,10 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
+<<<<<<< HEAD
   - agents/status
+=======
+  - kagents/status
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
   verbs:
   - get

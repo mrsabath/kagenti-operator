@@ -68,7 +68,6 @@ func (b *TektonBuilder) Build(ctx context.Context, agentBuild *agentv1alpha1.Age
 		return err
 	}
 	return nil
-
 }
 func (b *TektonBuilder) Cleanup(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) error {
 	// Check if cleanup is enabled
@@ -176,7 +175,6 @@ func (b *TektonBuilder) createPipelineRun(ctx context.Context, agentBuild *agent
 	} else {
 		fmt.Println("PipelineSpec:::" + string(pp))
 	}
-
 	pipelineRun := &tektonv1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pipelineRunName,
@@ -205,6 +203,7 @@ func (b *TektonBuilder) createPipelineRun(ctx context.Context, agentBuild *agent
 
 	return nil
 }
+
 func (b *TektonBuilder) Cancel(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) error {
 	if agentBuild.Status.PipelineRunName == "" {
 		return nil // Nothing to cancel
@@ -355,6 +354,28 @@ func (b *TektonBuilder) extractBuiltImage(pipelineRun *tektonv1.PipelineRun) str
 	return ""
 }
 
+func (b *TektonBuilder) triggerNewBuild(agentBuild *agentv1alpha1.AgentBuild) bool {
+	b.Log.Info("triggerNewBuild()", "BuildStatus", agentBuild.Status)
+	// Don't trigger if already building
+	if agentBuild.Status.Phase == agentv1alpha1.PhaseBuilding {
+		return false
+	}
+	if agentBuild.Status.LastBuildTime.IsZero() || agentBuild.Status.PipelineRunName == "" {
+		return true
+	}
+	// Trigger on failure (for retry)
+	if agentBuild.Status.Phase == agentv1alpha1.BuildPhaseFailed {
+		return true
+	}
+
+	for _, condition := range agentBuild.Status.Conditions {
+		if condition.Type == "BuildSucceeded" && condition.Status == metav1.ConditionFalse {
+			return true
+		}
+	}
+
+	return false
+}
 func (b *TektonBuilder) GetStatus(ctx context.Context, agent *agentv1alpha1.AgentBuild) (agentv1alpha1.AgentBuildStatus, error) {
 	return agentv1alpha1.AgentBuildStatus{}, nil
 }

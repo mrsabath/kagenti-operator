@@ -12,16 +12,26 @@ spec:
     sourceRepository: "github.com/kagenti/agent-examples.git"
     sourceRevision: "main"
     sourceSubfolder: "a2a/weather_service"
+<<<<<<< HEAD
     sourceCredentials:
       name: github-token-secret
 
+=======
+    sourceCredentials: 
+      name: github-token-secret
+  
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
   buildOutput:
     image: "weather-service"
     imageTag: "v0.0.1"
     imageRegistry: "registry.cr-system.svc.cluster.local:5000"
     imageRepoCredentials:
       name: ghcr-secret
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
   pipeline:
     namespace: kagenti-system
     steps:
@@ -31,9 +41,18 @@ spec:
         configMap: check-subfolder-step
       - name: kaniko-build
         configMap: kaniko-docker-build-step
+<<<<<<< HEAD
 
   # Cleanup after successful build
   cleanupAfterBuild: true
 
   # Use dev mode pipeline
   mode: dev
+=======
+  
+  # Cleanup after successful build
+  cleanupAfterBuild: true
+  
+  # Use dev mode pipeline
+  mode: dev
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)

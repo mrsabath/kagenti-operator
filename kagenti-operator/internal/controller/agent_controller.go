@@ -282,6 +282,11 @@ func (r *AgentReconciler) getContainerImage(ctx context.Context, agent *agentv1a
 	return "", nil
 }
 
+func (r *AgentReconciler) addIdentityContainers(agent *agentv1alpha1.Agent, podTemplateSpec *corev1.PodTemplateSpec) error {
+	if len(agent.Spec.PodTemplateSpec.Spec.Containers) == 0 {
+		return fmt.Errorf("no containers defined in PodTemplateSpec")
+	}
+
 func (r *AgentReconciler) createDeploymentForAgent(ctx context.Context, agent *agentv1alpha1.Agent) (*appsv1.Deployment, error) {
 	if len(agent.Spec.PodTemplateSpec.Spec.Containers) == 0 {
 		return nil, fmt.Errorf("no containers defined in PodTemplateSpec")

@@ -9,7 +9,11 @@ spec:
     sourceRepository: "github.com/kagenti/agent-examples.git"
     sourceRevision: "main"
     sourceSubfolder: "a2a/weather_service"
+<<<<<<< HEAD
     sourceCredentials:
+=======
+    sourceCredentials: 
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
       name: github-token-secret
 
   pipeline:
@@ -28,4 +32,8 @@ spec:
     imageTag: "v0.0.1"
     imageRegistry: "registry.cr-system.svc.cluster.local:5000"
     imageRepoCredentials:
+<<<<<<< HEAD
       name: ghcr-secret
+=======
+      name: ghcr-secret
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)

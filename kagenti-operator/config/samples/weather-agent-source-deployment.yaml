@@ -10,14 +10,24 @@ metadata:
     description: "Weather data processing agent deployed from source"
 spec:
   description: "Agent that processes weather data - built from source"
+<<<<<<< HEAD
 
   replicas: 1
 
+=======
+  
+  replicas: 1
+  
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
   # Reference AgentBuild instead of direct image
   imageSource:
     buildRef:
       name: weather-agent-build
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
   # Define service ports to expose
   servicePorts:
     - name: http
@@ -28,6 +38,7 @@ spec:
       port: 9090
       protocol: TCP
       targetPort: 9090
+<<<<<<< HEAD
 
   # Complete pod template specification
   podTemplateSpec:
@@ -38,6 +49,18 @@ spec:
         image: <will be replaced with image from AgentBuild>
         imagePullPolicy: IfNotPresent
 
+=======
+  
+  # Complete pod template specification
+  podTemplateSpec:
+    spec:        
+        
+      containers:
+      - name: agent
+        image: <will be replaced with image from AgentBuild>
+        imagePullPolicy: IfNotPresent
+        
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
         # Resource limits and requests
         resources:
           requests:
@@ -46,7 +69,11 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
         # Environment variables
         env:
         - name: PORT
@@ -75,7 +102,11 @@ spec:
           value: spiffe://localtest.me/sa/weather-service
         - name: NAMESPACE
           value: kagenti
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
         # Ports
         ports:
         - name: http
@@ -84,7 +115,11 @@ spec:
         - name: metrics
           containerPort: 9090
           protocol: TCP
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
         # Volume mounts
         volumeMounts:
         - name: cache
@@ -93,7 +128,11 @@ spec:
           name: marvin
         - mountPath: /shared
           name: shared-data
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> 0230991 (controller implementation of the agentbuild_controller)
       # Volumes
       volumes:
       - emptyDir: {}
