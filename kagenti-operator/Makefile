@@ -13,6 +13,18 @@ endif
 # scaffolded by default. However, you might want to replace it to use other
 # tools. (i.e. podman)
 CONTAINER_TOOL ?= docker
+CMD_NAME ?= kagenti-operator
+KO_DOCKER_REPO ?= ko.local
+IMAGE_TAG ?= $(shell git rev-parse --short HEAD)
+IMG ?= ${KO_DOCKER_REPO}/${CMD_NAME}:${IMAGE_TAG}
+ARCH := $(shell go env GOARCH)
+OS := $(shell go env GOOS)
+
+CLUSTER ?= kagenti
+CONTEXT ?= kind-kagenti
+
+HELM_IMG := --set controllerManager.container.image.repository=${KO_DOCKER_REPO}/${CMD_NAME} --set controllerManager.container.image.tag=${IMAGE_TAG} 
+HELM_OPTS ?= ${HELM_IMG}
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -157,6 +169,26 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
+.PHONY: chart
+chart: manifests kustomize
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(shell echo ${IMG} | sed 's/\(:.*\)v/\1/')
+	$(KUSTOMIZE) build config/default > ../charts/kagenti-operator/templates/operator.yaml
+	$(KUSTOMIZE) build config/crd > ../charts/kagenti-operator/templates/crd/crds.yaml
+
+.PHONY: ko-local-build
+ko-local-build:
+#    cd cmd && KO_DOCKER_REPO=${KO_DOCKER_REPO}/${CMD_NAME} ko build -B . -t 61c72a7 --platform linux/arm64
+	KO_DOCKER_REPO=${KO_DOCKER_REPO}/${CMD_NAME} ko build -B ./cmd -t ${IMAGE_TAG} --platform linux/${ARCH}
+	docker tag ${KO_DOCKER_REPO}/${CMD_NAME}/cmd:${IMAGE_TAG} ${KO_DOCKER_REPO}/${CMD_NAME}:${IMAGE_TAG}
+
+# this is used for local testing
+.PHONY: kind-load-image
+kind-load-image:
+	kind load docker-image ${KO_DOCKER_REPO}/${CMD_NAME}:${IMAGE_TAG} --name ${CLUSTER}
+
+.PHONY: install-local-chart
+install-local-chart: kind-load-image
+	if [ ! -n "$(CONTEXT)" ] ; then helm upgrade --install --create-namespace -n kagenti-system kagenti-operator ../charts/kagenti-operator ${HELM_OPTS} ; else helm  --kube-context ${CONTEXT} upgrade --install --create-namespace -n kagenti-system kagenti-operator ../charts/kagenti-operator ${HELM_OPTS} ; fi
 ##@ Dependencies
 
 ## Location to install dependencies to
