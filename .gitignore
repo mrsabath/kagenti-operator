@@ -26,3 +26,5 @@ go.work.sum
 
 # ignore dist/ at any level 
 **/dist/
+
+.DS_Store
