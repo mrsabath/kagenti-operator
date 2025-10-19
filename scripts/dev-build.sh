@@ -5,8 +5,5 @@
 #kind load docker-image --name agent-platform local/kagenti-operator:${TAG}
 #kubectl -n kagenti-system set image deployment/kagenti-operator kagenti-ui-container=local/kagenti-ui:${TAG}
 #kubectl rollout status -n kagenti-system deployment/kagenti-ui
-<<<<<<< HEAD
 #kubectl get -n kagenti-system pod -l app.kubernetes.io/instance=kagenti-platform-operator
-=======
-#kubectl get -n kagenti-system pod -l app.kubernetes.io/instance=kagenti-platform-operator
->>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+

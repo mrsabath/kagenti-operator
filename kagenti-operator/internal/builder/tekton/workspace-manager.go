@@ -115,7 +115,6 @@ func (wm *WorkspaceManager) CleanupUnusedWorkspaces(ctx context.Context, namespa
 	err := wm.client.List(ctx, agentBuilds, client.InNamespace(namespace))
 	if err != nil {
 		return fmt.Errorf("failed to list agentbuild: %w", err)
-	}
 	activeAgentBuilds := make(map[string]bool)
 	for _, agentBuild := range agentBuilds.Items {
 		activeAgentBuilds[agentBuild.Name] = true

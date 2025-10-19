@@ -89,7 +89,6 @@ func (pc *PipelineComposer) ComposePipelineSpec(ctx context.Context, agentBuild 
 	}
 
 	return pipelineSpec, nil
-
 }
 
 // mergeParameters merges spec-generated params with user params (user takes precedence)
@@ -162,57 +161,6 @@ func (pc *PipelineComposer) loadStepsWithMergedParams(ctx context.Context, agent
 	return steps, order, nil
 }
 
-func (pc *PipelineComposer) loadSteps(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) (map[string]*StepDefinition, []string, error) {
-	steps := make(map[string]*StepDefinition)
-	var order []string
-
-	for _, stepSpec := range agentBuild.Spec.Pipeline.Steps {
-		// Skip disabled steps
-		if stepSpec.Enabled != nil && !*stepSpec.Enabled {
-			continue
-		}
-		order = append(order, stepSpec.Name)
-
-		// Load step ConfigMap
-		configMap := &corev1.ConfigMap{}
-		err := pc.client.Get(ctx, types.NamespacedName{
-			Name:      stepSpec.ConfigMap,
-			Namespace: agentBuild.Spec.Pipeline.Namespace,
-		}, configMap)
-
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return nil, nil, fmt.Errorf("step ConfigMap %s not found", stepSpec.ConfigMap)
-			}
-			return nil, nil, fmt.Errorf("failed to get step ConfigMap %s: %w", stepSpec.ConfigMap, err)
-		}
-
-		// Extract task spec definition
-		taskSpecYaml, ok := configMap.Data["task-spec.yaml"]
-		if !ok {
-			return nil, nil, fmt.Errorf("task-spec.yaml not found in ConfigMap %s", stepSpec.ConfigMap)
-		}
-
-		// Parse task spec
-		taskSpec := &tektonv1.TaskSpec{}
-		if err := yaml.Unmarshal([]byte(taskSpecYaml), taskSpec); err != nil {
-			return nil, nil, fmt.Errorf("failed to parse task spec definition: %w", err)
-		}
-
-		// Create step definition
-		step := &StepDefinition{
-			Name:       stepSpec.Name,
-			ConfigMap:  stepSpec.ConfigMap,
-			TaskSpec:   taskSpec,
-			Parameters: pc.mergeTaskParameters(taskSpec.Params, agentBuild.Spec.Pipeline.Parameters),
-		}
-
-		steps[stepSpec.Name] = step
-	}
-
-	return steps, order, nil
-}
-
 func (pc *PipelineComposer) createPipelineTasks(steps map[string]*StepDefinition, order []string) ([]tektonv1.PipelineTask, error) {
 
 	tasks := make([]tektonv1.PipelineTask, 0, len(order))
@@ -262,7 +210,6 @@ func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec,
 			"description", taskParam.Description,
 			"hasDefault", taskParam.Default != nil)
 
-		// Additional detailed logging of the Default field
 		if taskParam.Default != nil {
 			pc.Logger.Info("TaskParam default details",
 				"name", taskParam.Name,

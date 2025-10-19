@@ -133,7 +133,6 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				"mode", agentBuild.Spec.Mode)
 			return ctrl.Result{}, err
 		}
-
 		r.Recorder.Event(agentBuild, corev1.EventTypeNormal, "BuildStarted",
 			fmt.Sprintf("PipelineRun %s created", agentBuild.Status.PipelineRunName))
 		return ctrl.Result{RequeueAfter: defaultRequeueDelay}, nil
@@ -162,8 +161,20 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		err := r.Builder.CheckStatus(ctx, agentBuild)
 		if err != nil {
+			r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "StatusCheckFailed",
+				fmt.Sprintf("Failed to check build status: %v", err))
 			agentBuildlogger.Error(err, "Failed to check agentbuild status", "AgentBuild", agentBuild.Name)
 			return ctrl.Result{}, err
+		}
+		if previousPhase != agentBuild.Status.Phase {
+			switch agentBuild.Status.Phase {
+			case agentv1alpha1.BuildPhaseSucceeded:
+				r.Recorder.Event(agentBuild, corev1.EventTypeNormal, "BuildSucceeded",
+					fmt.Sprintf("Image built successfully: %s", agentBuild.Status.BuiltImage))
+			case agentv1alpha1.BuildPhaseFailed:
+				r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "BuildFailed",
+					agentBuild.Status.Message)
+			}
 		}
 		return ctrl.Result{RequeueAfter: defaultRequeueDelay}, nil
 	case agentv1alpha1.BuildPhaseSucceeded:
@@ -201,7 +212,6 @@ func (r *AgentBuildReconciler) validateSpec(ctx context.Context, agentBuild *age
 			return fmt.Errorf("sourceCredentials secret not found: %w", err)
 		}
 	}
-
 	// Validate registry credentials if specified
 	if agentBuild.Spec.BuildOutput != nil &&
 		agentBuild.Spec.BuildOutput.ImageRepoCredentials != nil {

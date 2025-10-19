@@ -11,6 +11,7 @@ metadata:
 spec:
   description: "Agent that processes weather data - built from source"
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   replicas: 1
 
@@ -19,15 +20,24 @@ spec:
   replicas: 1
   
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+
+  replicas: 1
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
   # Reference AgentBuild instead of direct image
   imageSource:
     buildRef:
       name: weather-agent-build
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
   
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
   # Define service ports to expose
   servicePorts:
     - name: http
@@ -38,6 +48,7 @@ spec:
       port: 9090
       protocol: TCP
       targetPort: 9090
+<<<<<<< HEAD
 <<<<<<< HEAD
 
   # Complete pod template specification
@@ -51,16 +62,23 @@ spec:
 
 =======
   
+=======
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
   # Complete pod template specification
   podTemplateSpec:
-    spec:        
-        
+    spec:
+
       containers:
-      - name: agent
+      - name: agent  # use fixed name "agent" for the main container
         image: <will be replaced with image from AgentBuild>
         imagePullPolicy: IfNotPresent
+<<<<<<< HEAD
         
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
         # Resource limits and requests
         resources:
           requests:
@@ -70,10 +88,14 @@ spec:
             memory: "512Mi"
             cpu: "500m"
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
         
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
         # Environment variables
         env:
         - name: PORT
@@ -103,10 +125,14 @@ spec:
         - name: NAMESPACE
           value: kagenti
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
         
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
         # Ports
         ports:
         - name: http
@@ -116,10 +142,14 @@ spec:
           containerPort: 9090
           protocol: TCP
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
                 
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
         # Volume mounts
         volumeMounts:
         - name: cache
@@ -129,10 +159,14 @@ spec:
         - mountPath: /shared
           name: shared-data
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
       
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
       # Volumes
       volumes:
       - emptyDir: {}

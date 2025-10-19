@@ -13,6 +13,7 @@ spec:
     sourceRevision: "main"
     sourceSubfolder: "a2a/weather_service"
 <<<<<<< HEAD
+<<<<<<< HEAD
     sourceCredentials:
       name: github-token-secret
 
@@ -21,6 +22,11 @@ spec:
       name: github-token-secret
   
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+    sourceCredentials:
+      name: github-token-secret
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
   buildOutput:
     image: "weather-service"
     imageTag: "v0.0.1"
@@ -28,10 +34,14 @@ spec:
     imageRepoCredentials:
       name: ghcr-secret
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
   
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
   pipeline:
     namespace: kagenti-system
     steps:
@@ -42,6 +52,7 @@ spec:
       - name: kaniko-build
         configMap: kaniko-docker-build-step
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   # Cleanup after successful build
   cleanupAfterBuild: true
@@ -50,9 +61,15 @@ spec:
   mode: dev
 =======
   
+=======
+
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
   # Cleanup after successful build
   cleanupAfterBuild: true
-  
+
   # Use dev mode pipeline
   mode: dev
+<<<<<<< HEAD
 >>>>>>> 0230991 (controller implementation of the agentbuild_controller)
+=======
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)

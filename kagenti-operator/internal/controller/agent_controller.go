@@ -397,7 +397,11 @@ func (r *AgentReconciler) createDeploymentForAgent(ctx context.Context, agent *a
 			}
 		}
 		if exists := r.containerExists(podTemplateSpec, SPIFFY_HELPER_NAME); !exists {
+<<<<<<< HEAD
 			err := r.addSpiffyHelperContainer(podTemplateSpec)
+=======
+			err := r.addSpiffyHelperContainer(podTemplateSpec, agent)
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
 			if err != nil {
 				logger.Error(err, "Unable to add spiffy-helper sidecar container")
 				return nil, err
@@ -501,7 +505,11 @@ func (r *AgentReconciler) addClientRegistrationContainer(podTemplateSpec *corev1
 
 	containers := podTemplateSpec.Spec.Containers
 	if len(containers) == 0 {
+<<<<<<< HEAD
 		return fmt.Errorf("no containers found in Agent spec")
+=======
+		return fmt.Errorf("no containers found in MCPServer spec")
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
 	}
 
 	imagePullPolicy := "IfNotPresent"
@@ -525,6 +533,10 @@ func (r *AgentReconciler) addClientRegistrationContainer(podTemplateSpec *corev1
 		Command: []string{
 			"/bin/sh",
 			"-c",
+<<<<<<< HEAD
+=======
+			// TODO: tail -f /dev/null allows the container to stay alive. Change this to be a job.
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
 			"while [ ! -f /opt/jwt_svid.token ]; do echo waiting for SVID; sleep 1; done; python client_registration.py; tail -f /dev/null",
 		},
 		Env: []corev1.EnvVar{
@@ -597,11 +609,19 @@ func (r *AgentReconciler) addClientRegistrationContainer(podTemplateSpec *corev1
 	podTemplateSpec.Spec.Containers = containers
 	return nil
 }
+<<<<<<< HEAD
 func (r *AgentReconciler) addSpiffyHelperContainer(podTemplateSpec *corev1.PodTemplateSpec) error {
 
 	containers := podTemplateSpec.Spec.Containers
 	if len(containers) == 0 {
 		return fmt.Errorf("no containers found in Agent spec")
+=======
+func (r *AgentReconciler) addSpiffyHelperContainer(podTemplateSpec *corev1.PodTemplateSpec, agent *agentv1alpha1.Agent) error {
+
+	containers := podTemplateSpec.Spec.Containers
+	if len(containers) == 0 {
+		return fmt.Errorf("no containers found in MCPServer spec")
+>>>>>>> 2b17fd5 (adds implementation of agentbuild api)
 	}
 
 	imagePullPolicy := "IfNotPresent"
