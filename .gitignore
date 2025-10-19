@@ -24,7 +24,7 @@ go.work.sum
 # env file
 .env
 
-# ignore dist/ at any level 
+# ignore dist/ at any level
 **/dist/
 
 .DS_Store
