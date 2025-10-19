@@ -1,8 +1,9 @@
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: kagenti-manager-role
+  labels:
+    {{- include "chart.labels" . | nindent 4 }}
 rules:
 - apiGroups:
   - ""
@@ -85,10 +86,10 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kagentidev
+  - agent.kagenti.dev
   resources:
-  - kagentiagents
-  - kagentiagentbuilds
+  - agents
+  - agentbuilds
   verbs:
   - create
   - delete
@@ -100,15 +101,15 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagents/finalizers
-  - kagentiagentbuilds/finalizers
+  - agents/finalizers
+  - agentbuilds/finalizers
   verbs:
   - update
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagents/status
-  - kagentiagentbuilds/status
+  - agents/status
+  - agentbuilds/status
   verbs:
   - get
   - patch

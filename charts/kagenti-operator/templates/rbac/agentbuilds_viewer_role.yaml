@@ -11,12 +11,12 @@ kind: ClusterRole
 metadata:
   labels:
     {{- include "chart.labels" . | nindent 4 }}
-  name: kagenti-viewer-role
+  name: agentbuild-viewer-role
 rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds
+  - agentbuilds
   verbs:
   - get
   - list
@@ -24,7 +24,7 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds/status
+  - agentbuilds/status
   verbs:
   - get
 {{- end -}}

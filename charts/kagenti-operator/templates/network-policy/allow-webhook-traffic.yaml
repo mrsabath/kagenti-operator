@@ -13,7 +13,7 @@ spec:
   podSelector:
     matchLabels:
       control-plane: controller-manager
-      app.kubernetes.io/name: {{- include "chart.name" . }}
+      app.kubernetes.io/name: {{ include "chart.name" . }}
   policyTypes:
     - Ingress
   ingress:
