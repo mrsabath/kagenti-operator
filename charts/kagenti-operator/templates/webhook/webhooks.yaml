@@ -26,7 +26,7 @@ webhooks:
           - CREATE
           - UPDATE
         apiGroups:
-          - kagenti.operator.dev
+          - agent.kagenti.dev
         apiVersions:
           - v1alpha1
         resources:
@@ -59,7 +59,7 @@ webhooks:
           - CREATE
           - UPDATE
         apiGroups:
-          - kagenti.operator.dev
+          - agent.kagenti.dev
         apiVersions:
           - v1alpha1
         resources:

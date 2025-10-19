@@ -14,15 +14,15 @@ metadata:
   name: kagenti-admin-role
 rules:
 - apiGroups:
-  - kagenti.operator.dev
+  - agent.kagenti.dev
   resources:
-  - platforms
+  - kagentiagentbuilds
   verbs:
   - '*'
 - apiGroups:
-  - kagenti.operator.dev
+  - agent.kagenti.dev
   resources:
-  - platforms/status
+  - kagentiagentbuilds/status
   verbs:
   - get
 {{- end -}}
