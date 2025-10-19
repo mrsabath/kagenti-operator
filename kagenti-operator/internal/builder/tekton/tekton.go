@@ -68,10 +68,7 @@ func (b *TektonBuilder) Build(ctx context.Context, agentBuild *agentv1alpha1.Age
 		return err
 	}
 	return nil
-	/*
-		if err := b.CheckStatus(ctx, agentBuild); err != nil {
-			return err
-	*/
+
 }
 func (b *TektonBuilder) Cleanup(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) error {
 	// Check if cleanup is enabled
@@ -98,19 +95,20 @@ func (b *TektonBuilder) Cleanup(ctx context.Context, agentBuild *agentv1alpha1.A
 		}
 	}
 
-	// Delete completed pods
+	var errs []error
 	for _, pod := range completedPods {
-		b.Log.Info("Deleting completed pod", "podName", pod.Name)
-		err := b.Delete(ctx, &pod)
-		if err != nil {
-			b.Log.Error(err, "Failed to delete completed pod", "podName", pod.Name)
+		if err := b.Delete(ctx, &pod); err != nil && !errors.IsNotFound(err) {
+			b.Log.Error(err, "Failed to delete pod", "podName", pod.Name)
+			errs = append(errs, err)
 		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("failed to delete %d pods", len(errs))
 	}
 	return nil
 }
 func (b *TektonBuilder) createPipelineRun(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) error {
 	logger := b.Log.WithValues("Tekton builder", agentBuild.Name, "Namespace", agentBuild.Namespace)
-	//logger.Info("Creating new PipelineRun")
 	// Check if a PipelineRun already exists for this build
 	if agentBuild.Status.PipelineRunName != "" {
 		existingPR := &tektonv1.PipelineRun{}
@@ -128,7 +126,8 @@ func (b *TektonBuilder) createPipelineRun(ctx context.Context, agentBuild *agent
 		}
 		// NotFound is OK, continue to create
 	}
-	// Generate unique PipelineRun name
+	// Go uses a specific reference date for time formatting: Mon Jan 2 15:04:05 MST 2006
+	// This is NOT about the actual year - it's a pattern template.
 	pipelineRunName := fmt.Sprintf("%s-%s", agentBuild.Name, time.Now().Format("20060102150405"))
 
 	// Update status FIRST to claim this build attempt
@@ -138,6 +137,13 @@ func (b *TektonBuilder) createPipelineRun(ctx context.Context, agentBuild *agent
 	agentBuild.Status.Message = "Creating PipelineRun"
 	agentBuild.Status.LastBuildTime = &metav1.Time{Time: time.Now()}
 
+	meta.SetStatusCondition(&agentBuild.Status.Conditions, metav1.Condition{
+		Type:               "BuildSucceeded",
+		Status:             metav1.ConditionUnknown,
+		LastTransitionTime: metav1.Now(),
+		Reason:             "BuildStarted",
+		Message:            "PipelineRun creation initiated",
+	})
 	if err := b.Client.Status().Update(ctx, agentBuild); err != nil {
 		b.Log.Error(err, "Failed to update status before creating PipelineRun")
 		return err
@@ -170,9 +176,7 @@ func (b *TektonBuilder) createPipelineRun(ctx context.Context, agentBuild *agent
 	} else {
 		fmt.Println("PipelineSpec:::" + string(pp))
 	}
-	// Go uses a specific reference date for time formatting: Mon Jan 2 15:04:05 MST 2006
-	// This is NOT about the actual year - it's a pattern template.
-	//pipelineRunName := fmt.Sprintf("%s-%s", agentBuild.Name, time.Now().Format("20060102150405"))
+
 	pipelineRun := &tektonv1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pipelineRunName,
@@ -199,24 +203,29 @@ func (b *TektonBuilder) createPipelineRun(ctx context.Context, agentBuild *agent
 		return err
 	}
 
-	agentBuild.Status.PipelineRunName = pipelineRunName
-	agentBuild.Status.Phase = agentv1alpha1.PhaseBuilding
-
-	agentBuild.Status.LastBuildTime = &metav1.Time{Time: time.Now()}
-	if err := b.Client.Status().Update(ctx, agentBuild); err != nil {
-		// Handle AlreadyExists gracefully
-		if errors.IsAlreadyExists(err) {
-			logger.Info("PipelineRun already exists (race condition), continuing")
-			return nil
-		}
-		b.Log.Error(err, "Failed to update PipelineRun status")
-		return err
-	}
-
 	return nil
 }
 func (b *TektonBuilder) Cancel(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) error {
-	return nil
+	if agentBuild.Status.PipelineRunName == "" {
+		return nil // Nothing to cancel
+	}
+
+	pipelineRun := &tektonv1.PipelineRun{}
+	err := b.Client.Get(ctx, types.NamespacedName{
+		Name:      agentBuild.Status.PipelineRunName,
+		Namespace: agentBuild.Namespace,
+	}, pipelineRun)
+
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil // Already deleted
+		}
+		return err
+	}
+
+	// Cancel the PipelineRun
+	pipelineRun.Spec.Status = tektonv1.PipelineRunSpecStatusCancelled
+	return b.Client.Update(ctx, pipelineRun)
 }
 func (b *TektonBuilder) CheckStatus(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) error {
 	logger := b.Log.WithValues("Tekton builder", agentBuild.Name, "Namespace", agentBuild.Namespace)
@@ -346,28 +355,6 @@ func (b *TektonBuilder) extractBuiltImage(pipelineRun *tektonv1.PipelineRun) str
 	return ""
 }
 
-func (b *TektonBuilder) triggerNewBuild(agentBuild *agentv1alpha1.AgentBuild) bool {
-	b.Log.Info("triggerNewBuild()", "BuildStatus", agentBuild.Status)
-	// Don't trigger if already building
-	if agentBuild.Status.Phase == agentv1alpha1.PhaseBuilding {
-		return false
-	}
-	if agentBuild.Status.LastBuildTime.IsZero() || agentBuild.Status.PipelineRunName == "" {
-		return true
-	}
-	// Trigger on failure (for retry)
-	if agentBuild.Status.Phase == agentv1alpha1.BuildPhaseFailed {
-		return true
-	}
-
-	for _, condition := range agentBuild.Status.Conditions {
-		if condition.Type == "BuildSucceeded" && condition.Status == metav1.ConditionFalse {
-			return true
-		}
-	}
-
-	return false
-}
 func (b *TektonBuilder) GetStatus(ctx context.Context, agent *agentv1alpha1.AgentBuild) (agentv1alpha1.AgentBuildStatus, error) {
 	return agentv1alpha1.AgentBuildStatus{}, nil
 }

@@ -10,14 +10,14 @@ metadata:
     description: "Weather data processing agent deployed from source"
 spec:
   description: "Agent that processes weather data - built from source"
-  
+
   replicas: 1
-  
+
   # Reference AgentBuild instead of direct image
   imageSource:
     buildRef:
       name: weather-agent-build
-  
+
   # Define service ports to expose
   servicePorts:
     - name: http
@@ -28,16 +28,16 @@ spec:
       port: 9090
       protocol: TCP
       targetPort: 9090
-  
+
   # Complete pod template specification
   podTemplateSpec:
-    spec:        
-        
+    spec:
+
       containers:
-      - name: agent
+      - name: agent  # use fixed name "agent" for the main container
         image: <will be replaced with image from AgentBuild>
         imagePullPolicy: IfNotPresent
-        
+
         # Resource limits and requests
         resources:
           requests:
@@ -46,7 +46,7 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
-        
+
         # Environment variables
         env:
         - name: PORT
@@ -75,7 +75,7 @@ spec:
           value: spiffe://localtest.me/sa/weather-service
         - name: NAMESPACE
           value: kagenti
-        
+
         # Ports
         ports:
         - name: http
@@ -84,7 +84,7 @@ spec:
         - name: metrics
           containerPort: 9090
           protocol: TCP
-                
+
         # Volume mounts
         volumeMounts:
         - name: cache
@@ -93,7 +93,7 @@ spec:
           name: marvin
         - mountPath: /shared
           name: shared-data
-      
+
       # Volumes
       volumes:
       - emptyDir: {}

@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,8 +40,9 @@ import (
 // AgentBuildReconciler reconciles a AgentBuild object
 type AgentBuildReconciler struct {
 	client.Client
-	Scheme  *runtime.Scheme
-	Builder builder.Builder
+	Scheme   *runtime.Scheme
+	Builder  builder.Builder
+	Recorder record.EventRecorder
 }
 
 const (
@@ -111,6 +113,8 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if doBuild {
 		if err := r.validateSpec(ctx, agentBuild); err != nil {
 			agentBuildlogger.Error(err, "AgentBuild spec validation failed")
+			r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "ValidationFailed",
+				fmt.Sprintf("Spec validation failed: %v", err))
 			// Update status with validation error
 			agentBuild.Status.Phase = agentv1alpha1.BuildPhaseFailed
 			agentBuild.Status.Message = fmt.Sprintf("Validation failed: %v", err)
@@ -121,27 +125,47 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		err := r.Builder.Build(ctx, agentBuild)
 		if err != nil {
+			r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "BuildFailed",
+				fmt.Sprintf("Failed to start build: %v", err))
+
 			logger.Error(err, "Failed to trigger build",
 				"agentbuild", agentBuild.Name,
 				"namespace", agentBuild.Namespace,
 				"mode", agentBuild.Spec.Mode)
 			return ctrl.Result{}, err
 		}
+		r.Recorder.Event(agentBuild, corev1.EventTypeNormal, "BuildStarted",
+			fmt.Sprintf("PipelineRun %s created", agentBuild.Status.PipelineRunName))
 		return ctrl.Result{RequeueAfter: defaultRequeueDelay}, nil
 	}
 
 	agentBuildlogger.Info("Controller --------", "build Phase", agentBuild.Status.Phase)
 	switch agentBuild.Status.Phase {
 	case agentv1alpha1.PhaseBuilding:
+		previousPhase := agentBuild.Status.Phase
 		err := r.Builder.CheckStatus(ctx, agentBuild)
 		if err != nil {
+			r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "StatusCheckFailed",
+				fmt.Sprintf("Failed to check build status: %v", err))
 			agentBuildlogger.Error(err, "Failed to check agentbuild status", "AgentBuild", agentBuild.Name)
 			return ctrl.Result{}, err
+		}
+		if previousPhase != agentBuild.Status.Phase {
+			switch agentBuild.Status.Phase {
+			case agentv1alpha1.BuildPhaseSucceeded:
+				r.Recorder.Event(agentBuild, corev1.EventTypeNormal, "BuildSucceeded",
+					fmt.Sprintf("Image built successfully: %s", agentBuild.Status.BuiltImage))
+			case agentv1alpha1.BuildPhaseFailed:
+				r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "BuildFailed",
+					agentBuild.Status.Message)
+			}
 		}
 		return ctrl.Result{RequeueAfter: defaultRequeueDelay}, nil
 	case agentv1alpha1.BuildPhaseSucceeded:
 		err := r.Builder.Cleanup(ctx, agentBuild)
 		if err != nil {
+			r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "CleanupFailed",
+				fmt.Sprintf("Failed to cleanup resources: %v", err))
 			agentBuildlogger.Error(err, "Failed to cleanup Builder resource", "AgentBuild", agentBuild.Name)
 			return ctrl.Result{}, err
 		}
@@ -172,7 +196,17 @@ func (r *AgentBuildReconciler) validateSpec(ctx context.Context, agentBuild *age
 			return fmt.Errorf("sourceCredentials secret not found: %w", err)
 		}
 	}
-
+	// Validate registry credentials if specified
+	if agentBuild.Spec.BuildOutput != nil &&
+		agentBuild.Spec.BuildOutput.ImageRepoCredentials != nil {
+		secret := &corev1.Secret{}
+		if err := r.Get(ctx, types.NamespacedName{
+			Name:      agentBuild.Spec.BuildOutput.ImageRepoCredentials.Name,
+			Namespace: agentBuild.Namespace,
+		}, secret); err != nil {
+			return fmt.Errorf("imageRepoCredentials secret not found: %w", err)
+		}
+	}
 	return nil
 }
 

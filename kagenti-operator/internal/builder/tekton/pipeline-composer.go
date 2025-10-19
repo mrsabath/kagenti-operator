@@ -89,58 +89,6 @@ func (pc *PipelineComposer) ComposePipelineSpec(ctx context.Context, agentBuild 
 	}
 
 	return pipelineSpec, nil
-	/*
-		specParams := pc.collectPipelineParams(agentBuild)
-
-		// Convert to ParameterSpec for merging
-		var baseParams []agentv1alpha1.ParameterSpec
-		for _, p := range specParams {
-			baseParams = append(baseParams, agentv1alpha1.ParameterSpec{
-				Name:  p.Name,
-				Value: p.Default.StringVal,
-			})
-		}
-
-		// Merge with user-provided parameters (user params take precedence)
-		mergedParams := baseParams
-		for _, userParam := range agentBuild.Spec.Pipeline.Parameters {
-			found := false
-			for i, bp := range mergedParams {
-				if bp.Name == userParam.Name {
-					mergedParams[i] = userParam // Override with user value
-					found = true
-					break
-				}
-			}
-			if !found {
-				mergedParams = append(mergedParams, userParam)
-			}
-		}
-
-		// Load and validate all steps
-		steps, order, err := pc.loadSteps(ctx, agentBuild)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load pipeline steps: %w", err)
-		}
-
-		// Create ordered pipeline tasks with embedded specs
-		pipelineTasks, err := pc.createPipelineTasks(steps, order)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create pipeline tasks: %w", err)
-		}
-
-		pipelineSpec := &tektonv1.PipelineSpec{
-			Tasks: pipelineTasks,
-			Workspaces: []tektonv1.PipelineWorkspaceDeclaration{
-				{
-					Name:        "shared-workspace",
-					Description: "Workspace for source code and build artifacts",
-				},
-			},
-		}
-
-		return pipelineSpec, nil
-	*/
 }
 
 // mergeParameters merges spec-generated params with user params (user takes precedence)
@@ -213,64 +161,11 @@ func (pc *PipelineComposer) loadStepsWithMergedParams(ctx context.Context, agent
 	return steps, order, nil
 }
 
-func (pc *PipelineComposer) loadSteps(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) (map[string]*StepDefinition, []string, error) {
-	steps := make(map[string]*StepDefinition)
-	var order []string
-
-	for _, stepSpec := range agentBuild.Spec.Pipeline.Steps {
-		// Skip disabled steps
-		if stepSpec.Enabled != nil && !*stepSpec.Enabled {
-			continue
-		}
-		order = append(order, stepSpec.Name)
-
-		// Load step ConfigMap
-		configMap := &corev1.ConfigMap{}
-		err := pc.client.Get(ctx, types.NamespacedName{
-			Name:      stepSpec.ConfigMap,
-			Namespace: agentBuild.Spec.Pipeline.Namespace,
-		}, configMap)
-
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return nil, nil, fmt.Errorf("step ConfigMap %s not found", stepSpec.ConfigMap)
-			}
-			return nil, nil, fmt.Errorf("failed to get step ConfigMap %s: %w", stepSpec.ConfigMap, err)
-		}
-
-		// Extract task spec definition
-		taskSpecYaml, ok := configMap.Data["task-spec.yaml"]
-		if !ok {
-			return nil, nil, fmt.Errorf("task-spec.yaml not found in ConfigMap %s", stepSpec.ConfigMap)
-		}
-
-		// Parse task spec
-		taskSpec := &tektonv1.TaskSpec{}
-		if err := yaml.Unmarshal([]byte(taskSpecYaml), taskSpec); err != nil {
-			return nil, nil, fmt.Errorf("failed to parse task spec definition: %w", err)
-		}
-
-		// Create step definition
-		step := &StepDefinition{
-			Name:       stepSpec.Name,
-			ConfigMap:  stepSpec.ConfigMap,
-			TaskSpec:   taskSpec,
-			Parameters: pc.mergeTaskParameters(taskSpec.Params, agentBuild.Spec.Pipeline.Parameters),
-		}
-
-		steps[stepSpec.Name] = step
-	}
-
-	return steps, order, nil
-}
-
 func (pc *PipelineComposer) createPipelineTasks(steps map[string]*StepDefinition, order []string) ([]tektonv1.PipelineTask, error) {
 
 	tasks := make([]tektonv1.PipelineTask, 0, len(order))
 	for i, stepName := range order {
 		stepDefinition := steps[stepName]
-
-		//	stepParameters := pc.getTaskParams(stepDefinition.Parameters)
 
 		// Create task with embedded spec using EmbeddedTask
 		task := tektonv1.PipelineTask{
@@ -309,14 +204,13 @@ func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec,
 	}
 	for _, taskParam := range taskParams {
 		defaultValue := ""
-		// LOG: Right after taskParam is assigned from the range
+
 		pc.Logger.Info("Processing taskParam",
 			"name", taskParam.Name,
 			"type", string(taskParam.Type),
 			"description", taskParam.Description,
 			"hasDefault", taskParam.Default != nil)
 
-		// Additional detailed logging of the Default field
 		if taskParam.Default != nil {
 			pc.Logger.Info("TaskParam default details",
 				"name", taskParam.Name,
@@ -330,14 +224,7 @@ func (pc *PipelineComposer) mergeTaskParameters(taskParams []tektonv1.ParamSpec,
 		} else {
 			pc.Logger.Info("TaskParam has nil Default", "name", taskParam.Name)
 		}
-		// Create a copy of the task parameter
-		//		mergedParam := platformv1alpha1.ParameterSpec{
-		//			Name:        taskParam.Name,
-		//			Description: taskParam.Description,
-		//			Value:       taskParam.Default.StringVal,
-		//		}
 
-		// Create a copy of the task parameter
 		mergedParam := agentv1alpha1.ParameterSpec{
 			Name:        taskParam.Name,
 			Description: taskParam.Description,
@@ -439,62 +326,3 @@ func (pc *PipelineComposer) collectPipelineParams(agentBuild *agentv1alpha1.Agen
 
 	return params
 }
-
-/*
-func (pc *PipelineComposer) collectPipelineParams(agentBuild *agentv1alpha1.AgentBuild) []tektonv1.ParamSpec {
-
-	// Standard parameters
-	params := []tektonv1.ParamSpec{
-		{
-			Name:        "git-url",
-			Type:        tektonv1.ParamTypeString,
-			Description: "Git repository URL",
-			Default: &tektonv1.ParamValue{
-				Type:      tektonv1.ParamTypeString,
-				StringVal: agentBuild.Spec.SourceSpec.SourceRepository,
-			},
-		},
-		{
-			Name:        "git-revision",
-			Type:        tektonv1.ParamTypeString,
-			Description: "Git revision (branch, tag, commit)",
-			Default: &tektonv1.ParamValue{
-				Type:      tektonv1.ParamTypeString,
-				StringVal: agentBuild.Spec.SourceSpec.SourceRevision,
-			},
-		},
-		{
-			Name:        "component-path",
-			Type:        tektonv1.ParamTypeString,
-			Description: "Path to the component code within the repository",
-			Default: &tektonv1.ParamValue{
-				Type:      tektonv1.ParamTypeString,
-				StringVal: agentBuild.Spec.SourceSpec.SourceSubfolder,
-			},
-		},
-		{
-			Name:        "image-name",
-			Type:        tektonv1.ParamTypeString,
-			Description: "Name for the built image",
-			Default: &tektonv1.ParamValue{
-				Type:      tektonv1.ParamTypeString,
-				StringVal: fmt.Sprintf("%s:%s", agentBuild.Name, "latest"),
-			},
-		},
-	}
-
-	// Add custom parameters from component spec
-	for _, param := range agentBuild.Spec.Pipeline.Parameters {
-		params = append(params, tektonv1.ParamSpec{
-			Name: param.Name,
-			Type: tektonv1.ParamTypeString,
-			Default: &tektonv1.ParamValue{
-				Type:      tektonv1.ParamTypeString,
-				StringVal: param.Value,
-			},
-		})
-	}
-
-	return params
-}
-*/

@@ -1,6 +1,6 @@
 # Kagenti Platform Operator Documentation
 
-This document provides information on how to install and use the `kagenti-platform-operator` which automates the lifecycle management of agentic platform components within a Kubernetes cluster. 
+This document provides information on how to install and use the `kagenti-platform-operator` which automates the lifecycle management of agentic platform components within a Kubernetes cluster.
 ## Overview
 The operator will manage two primary Custom Resources: `Component` CRs and `Platform` CR.
 

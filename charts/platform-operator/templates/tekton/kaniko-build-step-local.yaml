@@ -2,9 +2,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kaniko-docker-build-step-local
-  namespace: kagenti-system  
+  namespace: kagenti-system
   labels:
-    kagenti.operator.dev/tekton: step 
+    kagenti.operator.dev/tekton: step
 data:
   task-spec.yaml: |
     params:

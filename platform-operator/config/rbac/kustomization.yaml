@@ -28,4 +28,3 @@ resources:
 - component_admin_role.yaml
 - component_editor_role.yaml
 - component_viewer_role.yaml
-

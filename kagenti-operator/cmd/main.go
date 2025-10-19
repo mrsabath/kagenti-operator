@@ -23,8 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	//_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	"github.com/kagenti/operator/internal/builder/tekton"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -237,6 +235,7 @@ func main() {
 			tekton.NewPipelineComposer(mgr.GetClient(), mgr.GetLogger()),
 			tekton.NewWorkspaceManager(mgr.GetClient(), mgr.GetScheme(), mgr.GetLogger()),
 		),
+		Recorder: mgr.GetEventRecorderFor("agentbuild-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AgentBuild")
 		os.Exit(1)

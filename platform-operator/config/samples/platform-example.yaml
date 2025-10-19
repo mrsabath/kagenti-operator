@@ -3,7 +3,7 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Platform
 metadata:
   name: ai-development-platform
-  namespace: kagenti-system 
+  namespace: kagenti-system
   labels:
     app.kubernetes.io/name: agentic-platform
     app.kubernetes.io/managed-by: platform-operator
@@ -12,9 +12,9 @@ metadata:
 
 spec:
   description: "AI/ML Development Platform with complete toolchain and agent deployment capabilities"
-  
+
   globalConfig:
-    namespace: kagenti-system 
+    namespace: kagenti-system
     annotations:
       platform.example.com/managed-by: "ai-platform-operator"
       platform.example.com/version: "v1.0.0"
@@ -22,21 +22,21 @@ spec:
       app.kubernetes.io/name: agentic-platform
       app.kubernetes.io/managed-by: platform-operator
       team: ai-engineering
-  
+
   infrastructure:
     - name: gateway-api
       componentReference:
         name: gateway-api
         kind: Component
         apiVersion: agent.example.com/v1
-        namespace: kagenti-system 
-        
+        namespace: kagenti-system
+
     - name: phoenix
       componentReference:
         name: phoenix
         kind: Component
         apiVersion: agent.example.com/v1
-        namespace: kagenti-system 
+        namespace: kagenti-system
 
   tools:
       - name: test-server-weather
@@ -45,7 +45,7 @@ spec:
           kind: Component
           apiVersion: agent.example.com/v1
           namespace: kagenti-system
-  
+
   agents:
       - name: research-agent
         componentReference:
@@ -53,4 +53,3 @@ spec:
           kind: Component
           apiVersion: agent.example.com/v1
           namespace: kagenti-system
-  

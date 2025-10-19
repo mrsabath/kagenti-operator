@@ -31,34 +31,34 @@ graph TD;
         direction RL
         Operator[Agentic Platform Operator]
         PlatformCRD["Platform CRD"]
-        ComponentCRD["Component CRD"] 
+        ComponentCRD["Component CRD"]
         AgentComp[Agent Component]
         ToolComp[Tool Component]
         InfraComp[Infrastructure Component]
         HelmInstaller[Helm Installer]
         OLMDeployer[OLM Deployer]
-        
+
         PlatformCRD --> |References| ComponentCRD
         ComponentCRD --> AgentComp
         ComponentCRD --> ToolComp
         ComponentCRD --> InfraComp
         Operator -- Reconciles --> PlatformCRD
         Operator -- Reconciles --> ComponentCRD
-        
+
         AgentComp --> |Creates| AgentService[Service]
         AgentComp --> |Creates| AgentDeployment[Deployment]
-        
+
         ToolComp --> |Creates| ToolService[Service]
         ToolComp --> |Creates| ToolDeployment[Deployment]
-        
+
         InfraComp --> |Processed by| HelmInstaller
         InfraComp --> |Processed by| OLMDeployer
-        
- 
-        
+
+
+
         OLMDeployer --> |Creates| OLMSubscription[OLM Subscription]
         OLMDeployer --> |Creates| PrometheusOperator[Prometheus Operator]
-        
+
         PrometheusOperator --> |Creates| CustomResource[Custom Resource]
     end
 ```
@@ -76,7 +76,7 @@ The architecture diagram illustrates the key components of the system and their 
 * **Check Subfolder:** Verifies the existence of the designated subfolder within the repository.
 * **Build & Push Task:** Builds the container image and pushes it to the specified registry.
 
-The initial design offers a basic, built-in pipeline that automates the essential steps to built images from source code. However, Tekton's true strength lies in its extensibility.  While this default pipeline serves as a convenient starting point, the operator will evolve to accommodate more complex, user-defined Tekton pipelines. This allows for advanced workflows, such as those seen in Red Hat Trusted Application Pipelines, which incorporate practices like creating Bill of Materials (BOM) manifests and performing signed builds to enhance software security.  
+The initial design offers a basic, built-in pipeline that automates the essential steps to built images from source code. However, Tekton's true strength lies in its extensibility.  While this default pipeline serves as a convenient starting point, the operator will evolve to accommodate more complex, user-defined Tekton pipelines. This allows for advanced workflows, such as those seen in Red Hat Trusted Application Pipelines, which incorporate practices like creating Bill of Materials (BOM) manifests and performing signed builds to enhance software security.
 
 **Deployment Methods:**
 * Direct Kubernetes resources for Agent and Tool components.
@@ -102,7 +102,7 @@ metadata:
   name: research-platform
 spec:
   description: "Research Agentic Platform"
-  
+
   # Infrastructure components required by the platform
   infrastructure:
     - name: redis-cache-component
@@ -127,7 +127,7 @@ spec:
       componentReference:
         name: dashboard
         namespace: agentic-platform
-  
+
   # Agents that will run on the platform
   agents:
     - name: research-agent-component
@@ -138,7 +138,7 @@ spec:
       componentReference:
         name: assistant-agent
         namespace: my-agents
-  
+
   # Global configurations that apply to all components
   globalConfig:
     namespace: agentic-platform
@@ -203,12 +203,12 @@ spec:
       - name: "IMAGE_REPO_SECRET"
         valueFrom:
           secretKeyRef:
-            name: "ghcr-token-secret" 
-            key: "token"  
+            name: "ghcr-token-secret"
+            key: "token"
 
     deployAfterBuild: true
 
-```      
+```
 
 ### 5.2 Tool Component
 Tool components are services that agents can utilize to interact with external systems or provide specific functionalities, such as Model Context Protocol Servers (MCP).
@@ -252,16 +252,16 @@ spec:
           cpu: "1"
           memory: "2Gi"
       serviceType: "ClusterIP"
-      deployAfterBuild: true  
+      deployAfterBuild: true
     env:
       - name: PORT
         value: "10000"
       - name: "IMAGE_REPO_SECRET"
         valueFrom:
           secretKeyRef:
-            name: "ghcr-token-secret" 
-            key: "token"  
-  
+            name: "ghcr-token-secret"
+            key: "token"
+
 ```
 ### 5.3 Infrastructure Component
 Infrastructure components provide the foundational services required by agents and tools, such as databases, caches, observability tools, metrics etc. Such services can be deployed with Helm charts or OLM.
@@ -297,9 +297,9 @@ spec:
       - name: "REDIS_SECRET"
         valueFrom:
           secretKeyRef:
-            name: "redis-secret" 
+            name: "redis-secret"
             key: "secret"
-  
+
 ```
 
 Example with OLM:
@@ -329,8 +329,8 @@ spec:
       channel: "stable"
       version: "0.50.0"
       approvalStrategy: "Automatic"
-            
-```        
+
+```
 
 ## 6. Component Type Definitions
 This section details the Go struct definitions for the Component CRD specification and status. These definitions are typically used with Kubernetes controller-runtime.
@@ -550,27 +550,27 @@ type BuildOutput struct {
 type PlatformSpec struct {
     // Description of the platform
     Description string `json:"description,omitempty"`
-    
+
     // Infrastructure components required by the platform
     Infrastructure []PlatformComponentRef `json:"infrastructure,omitempty"`
-    
+
     // Tools required by the platform
     Tools []PlatformComponentRef `json:"tools,omitempty"`
-    
+
     // Agents that will run on the platform
     Agents []PlatformComponentRef `json:"agents,omitempty"`
-    
+
     // Global configurations that apply to all components
     GlobalConfig GlobalConfig `json:"globalConfig,omitempty"`
 }
 ```
 ### 7.2 PlatformComponentRef
-```go 
+```go
 // PlatformComponentRef defines a reference to a component
 type PlatformComponentRef struct {
     // Name of the component in the platform
     Name string `json:"name"`
-    
+
     // Reference to the component resource
     ComponentReference ComponentReference `json:"componentReference"`
 }
@@ -581,14 +581,14 @@ type PlatformComponentRef struct {
 type ComponentReference struct {
     // Name of the component resource
     Name string `json:"name"`
-    
+
     // Kind of the component (Component)
     Kind string `json:"kind"`
-    
+
     // API version of the component
     // +optional
     APIVersion string `json:"apiVersion,omitempty"`
-    
+
     // Namespace of the component
     // +optional
     Namespace string `json:"namespace,omitempty"`
@@ -601,11 +601,11 @@ type GlobalConfig struct {
     // Namespace for all components
     // +optional
     Namespace string `json:"namespace,omitempty"`
-    
+
     // Annotations to apply to all components
     // +optional
     Annotations map[string]string `json:"annotations,omitempty"`
-    
+
     // Labels to apply to all components
     // +optional
     Labels map[string]string `json:"labels,omitempty"`

@@ -9,7 +9,7 @@ spec:
     sourceRepository: "github.com/kagenti/agent-examples.git"
     sourceRevision: "main"
     sourceSubfolder: "a2a/weather_service"
-    sourceCredentials: 
+    sourceCredentials:
       name: github-token-secret
 
   pipeline:

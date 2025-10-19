@@ -12,13 +12,13 @@ metadata:
     description: "Weather data processing agent"
 spec:
   description: "Agent that processes weather data"
-  
+
   replicas: 1
-  
+
   # Use existing container image
   imageSource:
     image: "ghcr.io/kagenti/agent-examples/weather_service:v0.0.1-alpha.2"
-  
+
   # Define service ports to expose
   servicePorts:
     - name: http
@@ -29,16 +29,16 @@ spec:
       port: 9090
       protocol: TCP
       targetPort: 9090
-  
+
   # Complete pod template specification
   podTemplateSpec:
-    spec:        
-        
+    spec:
+
       containers:
-      - name: agent
+      - name: agent # use fixed name "agent" for the main container
         image:  <will be replaced with imageSource.image above>
         imagePullPolicy: IfNotPresent
-        
+
         # Resource limits and requests
         resources:
           requests:
@@ -47,7 +47,7 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
-        
+
         # Environment variables
         env:
         - name: PORT
@@ -76,7 +76,7 @@ spec:
           value: spiffe://localtest.me/sa/weather-service
         - name: NAMESPACE
           value: kagenti
-        
+
         # Ports
         ports:
         - name: http
@@ -85,7 +85,7 @@ spec:
         - name: metrics
           containerPort: 9090
           protocol: TCP
-                
+
         # Volume mounts
         volumeMounts:
         - name: cache
@@ -94,7 +94,7 @@ spec:
           name: marvin
         - mountPath: /shared
           name: shared-data
-      
+
       # Volumes
       volumes:
       - emptyDir: {}
@@ -103,5 +103,3 @@ spec:
         name: marvin
       - emptyDir: {}
         name: shared-data
-
-

@@ -58,7 +58,7 @@ func (wm *WorkspaceManager) CreateWorkspacePVC(ctx context.Context, agentBuild *
 		return nil
 	}
 	if !errors.IsNotFound(err) {
-		return fmt.Errorf("Failed to check if workspace PVC exists: %w", err)
+		return fmt.Errorf("failed to check if workspace PVC exists: %w", err)
 	}
 	pvc = &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
@@ -81,11 +81,11 @@ func (wm *WorkspaceManager) CreateWorkspacePVC(ctx context.Context, agentBuild *
 		},
 	}
 	if err := controllerutil.SetControllerReference(agentBuild, pvc, wm.scheme); err != nil {
-		return fmt.Errorf("Failed to set owner reference on workspace PVC: %w", err)
+		return fmt.Errorf("failed to set owner reference on workspace PVC: %w", err)
 	}
 	err = wm.client.Create(ctx, pvc)
 	if err != nil {
-		return fmt.Errorf("Failed to create workspace PVC: %w", err)
+		return fmt.Errorf("failed to create workspace PVC: %w", err)
 	}
 	return nil
 }
@@ -106,7 +106,7 @@ func (wm *WorkspaceManager) ListComponentWorkspaces(ctx context.Context, namespa
 		client.MatchingLabels{"app.kubernetes.io/part-of": "kagenti-operator"},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to list agentBuild workspaces: %w", err)
+		return nil, fmt.Errorf("failed to list agentBuild workspaces: %w", err)
 	}
 	return pvcList, nil
 }
@@ -114,7 +114,7 @@ func (wm *WorkspaceManager) CleanupUnusedWorkspaces(ctx context.Context, namespa
 	agentBuilds := &agentv1alpha1.AgentBuildList{}
 	err := wm.client.List(ctx, agentBuilds, client.InNamespace(namespace))
 	if err != nil {
-		return fmt.Errorf("Failed to list agentbuild: %w", err)
+		return fmt.Errorf("failed to list agentbuild: %w", err)
 
 	}
 	activeAgentBuilds := make(map[string]bool)
@@ -133,7 +133,7 @@ func (wm *WorkspaceManager) CleanupUnusedWorkspaces(ctx context.Context, namespa
 		if !activeAgentBuilds[agentBuildName] {
 			err := wm.client.Delete(ctx, &pvc)
 			if err != nil && !errors.IsNotFound(err) {
-				return fmt.Errorf("Failed to deleted unused workspace: %w", err)
+				return fmt.Errorf("failed to deleted unused workspace: %w", err)
 			}
 		}
 	}
