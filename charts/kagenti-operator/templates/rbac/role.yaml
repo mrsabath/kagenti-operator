@@ -87,8 +87,8 @@ rules:
 - apiGroups:
   - kagentidev
   resources:
-  - agents
-  - agentbuilds
+  - kagentiagents
+  - kagentiagentbuilds
   verbs:
   - create
   - delete
@@ -100,15 +100,15 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - agents/finalizers
-  - agentbuilds/finalizers
+  - kagentiagents/finalizers
+  - kagentiagentbuilds/finalizers
   verbs:
   - update
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - agents/status
-  - agentbuilds/status
+  - kagentiagents/status
+  - kagentiagentbuilds/status
   verbs:
   - get
   - patch
