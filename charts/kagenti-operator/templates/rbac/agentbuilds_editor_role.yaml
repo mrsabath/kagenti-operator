@@ -11,12 +11,12 @@ kind: ClusterRole
 metadata:
   labels:
     {{- include "chart.labels" . | nindent 4 }}
-  name: kagenti-editor-role
+  name: agentbuild-editor-role
 rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds
+  - agentbuilds
   verbs:
   - create
   - delete
@@ -28,7 +28,7 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds/status
+  - agentbuilds/status
   verbs:
   - get
 {{- end -}}

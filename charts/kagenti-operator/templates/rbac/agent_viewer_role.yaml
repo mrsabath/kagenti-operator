@@ -22,7 +22,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - kagenti.dev
+  - agent.kagenti.dev
   resources:
   - agents/status
   verbs:

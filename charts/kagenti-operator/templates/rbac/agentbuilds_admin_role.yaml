@@ -11,18 +11,18 @@ kind: ClusterRole
 metadata:
   labels:
     {{- include "chart.labels" . | nindent 4 }}
-  name: kagenti-admin-role
+  name: agentbuild-admin-role
 rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds
+  - agentbuilds
   verbs:
   - '*'
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds/status
+  - agentbuilds/status
   verbs:
   - get
 {{- end -}}

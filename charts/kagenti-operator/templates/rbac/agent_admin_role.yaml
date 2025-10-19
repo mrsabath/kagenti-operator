@@ -20,7 +20,7 @@ rules:
   verbs:
   - '*'
 - apiGroups:
-  - kagenti.dev
+  - agent.kagenti.dev
   resources:
   - agents/status
   verbs:
