@@ -136,6 +136,10 @@ func (r *AgentCardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 
+	// Override the URL with the actual in-cluster service URL
+	// (agents may advertise 0.0.0.0:8000 which isn't useful for cluster communication)
+	cardData.URL = serviceURL
+
 	// Update the AgentCard status with the fetched card
 	if err := r.updateAgentCardStatus(ctx, agentCard, cardData, protocol); err != nil {
 		agentCardLogger.Error(err, "Failed to update AgentCard status")
