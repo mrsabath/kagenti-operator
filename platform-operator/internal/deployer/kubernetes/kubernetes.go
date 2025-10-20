@@ -295,7 +295,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 				{
 					Name:    "fix-permissions",
 					Image:   "busybox:1.36",
-					Command: []string{"sh", "-c", "chmod 1777 /opt"},
+					Command: []string{"sh", "-c", "chmod 0755 /opt"},
 					VolumeMounts: []corev1.VolumeMount{
 						SVIDMount,
 					},
