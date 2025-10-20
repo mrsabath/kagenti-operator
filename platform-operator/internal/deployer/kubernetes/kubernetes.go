@@ -265,10 +265,6 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 			Value: clientId,
 		},
 		{
-			Name:  "CLIENT_ID",
-			Value: "spiffe://localtest.me/sa/" + component.Name,
-		},
-		{
 			Name:  "NAMESPACE",
 			Value: namespace,
 		},
@@ -284,6 +280,10 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		Name:      "shared-data",
 		MountPath: "/shared",
 	}
+	SVIDMount := corev1.VolumeMount{
+		Name:      "svid-output",
+		MountPath: "/opt",
+	}
 
 	template := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -291,6 +291,16 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 		},
 		Spec: corev1.PodSpec{
 			ServiceAccountName: component.Name,
+			InitContainers: []corev1.Container{
+				{
+					Name:    "fix-permissions",
+					Image:   "busybox:1.36",
+					Command: []string{"sh", "-c", "chmod 0755 /opt"},
+					VolumeMounts: []corev1.VolumeMount{
+						SVIDMount,
+					},
+				},
+			},
 			Containers: []corev1.Container{
 				{
 					Name:            component.Name,
@@ -302,6 +312,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 					VolumeMounts: append(
 						component.Spec.Deployer.Kubernetes.VolumeMounts,
 						sharedMount,
+						SVIDMount,
 					),
 				},
 				{
@@ -321,10 +332,7 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 							Name:      "spire-agent-socket",
 							MountPath: "/spiffe-workload-api",
 						},
-						{
-							Name:      "svid-output",
-							MountPath: "/opt",
-						},
+						SVIDMount,
 					},
 				},
 				{
@@ -390,12 +398,8 @@ func (d *KubernetesDeployer) createDeployment(ctx context.Context, component *pl
 						},
 					},
 					VolumeMounts: []corev1.VolumeMount{
-						{
-							// This is how client registration accesses the SVID
-							Name:      "svid-output",
-							MountPath: "/opt",
-						},
 						sharedMount,
+						SVIDMount,
 					},
 				},
 			},
