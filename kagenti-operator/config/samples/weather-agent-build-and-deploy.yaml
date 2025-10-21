@@ -1,12 +1,37 @@
 apiVersion: agent.kagenti.dev/v1alpha1
+kind: AgentBuild
+metadata:
+  name: weather-agent-build
+  namespace: kagenti
+spec:
+  source:
+    sourceRepository: "github.com/kagenti/agent-examples.git"
+    sourceRevision: "main"
+    sourceSubfolder: "a2a/weather_service"
+    sourceCredentials:
+      name: github-token-secret
+
+  pipeline:
+    namespace: kagenti-system
+    parameters:
+    - name: SOURCE_REPO_SECRET
+      value: github-token-secret
+
+  buildOutput:
+    image: "weather-service"
+    imageTag: "v0.0.1"
+    imageRegistry: "registry.cr-system.svc.cluster.local:5000"
+    imageRepoCredentials:
+      name: ghcr-secret
+
+---
+apiVersion: agent.kagenti.dev/v1alpha1
 kind: Agent
 metadata:
   name: weather-agent
   namespace: kagenti
   labels:
-    app.kubernetes.io/name: weather-agent
-    kagenti.io/type: agent
-    kagenti.io/agent-protocol: a2a
+    app: weather-service
 
   annotations:
     description: "Weather data processing agent"
@@ -17,18 +42,8 @@ spec:
 
   # Use existing container image
   imageSource:
-    image: "ghcr.io/kagenti/agent-examples/weather_service:v0.0.1-alpha.2"
-
-  # Define service ports to expose
-  servicePorts:
-    - name: http
-      port: 8000
-      protocol: TCP
-      targetPort: 8000
-    - name: metrics
-      port: 9090
-      protocol: TCP
-      targetPort: 9090
+    buildRef:
+      name: weather-agent-build
 
   # Complete pod template specification
   podTemplateSpec:
@@ -37,7 +52,6 @@ spec:
       containers:
       - name: agent # use fixed name "agent" for the main container
         image:  <will be replaced with imageSource.image above>
-        imagePullPolicy: IfNotPresent
 
         # Environment variables
         env:
@@ -67,30 +81,3 @@ spec:
           value: spiffe://localtest.me/sa/weather-service
         - name: NAMESPACE
           value: kagenti
-
-        # Ports
-        ports:
-        - name: http
-          containerPort: 8000
-          protocol: TCP
-        - name: metrics
-          containerPort: 9090
-          protocol: TCP
-
-        # Volume mounts
-        volumeMounts:
-        - name: cache
-          mountPath: /app/.cache
-        - mountPath: /.marvin
-          name: marvin
-        - mountPath: /shared
-          name: shared-data
-
-      # Volumes
-      volumes:
-      - emptyDir: {}
-        name: cache
-      - emptyDir: {}
-        name: marvin
-      - emptyDir: {}
-        name: shared-data

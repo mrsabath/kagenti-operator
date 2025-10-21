@@ -28,7 +28,7 @@ type AgentBuildSpec struct {
 	SourceSpec SourceSpec `json:"source"`
 	// Pipeline specifies the pipeline configuration
 	// +optional
-	Pipeline PipelineSpec `json:"pipeline"`
+	Pipeline *PipelineSpec `json:"pipeline"`
 	// BuildArgs are arguments to pass to the build process
 	// +optional
 	BuildArgs []ParameterSpec `json:"buildArgs,omitempty"`

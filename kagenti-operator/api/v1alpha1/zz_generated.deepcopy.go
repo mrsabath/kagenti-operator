@@ -116,7 +116,11 @@ func (in *AgentBuildList) DeepCopyObject() runtime.Object {
 func (in *AgentBuildSpec) DeepCopyInto(out *AgentBuildSpec) {
 	*out = *in
 	in.SourceSpec.DeepCopyInto(&out.SourceSpec)
-	in.Pipeline.DeepCopyInto(&out.Pipeline)
+	if in.Pipeline != nil {
+		in, out := &in.Pipeline, &out.Pipeline
+		*out = new(PipelineSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.BuildArgs != nil {
 		in, out := &in.BuildArgs, &out.BuildArgs
 		*out = make([]ParameterSpec, len(*in))

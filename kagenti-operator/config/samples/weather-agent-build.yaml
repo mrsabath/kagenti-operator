@@ -44,6 +44,9 @@ spec:
 >>>>>>> 2b17fd5 (adds implementation of agentbuild api)
   pipeline:
     namespace: kagenti-system
+    parameters:
+    - name: SOURCE_REPO_SECRET
+      value: github-token-secret
     steps:
       - name: git-clone
         configMap: github-clone-step
