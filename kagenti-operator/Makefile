@@ -23,7 +23,7 @@ OS := $(shell go env GOOS)
 CLUSTER ?= agent-platform
 CONTEXT ?= kind-agent-platform
 
-HELM_IMG := --set controllerManager.container.image.repository=${KO_DOCKER_REPO}/${CMD_NAME} --set controllerManager.container.image.tag=${IMAGE_TAG} 
+HELM_IMG := --set controllerManager.container.image.repository=${KO_DOCKER_REPO}/${CMD_NAME} --set controllerManager.container.image.tag=${IMAGE_TAG}
 HELM_OPTS ?= ${HELM_IMG}
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
