@@ -188,7 +188,7 @@ kind-load-image:
 
 .PHONY: install-local-chart
 install-local-chart: kind-load-image
-	if [ ! -n "$(CONTEXT)" ] ; then helm upgrade --install --create-namespace -n kagenti-system kagenti-operator ../charts/kagenti-operator ${HELM_OPTS} ; else helm  --kube-context ${CONTEXT} upgrade --install --create-namespace -n kagenti-system kagenti-operator ../charts/kagenti-operator ${HELM_OPTS} ; fi
+	if [ -z "$(CONTEXT)" ] ; then helm upgrade --install --create-namespace -n kagenti-system kagenti-operator ../charts/kagenti-operator ${HELM_OPTS} ; else helm  --kube-context ${CONTEXT} upgrade --install --create-namespace -n kagenti-system kagenti-operator ../charts/kagenti-operator ${HELM_OPTS} ; fi
 ##@ Dependencies
 
 ## Location to install dependencies to
