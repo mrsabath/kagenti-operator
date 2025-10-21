@@ -50,14 +50,14 @@ repos:
         language: system
         files: ^platform-operator/.*\.go$
         pass_filenames: false
-        
+
       - id: go-vet-platform
         name: go-vet (platform-operator)
         entry: bash -c 'cd platform-operator && go vet ./...'
         language: system
         files: ^platform-operator/.*\.go$
         pass_filenames: false
-        
+
       - id: go-mod-tidy-platform
         name: go-mod-tidy (platform-operator)
         entry: bash -c 'cd platform-operator && go mod tidy'
