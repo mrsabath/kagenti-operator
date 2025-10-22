@@ -34,7 +34,7 @@ data:
       - name: list-dir
         image: public.ecr.aws/docker/library/alpine:latest
         workingDir: $(workspaces.source.path) 
-        Script: |
+        script: |
             echo "Listing contents of workspace root ($(workspaces.source.path)): "
             ls -la 
           
