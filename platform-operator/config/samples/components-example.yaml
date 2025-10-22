@@ -2,7 +2,7 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: gateway-api
-  namespace: kagenti-system 
+  namespace: kagenti-system
 spec:
   description: Istio Infra component
 
@@ -11,7 +11,7 @@ spec:
     infraProvider: k8s-sigs
 
   deployer:
-    name: "Kubernetes Manifest Deployer" 
+    name: "Kubernetes Manifest Deployer"
     namespace: "kagenti-system"
     kubernetes:
       manifest:
@@ -22,17 +22,17 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: phoenix
-  namespace: kagenti-system 
+  namespace: kagenti-system
 spec:
   description: phoenix
 
-  infra:  
+  infra:
     infraType: Observability
     infraProvider: phoenix
 
   deployer:
-    name: "Kubernetes Manifest Deployer" 
-    namespace: kagenti-system 
+    name: "Kubernetes Manifest Deployer"
+    namespace: kagenti-system
     kubernetes:
       manifest:
         github:
@@ -55,7 +55,7 @@ spec:
   tool:
     toolType: "MCP"
     build:
-  
+
       mode: dev
       pipeline:
         parameters:
@@ -70,7 +70,7 @@ spec:
       cleanupAfterBuild: true
   deployer:
     name: test-mcp-server
-    namespace: kagenti-system     
+    namespace: kagenti-system
     deployAfterBuild: true
     kubernetes:
       imageSpec:
@@ -86,7 +86,7 @@ spec:
         - name: "http"
           port: 8008
           targetPort: 8090
-          protocol: "TCP"   
+          protocol: "TCP"
       resources:
         limits:
           cpu: "1"
@@ -98,7 +98,7 @@ spec:
 
     env:
       - name: HOST
-        value: "0.0.0.0"  
+        value: "0.0.0.0"
       - name: PORT
         value: "10000"
 ---
@@ -107,7 +107,7 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: research-agent
-  namespace: kagenti-system 
+  namespace: kagenti-system
 
 spec:
   description: "A research agent for information gathering"
@@ -119,7 +119,7 @@ spec:
       pipeline:
         parameters:
           - name: github-token-secret
-            value: "github-credentials"  
+            value: "github-credentials"
           - name: repo-url
             value: "github.com/kagenti/agent-examples.git"
           - name: revision
@@ -129,10 +129,10 @@ spec:
           - name: image
             value: "registry.cr-system.svc.cluster.local:5000/beai-research-agent:latest"
       cleanupAfterBuild: true
- 
+
   deployer:
     name: "my-agent-deployment"
-    namespace: kagenti-system 
+    namespace: kagenti-system
     deployAfterBuild: true
     kubernetes:
       imageSpec:
@@ -148,7 +148,7 @@ spec:
         - name: "http"
           port: 8008
           targetPort: 8090
-          protocol: "TCP"   
+          protocol: "TCP"
       resources:
         limits:
           cpu: "1"
@@ -160,11 +160,10 @@ spec:
 
     env:
       - name: HOST
-        value: "0.0.0.0"  
+        value: "0.0.0.0"
       - name: LLM_API_BASE
         value: "http://host.docker.internal:11434/v1"
       - name: LLM_API_KEY
-        value: "dummy"  
+        value: "dummy"
       - name: LLM_MODEL
         value: "llama3.2:3b-instruct-fp16"
-

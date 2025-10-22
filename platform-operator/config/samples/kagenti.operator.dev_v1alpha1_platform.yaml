@@ -12,7 +12,7 @@ metadata:
 
 spec:
   description: "AI/ML Development Platform with complete toolchain and agent deployment capabilities"
-  
+
   globalConfig:
     namespace: ai-platform
     annotations:
@@ -22,7 +22,7 @@ spec:
       app.kubernetes.io/name: agentic-platform
       app.kubernetes.io/managed-by: platform-operator
       team: ai-engineering
-  
+
   agents:
     - name: research-agent
       componentReference:
@@ -30,4 +30,3 @@ spec:
         kind: Component
         apiVersion: agent.example.com/v1
         namespace: default
-  

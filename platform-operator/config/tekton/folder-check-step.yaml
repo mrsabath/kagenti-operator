@@ -4,9 +4,9 @@ metadata:
   name: check-subfolder-step
   namespace: kagenti-system
   labels:
-    kagenti.operator.dev/tekton: step 
+    kagenti.operator.dev/tekton: step
 data:
-  
+
   task-spec.yaml: |
     params:
       - name: subfolder-path
@@ -21,10 +21,10 @@ data:
           - -c
         args:
           - |
-            if [ ! -d "$(workspaces.source.path)/$(params.subfolder-path)" ]; then 
+            if [ ! -d "$(workspaces.source.path)/$(params.subfolder-path)" ]; then
               echo "Subfolder $(params.subfolder-path) not found"
               exit 1
-            else 
+            else
               echo "Subfolder $(params.subfolder-path) exists"
             fi
     workspaces:

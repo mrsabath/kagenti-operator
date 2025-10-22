@@ -27,46 +27,46 @@ graph TD;
     subgraph Kubernetes
         direction TB
         style Kubernetes fill:#f0f4ff,stroke:#8faad7,stroke-width:2px
-        
+
         User[User/App]
         style User fill:#ffecb3,stroke:#ffa000
-        
-        AgentCRD["Agent CR"] 
+
+        AgentCRD["Agent CR"]
         style AgentCRD fill:#e1f5fe,stroke:#039be5
-        
+
         AgentBuildCRD["AgentBuild CR"]
         style AgentBuildCRD fill:#e1f5fe,stroke:#039be5
-        
+
         User -->|Creates| AgentCRD
         User -->|Creates| AgentBuildCRD
-        
-        AgentController[Agent Controller] 
+
+        AgentController[Agent Controller]
         style AgentController fill:#ffe0b2,stroke:#fb8c00
-        
+
         AgentBuildController[AgentBuild Controller]
         style AgentBuildController fill:#ffe0b2,stroke:#fb8c00
-        
+
         Service_Service[Service]
         style Service_Service fill:#dcedc8,stroke:#689f38
-        
+
         Deployment_Deployment[Deployment]
         style Deployment_Deployment fill:#d1c4e9,stroke:#7e57c2
-        
+
         AgentPod[Agent Pod]
         style AgentPod fill:#c8e6c9,stroke:#66bb6a
-        
+
         AgentCRD -->|Reconciles| AgentController
         AgentBuildCRD -->|Reconciles| AgentBuildController
-        
+
         AgentController --> |Creates| Service_Service
         AgentController --> |Creates| Deployment_Deployment
-        
+
         Deployment_Deployment --> |Deploys| AgentPod
-        
+
         subgraph Tekton_Pipeline
             direction LR
             style Tekton_Pipeline fill:#e7f3e7,stroke:#73b473,stroke-width:1px
-            
+
             Pull[1. Pull Task]
             style Pull fill:#e8eaf6,stroke:#5c6bc0
             Build[2. Build Task]
@@ -75,7 +75,6 @@ graph TD;
             style Push fill:#f3e5f5,stroke:#ab47bc
             Pull --> Build --> Push
         end
-        
         AgentBuildController -->|Triggers| Tekton_Pipeline       
         AgentBuildController -->|Saves Image URL on successful build| AgentBuildCRD
         AgentCRD -->|References| AgentBuildCRD
@@ -189,6 +188,7 @@ This provides complete flexibility for organizations with specific build require
 
 ## License
 
+```bash
 Copyright 2025.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -202,3 +202,4 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+```

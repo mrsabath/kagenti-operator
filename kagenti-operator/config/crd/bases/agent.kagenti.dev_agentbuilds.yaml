@@ -78,10 +78,7 @@ spec:
                     description: ImageRegistry is the container registry where the
                       image will be pushed
                     type: string
-                  imageTag:
-                    description: ImageTag is the tag to apply to the built image
-                    type: string
-                  sourceCredentials:
+                  imageRepoCredentials:
                     description: ImageRepoCredentials is a reference to a secret containing
                       registry credentials
                     properties:
@@ -96,6 +93,9 @@ spec:
                         type: string
                     type: object
                     x-kubernetes-map-type: atomic
+                  imageTag:
+                    description: ImageTag is the tag to apply to the built image
+                    type: string
                 required:
                 - image
                 - imageRegistry

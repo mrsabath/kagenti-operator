@@ -161,12 +161,13 @@ type BuildOutput struct {
 	ImageRegistry string `json:"imageRegistry"`
 	// ImageRepoCredentials is a reference to a secret containing registry credentials
 	// +optional
-	ImageRepoCredentials *corev1.LocalObjectReference `json:"sourceCredentials,omitempty"`
+	ImageRepoCredentials *corev1.LocalObjectReference `json:"imageRepoCredentials,omitempty"`
 }
 
 type LifecycleBuildPhase string
 
 const (
+	BuildPhasePending   LifecycleBuildPhase = "Pending"
 	PhaseBuilding       LifecycleBuildPhase = "Building"
 	BuildPhaseSucceeded LifecycleBuildPhase = "Succeeded"
 	BuildPhaseFailed    LifecycleBuildPhase = "Failed"

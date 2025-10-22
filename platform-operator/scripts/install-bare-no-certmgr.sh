@@ -3,11 +3,11 @@
 #set -euo pipefail
 set -x # echo so that users can understand what is happening
 
-TEKTON_VERSION="v0.66.0" 
+TEKTON_VERSION="v0.66.0"
 OPERATOR_NAMESPACE="kagenti-system"
 LATEST_TAG=0.2.0-alpha.3
 
-cluster_name="agent-platform" 
+cluster_name="agent-platform"
 
 # Function to check if a Kind cluster exists
 kind_exists() {
@@ -55,7 +55,7 @@ kubectl apply -f https://raw.githubusercontent.com/kagenti/kagenti-operator/refs
 : "Wait to be ready"
 :
 
-    kubectl -n cr-system rollout status deployment/registry 
+    kubectl -n cr-system rollout status deployment/registry
 
 :
 : -------------------------------------------------------------------------
@@ -65,12 +65,7 @@ REGISTRY_IP=$(kubectl get service -n cr-system registry -o jsonpath='{.spec.clus
 # docker exec -it agent-platform-control-plane sh -c "echo ${REGISTRY_IP} registry.cr-system.svc.cluster.local >> /etc/hosts"
 docker exec agent-platform-control-plane sh -c "echo ${REGISTRY_IP} registry.cr-system.svc.cluster.local >> /etc/hosts"
 
-  
+
 :    "Kind cluster '$cluster_name' created successfully."
-  
+
 fi
-
-
-
-
-

@@ -13,3 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+package builder
+
+import (
+	"context"
+
+	agentv1alpha1 "github.com/kagenti/operator/api/v1alpha1"
+)
+
+type Builder interface {
+	Build(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) error
+
+	Cancel(ctx context.Context, cagentBuild *agentv1alpha1.AgentBuild) error
+
+	GetStatus(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) (agentv1alpha1.AgentBuildStatus, error)
+
+	CheckStatus(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) error
+
+	Cleanup(ctx context.Context, cagentBuild *agentv1alpha1.AgentBuild) error
+}

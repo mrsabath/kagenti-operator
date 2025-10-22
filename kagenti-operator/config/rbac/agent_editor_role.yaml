@@ -11,12 +11,12 @@ metadata:
   labels:
     app.kubernetes.io/name: kagenti-operator
     app.kubernetes.io/managed-by: kustomize
-  name: kagentiagentbuild-editor-role
+  name: agent-editor-role
 rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds
+  - agents
   verbs:
   - create
   - delete
@@ -28,6 +28,6 @@ rules:
 - apiGroups:
   - agent.kagenti.dev
   resources:
-  - kagentiagentbuilds/status
+  - agents/status
   verbs:
   - get

@@ -171,7 +171,7 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: gateway-api
-  namespace: kagenti-system 
+  namespace: kagenti-system
 spec:
 
   infra:
@@ -192,11 +192,11 @@ apiVersion: kagenti.operator.dev/v1alpha1
 kind: Component
 metadata:
   name: phoenix
-  namespace: kagenti-system 
+  namespace: kagenti-system
 spec:
-  infra:  
+  infra:
   ...
-  deployer:    
+  deployer:
     kubernetes:
       manifest:
         github:
@@ -333,7 +333,7 @@ metadata:
 
 spec:
   globalConfig:
-    namespace: kagenti-system 
+    namespace: kagenti-system
     annotations:
       kagenti.platform.dev/managed-by: "kagenti-operator"
       kagenti.platform.dev/version: "v1.0.0"
@@ -341,11 +341,11 @@ spec:
       app.kubernetes.io/name: agentic-platform
       team: ai-engineering
       environment: dev
-  
+
 infrastructure:
     - name: phoenix
 tools:
-    - name: mcp-server-weather  
+    - name: mcp-server-weather
 agents:
     - name: research-agent
 ```
@@ -389,7 +389,7 @@ spec:
             value: "main"
           - name: subfolder-path  # path to the source to be built
             value: "kagenti/examples/mcp"
-          - name: image   # name of the image to build and its repo destination  
+          - name: image   # name of the image to build and its repo destination
             value: "registry.cr-system.svc.cluster.local:5000/test-mcp-server:latest"
       cleanupAfterBuild: true
 ```

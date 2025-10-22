@@ -2,7 +2,7 @@
 
 Greetings! We are grateful for your interest in joining the Kagenti community and making a positive impact. Whether you're raising issues, enhancing documentation, fixing bugs, or developing new features, your contributions are essential to our success.
 
-To get started, kindly read through this document and familiarize yourself with our code of conduct. 
+To get started, kindly read through this document and familiarize yourself with our code of conduct.
 
 We can't wait to collaborate with you!
 
