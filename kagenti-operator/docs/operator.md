@@ -13,12 +13,12 @@ The `AgentBuild` CR defines the specifications for building and publishing a con
 * Automate the container image building and publishing process for AI agents triggered by `AgentBuild` CRs.
 * Integrate with Tekton Pipelines for the image building workflow, consisting of pull, build, and push tasks.
 * Securely manage GitHub repository access using a referenced Kubernetes Secret.
-* Lock down agent pods with read-only filesystem with minimal priviledges
+* Lock down agent pods with read-only filesystem with minimal privileges
 * Support cluster-wide as well as namespaced scope deployment
 
 ## Deployment Modes
 
-The kagenti operator supports both cluster-wide and namespaced deployment modes. In cluster-wide, it uses ClusterRoleBinding to watch and reconcile resources across all namespaces. For stricter isolation, it can run in namespaced scope using RoleBinding in specific namespaces, allowing the operator to only manage resources in explicitely authorized namespaces while maintaining least-priviledge access controls.
+The kagenti operator supports both cluster-wide and namespaced deployment modes. In cluster-wide, it uses ClusterRoleBinding to watch and reconcile resources across all namespaces. For stricter isolation, it can run in namespaced scope using RoleBinding in specific namespaces, allowing the operator to only manage resources in explicitly authorized namespaces while maintaining least-privilege access controls.
 
 ## Proposed Design
 
@@ -77,7 +77,7 @@ graph TD;
         end
         
         AgentBuildController -->|Triggers| Tekton_Pipeline       
-        AgentBuildController -->|Saves Image URL on successfull build| AgentBuildCRD
+        AgentBuildController -->|Saves Image URL on successful build| AgentBuildCRD
         AgentCRD -->|References| AgentBuildCRD
     end
 ```
@@ -94,22 +94,22 @@ The Kagenti Operator implements a flexible, template-based build system that lev
 
 The complete lifecycle follows this orchestrated pattern:
 
-1; `AgentBuild CR Creation`: User/App creates AgentBuild CustomResource in Kubernetes
+1. `AgentBuild CR Creation`: User/App creates AgentBuild CustomResource in Kubernetes
 
-2; `Webhook Processing`
+2. `Webhook Processing`
 
 * Validates pipeline parameters.
 
 * Injects appropriate pipeline template based on defined environment (dev, dev-external, preprod, prod) defined in AgentBuild CR.
 
-3; `Build Execution`
+3. `Build Execution`
 
 * agentbuild_controller retrieves individual step specifications from ConfigMaps
 * Creates a Tekton Pipeline resources from injected template.
 * Merges user parameters with step defaults.
 * Launches PipelineRun with proper configuration.
 * Monitors build progress and updates AgentBuild CR status.
-* On succesfull container image push, the agentbuild_controller records container image URL in the AgentBuild CR status
+* On succesful container image push, the agentbuild_controller records container image URL in the AgentBuild CR status
 
 ### Template-Based Pipelines
 

@@ -60,7 +60,7 @@ graph TD;
         
         AgentBuildController -->|Triggers| Tekton_Pipeline
        
-        AgentBuildController -->|Saves Image URL on successfull build| AgentBuildCRD
+        AgentBuildController -->|Saves Image URL on successful build| AgentBuildCRD
         AgentCRD -->|References| AgentBuildCRD
     end
 ```
