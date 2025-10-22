@@ -392,7 +392,7 @@ func (r *AgentReconciler) createDeploymentForAgent(ctx context.Context, agent *a
 			}
 		}
 		if exists := r.containerExists(podTemplateSpec, SPIFFY_HELPER_NAME); !exists {
-			err := r.addSpiffyHelperContainer(podTemplateSpec, agent)
+			err := r.addSpiffyHelperContainer(podTemplateSpec)
 			if err != nil {
 				logger.Error(err, "Unable to add spiffy-helper sidecar container")
 				return nil, err
@@ -496,7 +496,7 @@ func (r *AgentReconciler) addClientRegistrationContainer(podTemplateSpec *corev1
 
 	containers := podTemplateSpec.Spec.Containers
 	if len(containers) == 0 {
-		return fmt.Errorf("no containers found in MCPServer spec")
+		return fmt.Errorf("no containers found in Agent spec")
 	}
 
 	imagePullPolicy := "IfNotPresent"
@@ -520,7 +520,6 @@ func (r *AgentReconciler) addClientRegistrationContainer(podTemplateSpec *corev1
 		Command: []string{
 			"/bin/sh",
 			"-c",
-			// TODO: tail -f /dev/null allows the container to stay alive. Change this to be a job.
 			"while [ ! -f /opt/jwt_svid.token ]; do echo waiting for SVID; sleep 1; done; python client_registration.py; tail -f /dev/null",
 		},
 		Env: []corev1.EnvVar{
@@ -593,11 +592,11 @@ func (r *AgentReconciler) addClientRegistrationContainer(podTemplateSpec *corev1
 	podTemplateSpec.Spec.Containers = containers
 	return nil
 }
-func (r *AgentReconciler) addSpiffyHelperContainer(podTemplateSpec *corev1.PodTemplateSpec, agent *agentv1alpha1.Agent) error {
+func (r *AgentReconciler) addSpiffyHelperContainer(podTemplateSpec *corev1.PodTemplateSpec) error {
 
 	containers := podTemplateSpec.Spec.Containers
 	if len(containers) == 0 {
-		return fmt.Errorf("no containers found in MCPServer spec")
+		return fmt.Errorf("no containers found in Agent spec")
 	}
 
 	imagePullPolicy := "IfNotPresent"

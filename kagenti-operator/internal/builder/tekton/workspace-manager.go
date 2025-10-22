@@ -133,7 +133,7 @@ func (wm *WorkspaceManager) CleanupUnusedWorkspaces(ctx context.Context, namespa
 		if !activeAgentBuilds[agentBuildName] {
 			err := wm.client.Delete(ctx, &pvc)
 			if err != nil && !errors.IsNotFound(err) {
-				return fmt.Errorf("failed to deleted unused workspace: %w", err)
+				return fmt.Errorf("failed to delete unused workspace: %w", err)
 			}
 		}
 	}
