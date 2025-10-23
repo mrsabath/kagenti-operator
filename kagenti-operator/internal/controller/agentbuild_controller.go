@@ -159,23 +159,6 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					agentBuild.Status.Message)
 			}
 		}
-		err := r.Builder.CheckStatus(ctx, agentBuild)
-		if err != nil {
-			r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "StatusCheckFailed",
-				fmt.Sprintf("Failed to check build status: %v", err))
-			agentBuildlogger.Error(err, "Failed to check agentbuild status", "AgentBuild", agentBuild.Name)
-			return ctrl.Result{}, err
-		}
-		if previousPhase != agentBuild.Status.Phase {
-			switch agentBuild.Status.Phase {
-			case agentv1alpha1.BuildPhaseSucceeded:
-				r.Recorder.Event(agentBuild, corev1.EventTypeNormal, "BuildSucceeded",
-					fmt.Sprintf("Image built successfully: %s", agentBuild.Status.BuiltImage))
-			case agentv1alpha1.BuildPhaseFailed:
-				r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "BuildFailed",
-					agentBuild.Status.Message)
-			}
-		}
 		return ctrl.Result{RequeueAfter: defaultRequeueDelay}, nil
 	case agentv1alpha1.BuildPhaseSucceeded:
 		err := r.Builder.Cleanup(ctx, agentBuild)
