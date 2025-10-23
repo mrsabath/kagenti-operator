@@ -11,7 +11,7 @@ data:
   template.json: |
     {
       "name": "Development Pipeline (Local Registry)",
-      "namespace": {{ .Release.Namespace }},     
+      "namespace": {{ .Release.Namespace | quote}},     
       "description": "Basic pipeline for development builds with local registry",
       "requiredParameters": [
         "repo-url",

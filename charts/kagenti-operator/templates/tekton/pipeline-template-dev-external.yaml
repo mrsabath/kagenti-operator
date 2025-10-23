@@ -11,7 +11,7 @@ data:
   template.json: |
     {
       "name": "Development Pipeline (External Registry)",
-      "namespace": {{ .Release.Namespace }},     
+      "namespace": {{ .Release.Namespace | quote }},     
       "description": "Basic pipeline for development builds with external registry authentication",
       "requiredParameters": [
         "repo-url",

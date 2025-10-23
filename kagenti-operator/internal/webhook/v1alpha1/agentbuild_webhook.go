@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	agentv1alpha1 "github.com/kagenti/operator/api/v1alpha1"
@@ -36,7 +37,7 @@ var agentbuildlog = ctrl.Log.WithName("agentcard-webhook").WithName("webhook")
 const (
 	// ConfigMap naming convention for pipeline templates
 	PipelineTemplateConfigMapPrefix = "pipeline-template"
-
+	operatorNamespaceEnv            = "POD_NAMESPACE"
 	// Default values
 	DefaultPipelineMode = "dev"
 )
@@ -98,7 +99,7 @@ func (d *AgentBuildDefaulter) applyBasicDefaults(agentbuild *agentv1alpha1.Agent
 
 	// Default pipeline namespace to AgentBuild's namespace
 	if agentbuild.Spec.Pipeline.Namespace == "" {
-		agentbuild.Spec.Pipeline.Namespace = agentbuild.Namespace
+		agentbuild.Spec.Pipeline.Namespace = operatorNamespace(agentbuild.Namespace)
 	}
 
 	// Default source revision
@@ -106,7 +107,12 @@ func (d *AgentBuildDefaulter) applyBasicDefaults(agentbuild *agentv1alpha1.Agent
 		agentbuild.Spec.SourceSpec.SourceRevision = "main"
 	}
 }
-
+func operatorNamespace(defaultNS string) string {
+	if ns, ok := os.LookupEnv(operatorNamespaceEnv); ok && ns != "" {
+		return ns
+	}
+	return defaultNS
+}
 func (d *AgentBuildDefaulter) autoGenerateParameters(agentbuild *agentv1alpha1.AgentBuild) {
 	// Build map of existing parameters for efficient lookup
 	existingParams := make(map[string]bool)
@@ -161,11 +167,11 @@ func (d *AgentBuildDefaulter) processPipelineConfig(ctx context.Context, agentbu
 
 	var buildSpec = &agentbuild.Spec
 
-	agentbuildlog.Info("Mutating webbhook - injecting Tekton pipeline", "name", agentbuild.GetName())
+	agentbuildlog.Info("Mutating webhook - injecting Tekton pipeline", "name", agentbuild.GetName())
 
 	// Skip if custom pipeline is provided
 	if buildSpec.Pipeline.Steps != nil {
-		agentbuildlog.Info("Mutating webbhook - using user defined Tekton pipeline", "name", agentbuild.GetName())
+		agentbuildlog.Info("Mutating webhook - using user defined Tekton pipeline", "name", agentbuild.GetName())
 		return nil
 	}
 
@@ -201,14 +207,14 @@ func (d *AgentBuildDefaulter) processPipelineConfig(ctx context.Context, agentbu
 	// Replace the pipeline config with the final merged pipeline
 	buildSpec.Pipeline.Steps = pipelineSpec.Steps
 
-	fmt.Printf("Mutating webbhook - injected Tekton pipeline for AgentBuild %s: %+v\n", agentbuild.GetName(), agentbuild)
+	agentbuildlog.Info("Mutating webhook - injected Tekton pipeline for AgentBuild", "name", agentbuild.GetName(), "agentbuild", agentbuild)
 	return nil
 }
 
 // getPipelineTemplate retrieves pipeline template from ConfigMap
 func (d *AgentBuildDefaulter) getPipelineTemplate(ctx context.Context, mode, namespace string) (*agentv1alpha1.PipelineTemplate, error) {
 	configMapName := fmt.Sprintf("%s-%s", PipelineTemplateConfigMapPrefix, mode)
-	agentbuildlog.Info("Mutating webbhook - using Tekton pipeline from configMap", "configMap Name", configMapName, "namespace", namespace)
+	agentbuildlog.Info("Mutating webhook - using Tekton pipeline from configMap", "configMap Name", configMapName, "namespace", namespace)
 
 	configMap := &corev1.ConfigMap{}
 	err := d.Client.Get(ctx, types.NamespacedName{
@@ -224,7 +230,7 @@ func (d *AgentBuildDefaulter) getPipelineTemplate(ctx context.Context, mode, nam
 	if !exists {
 		return nil, fmt.Errorf("template.json not found in ConfigMap %s", configMapName)
 	}
-	agentbuildlog.Info("Mutating webbhook - found Tekton pipeline in configMap", "configMap Name", configMapName)
+	agentbuildlog.Info("Mutating webhook - found Tekton pipeline in configMap", "configMap Name", configMapName)
 
 	var template agentv1alpha1.PipelineTemplate
 
@@ -232,14 +238,14 @@ func (d *AgentBuildDefaulter) getPipelineTemplate(ctx context.Context, mode, nam
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal pipeline template from ConfigMap: %w", err)
 	}
-	agentbuildlog.Info("Mutating webbhook - unmarshalled Tekton pipeline from configMap", "configMap Name", configMapName)
+	agentbuildlog.Info("Mutating webhook - unmarshalled Tekton pipeline from configMap", "configMap Name", configMapName)
 
 	return &template, nil
 }
 
 func (d *AgentBuildDefaulter) validateRequiredParameters(template *agentv1alpha1.PipelineTemplate, pipelineSpec *agentv1alpha1.PipelineSpec) error {
 	userParams := make(map[string]string)
-	agentbuildlog.Info("Mutating webbhook - validateRequiredParameters()")
+	agentbuildlog.Info("Mutating webhook - validateRequiredParameters()")
 
 	// Build map of user-provided parameters
 	for _, param := range pipelineSpec.Parameters {
@@ -267,7 +273,7 @@ func (d *AgentBuildDefaulter) validateRequiredParameters(template *agentv1alpha1
 
 // mergePipelineTemplate merges template with user parameters to create final pipeline
 func (d *AgentBuildDefaulter) mergePipelineTemplate(template *agentv1alpha1.PipelineTemplate, pipelineSpec *agentv1alpha1.PipelineSpec) (*agentv1alpha1.PipelineSpec, error) {
-	agentbuildlog.Info("Mutating webbhook - mergePipelineTemplate()")
+	agentbuildlog.Info("Mutating webhook - mergePipelineTemplate()")
 	// Create parameter map from user input
 	userParams := make(map[string]string)
 	for _, param := range pipelineSpec.Parameters {
