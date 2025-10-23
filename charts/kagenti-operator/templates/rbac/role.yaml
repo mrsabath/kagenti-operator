@@ -97,6 +97,7 @@ rules:
   resources:
   - agents
   - agentbuilds
+  - agentcards
   verbs:
   - create
   - delete
@@ -110,6 +111,7 @@ rules:
   resources:
   - agents/finalizers
   - agentbuilds/finalizers
+  - agentcards/finalizers
   verbs:
   - update
 - apiGroups:
@@ -117,6 +119,7 @@ rules:
   resources:
   - agents/status
   - agentbuilds/status
+  - agentcards/status
   verbs:
   - get
   - patch

@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pipeline-template-dev-external
-  namespace: kagenti-system
+  name: tekton-pipeline-template-dev-external
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/component: pipeline-template
     app.kubernetes.io/name: component-operator
@@ -11,7 +11,7 @@ data:
   template.json: |
     {
       "name": "Development Pipeline (External Registry)",
-      "namespace": "kagenti-system",     
+      "namespace": {{ .Release.Namespace }},     
       "description": "Basic pipeline for development builds with external registry authentication",
       "requiredParameters": [
         "repo-url",
@@ -22,21 +22,21 @@ data:
       "steps": [
         {
           "name": "github-clone",
-          "configMap": "github-clone-step",
+          "configMap": "tekton-github-clone-step",
           "enabled": true,
           "description": "Clone source code from GitHub repository",
           "requiredParameters": ["repo-url"]
         },
         {
           "name": "folder-verification",
-          "configMap": "check-subfolder-step",
+          "configMap": "tekton-check-subfolder-step",
           "enabled": true,
           "description": "Verify that the specified subfolder exists",
           "requiredParameters": ["subfolder-path"]
         },
         {
           "name": "kaniko-build",
-          "configMap": "kaniko-docker-build-step-external",
+          "configMap": "tekton-kaniko-docker-build-step-external",
           "enabled": true,
           "description": "Build container image using Kaniko with registry authentication",
           "requiredParameters": ["image"]

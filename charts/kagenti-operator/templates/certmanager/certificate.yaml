@@ -5,7 +5,7 @@ kind: Issuer
 metadata:
   labels:
     {{- include "chart.labels" . | nindent 4 }}
-  name: selfsigned-issuer
+  name: selfsigned-issuer-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
   selfSigned: {}
@@ -19,7 +19,7 @@ metadata:
     {{- if .Values.crd.keep }}
     "helm.sh/resource-policy": keep
     {{- end }}
-  name: serving-cert
+  name: serving-cert-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "chart.labels" . | nindent 4 }}
@@ -45,7 +45,7 @@ metadata:
     {{- end }}
   labels:
     {{- include "chart.labels" . | nindent 4 }}
-  name: metrics-certs
+  name: metrics-certs-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
   dnsNames:
