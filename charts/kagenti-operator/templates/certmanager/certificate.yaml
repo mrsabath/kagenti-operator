@@ -25,13 +25,12 @@ metadata:
     {{- include "chart.labels" . | nindent 4 }}
 spec:
   dnsNames:
-    - kagenti.{{ .Release.Namespace }}.svc
-    - kagenti.{{ .Release.Namespace }}.svc.cluster.local
-    - kagenti-webhook-service.{{ .Release.Namespace }}.svc
+    - {{ include "chart.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc
+    - {{ include "chart.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     kind: Issuer
-    name: selfsigned-issuer
-  secretName: webhook-server-cert
+    name: selfsigned-issuer-{{ .Release.Name }}
+  secretName: kagenti-operator-webhook-server-cert
 {{- end }}
 {{- if .Values.metrics.enable }}
 ---
@@ -49,12 +48,11 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   dnsNames:
-    - kagenti.{{ .Release.Namespace }}.svc
-    - kagenti.{{ .Release.Namespace }}.svc.cluster.local
-    - kagenti-metrics-service.{{ .Release.Namespace }}.svc
+    - {{ include "chart.fullname" . }}-controller-manager-metrics-service.{{ .Release.Namespace }}.svc
+    - {{ include "chart.fullname" . }}-controller-manager-metrics-service.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     kind: Issuer
-    name: selfsigned-issuer
-  secretName: metrics-server-cert
+    name: selfsigned-issuer-{{ .Release.Name }}
+  secretName: kagenti-operator-metrics-server-cert
 {{- end }}
 {{- end }}

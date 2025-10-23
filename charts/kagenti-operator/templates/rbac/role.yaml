@@ -12,6 +12,7 @@ rules:
   - namespaces
   - persistentvolumeclaims
   - pods
+  - pods/log
   - secrets
   - serviceaccounts
   - services

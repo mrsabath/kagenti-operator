@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tekton-kaniko-docker-build-step
-  namespace: {{ .Release.Namespace }} 
+  name: kaniko-docker-build-step
+  namespace: {{ .Release.Namespace  }}
   labels:
     kagenti.operator.dev/tekton: step 
 data:

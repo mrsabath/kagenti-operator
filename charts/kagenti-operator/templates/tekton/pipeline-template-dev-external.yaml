@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tekton-pipeline-template-dev-external
-  namespace: {{ .Release.Namespace }}
+  name: pipeline-template-dev-external
+  namespace: "{{ .Release.Namespace }}"
   labels:
     app.kubernetes.io/component: pipeline-template
     app.kubernetes.io/name: component-operator
@@ -22,21 +22,21 @@ data:
       "steps": [
         {
           "name": "github-clone",
-          "configMap": "tekton-github-clone-step",
+          "configMap": "github-clone-step",
           "enabled": true,
           "description": "Clone source code from GitHub repository",
           "requiredParameters": ["repo-url"]
         },
         {
           "name": "folder-verification",
-          "configMap": "tekton-check-subfolder-step",
+          "configMap": "check-subfolder-step",
           "enabled": true,
           "description": "Verify that the specified subfolder exists",
           "requiredParameters": ["subfolder-path"]
         },
         {
           "name": "kaniko-build",
-          "configMap": "tekton-kaniko-docker-build-step-external",
+          "configMap": "kaniko-docker-build-step-external",
           "enabled": true,
           "description": "Build container image using Kaniko with registry authentication",
           "requiredParameters": ["image"]

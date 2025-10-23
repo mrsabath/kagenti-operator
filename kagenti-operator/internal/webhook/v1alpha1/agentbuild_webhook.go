@@ -175,9 +175,13 @@ func (d *AgentBuildDefaulter) processPipelineConfig(ctx context.Context, agentbu
 		mode = DefaultPipelineMode
 		buildSpec.Mode = mode
 	}
+	namespace := agentbuild.Namespace
+	if agentbuild.Spec.Pipeline != nil && agentbuild.Spec.Pipeline.Namespace != "" {
+		namespace = agentbuild.Spec.Pipeline.Namespace
+	}
 
 	// Load pipeline template from ConfigMap
-	template, err := d.getPipelineTemplate(ctx, mode, "kagenti-system")
+	template, err := d.getPipelineTemplate(ctx, mode, namespace)
 	if err != nil {
 		return fmt.Errorf("failed to get pipeline template for mode %s: %w", mode, err)
 	}

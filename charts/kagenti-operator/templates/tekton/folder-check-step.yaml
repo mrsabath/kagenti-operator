@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tekton-check-subfolder-step
+  name: check-subfolder-step
   namespace: {{ .Release.Namespace }}
   labels:
     kagenti.operator.dev/tekton: step 

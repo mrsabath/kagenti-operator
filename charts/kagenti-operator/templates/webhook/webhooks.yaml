@@ -2,21 +2,22 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: kagenti-mutating-webhook-configuration
+  name: {{ include "chart.fullname" . }}-mutating-webhook-configuration
   namespace: {{ .Release.Namespace }}
   annotations:
     {{- if .Values.certmanager.enable }}
-    cert-manager.io/inject-ca-from: "{{ $.Release.Namespace }}/serving-cert"
+    cert-manager.io/inject-ca-from: "{{ .Release.Namespace }}/serving-cert-{{ .Release.Name }}"
     {{- end }}
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 webhooks:
-  - name: mcomponent-v1alpha1.kb.io
+  # ADD THIS - AgentBuild mutating webhook
+  - name: magentbuild.kb.io
     clientConfig:
       service:
-        name: kagenti-webhook-service
+        name: {{ include "chart.fullname" . }}-webhook-service
         namespace: {{ .Release.Namespace }}
-        path: /mutate-kagenti-operator-dev-v1alpha1-component
+        path: /mutate-agent-kagenti-dev-v1alpha1-agentbuild
     failurePolicy: Fail
     sideEffects: None
     admissionReviewVersions:
@@ -30,26 +31,27 @@ webhooks:
         apiVersions:
           - v1alpha1
         resources:
-          - components
+          - agentbuilds
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: kagenti-validating-webhook-configuration
+  name: {{ include "chart.fullname" . }}-validating-webhook-configuration
   namespace: {{ .Release.Namespace }}
   annotations:
     {{- if .Values.certmanager.enable }}
-    cert-manager.io/inject-ca-from: "{{ $.Release.Namespace }}/serving-cert"
+    cert-manager.io/inject-ca-from: "{{ .Release.Namespace }}/serving-cert-{{ .Release.Name }}"
     {{- end }}
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 webhooks:
-  - name: vcomponent-v1alpha1.kb.io
+  # ADD THIS - AgentBuild validating webhook
+  - name: vagentbuild.kb.io
     clientConfig:
       service:
-        name: kagenti-webhook-service
+        name: {{ include "chart.fullname" . }}-webhook-service
         namespace: {{ .Release.Namespace }}
-        path: /validate-kagenti-operator-dev-v1alpha1-component
+        path: /validate-agent-kagenti-dev-v1alpha1-agentbuild
     failurePolicy: Fail
     sideEffects: None
     admissionReviewVersions:
@@ -63,5 +65,5 @@ webhooks:
         apiVersions:
           - v1alpha1
         resources:
-          - components
+          - agentbuilds
 {{- end }}
