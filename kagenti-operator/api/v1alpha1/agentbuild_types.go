@@ -28,7 +28,7 @@ type AgentBuildSpec struct {
 	SourceSpec SourceSpec `json:"source"`
 	// Pipeline specifies the pipeline configuration
 	// +optional
-	Pipeline PipelineSpec `json:"pipeline"`
+	Pipeline *PipelineSpec `json:"pipeline"`
 	// BuildArgs are arguments to pass to the build process
 	// +optional
 	BuildArgs []ParameterSpec `json:"buildArgs,omitempty"`
@@ -72,7 +72,7 @@ type PipelineSpec struct {
 	// Namespace is the namespace where the pipeline steps ConfigMaps are located
 	Namespace string `json:"namespace"`
 	// Steps is an ordered list of pipeline steps to execute
-	Steps []PipelineStepSpec `json:"steps"`
+	Steps []PipelineStepSpec `json:"steps,omitempty"`
 	// Parameters contains additional parameters to pass to the pipeline
 	Parameters []ParameterSpec `json:"parameters,omitempty"`
 }

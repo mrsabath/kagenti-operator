@@ -94,6 +94,25 @@ func (r *AgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		}
 		return ctrl.Result{}, nil
 	}
+	// if image is not set in the spec, try to fetch it from the AgentBuild object
+	image := agent.Spec.ImageSource.Image
+	if image == nil {
+		// Get the image for the main container
+		containerImage, err := r.getContainerImage(ctx, agent)
+		if err != nil {
+			logger.Error(err, "Failed to get container image",
+				"agent", agent.Name,
+				"hasImage", agent.Spec.ImageSource.Image != nil,
+				"hasBuildRef", agent.Spec.ImageSource.BuildRef != nil)
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		}
+		if containerImage == "" {
+			logger.Error(fmt.Errorf("empty image returned"), "No image available")
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		}
+		image = &containerImage
+	}
+
 	deploymentResult, err := r.reconcileAgentDeployment(ctx, agent)
 	if err != nil {
 		return deploymentResult, err
@@ -254,34 +273,81 @@ func (r *AgentReconciler) reconcileAgentDeployment(ctx context.Context, agent *a
 }
 
 func (r *AgentReconciler) fetchImageFromAgentBuild(ctx context.Context, agent *agentv1alpha1.Agent, agentBuildRef string) (string, error) {
+	logger.Info("Fetching image from AgentBuild", "buildRef", agentBuildRef, "namespace", agent.Namespace)
+
 	agentBuild := &agentv1alpha1.AgentBuild{}
 	err := r.Get(ctx, types.NamespacedName{Name: agentBuildRef, Namespace: agent.Namespace}, agentBuild)
 	if err != nil {
-		return "", err
+		if errors.IsNotFound(err) {
+			return "", fmt.Errorf("AgentBuild %s not found in namespace %s", agentBuildRef, agent.Namespace)
+		}
+		return "", fmt.Errorf("failed to get AgentBuild %s: %w", agentBuildRef, err)
 	}
-	if agentBuild.Status.Phase != agentv1alpha1.BuildPhaseSucceeded {
-		return "", fmt.Errorf("AgentBuild %s is not in Succeeded phase", agentBuildRef)
+
+	// Check build phase with specific error messages
+	switch agentBuild.Status.Phase {
+	case agentv1alpha1.BuildPhaseSucceeded:
+		// Build succeeded, check for image
+		if agentBuild.Status.BuiltImage == "" {
+			return "", fmt.Errorf("AgentBuild %s succeeded but BuiltImage is empty", agentBuildRef)
+		}
+		logger.Info("Using image from AgentBuild",
+			"buildRef", agentBuildRef,
+			"image", agentBuild.Status.BuiltImage)
+		return agentBuild.Status.BuiltImage, nil
+
+	case agentv1alpha1.PhaseBuilding:
+		return "", fmt.Errorf("AgentBuild %s is still building (phase: %s)",
+			agentBuildRef, agentBuild.Status.Phase)
+
+	case agentv1alpha1.BuildPhaseFailed:
+		return "", fmt.Errorf("AgentBuild %s failed: %s",
+			agentBuildRef, agentBuild.Status.Message)
+
+	case agentv1alpha1.BuildPhasePending, "":
+		return "", fmt.Errorf("AgentBuild %s is pending (not started yet)", agentBuildRef)
+
+	default:
+		return "", fmt.Errorf("AgentBuild %s has unknown phase: %s",
+			agentBuildRef, agentBuild.Status.Phase)
 	}
-	if agentBuild.Status.BuiltImage == "" {
-		return "", fmt.Errorf("AgentBuild %s does not have a built image", agentBuildRef)
-	}
-	return agentBuild.Status.BuiltImage, nil
 }
 
 func (r *AgentReconciler) getContainerImage(ctx context.Context, agent *agentv1alpha1.Agent) (string, error) {
-	if agent.Spec.ImageSource.Image != nil && *agent.Spec.ImageSource.Image != "" {
-		return *agent.Spec.ImageSource.Image, nil
-	} else if agent.Spec.ImageSource.BuildRef != nil {
+	if agent.Spec.ImageSource.BuildRef != nil {
 		image, err := r.fetchImageFromAgentBuild(ctx, agent, agent.Spec.ImageSource.BuildRef.Name)
 		if err != nil {
-			logger.Error(err, "Unable to fetch image from AgentBuild", "buildRef", agent.Spec.ImageSource.BuildRef.Name)
+			logger.Error(err, "Unable to fetch image from AgentBuild",
+				"buildRef", agent.Spec.ImageSource.BuildRef.Name)
+
+			meta.SetStatusCondition(&agent.Status.Conditions, metav1.Condition{
+				Type:               "ImageReady",
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: metav1.Now(),
+				Reason:             "WaitingForBuild",
+				Message:            err.Error(),
+			})
+
+			// Update status (best effort)
+			_ = r.Status().Update(ctx, agent)
 			return "", err
 		}
-		return image, nil
-	}
-	return "", nil
-}
+		meta.SetStatusCondition(&agent.Status.Conditions, metav1.Condition{
+			Type:               "ImageReady",
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+			Reason:             "ImageAvailable",
+			Message:            fmt.Sprintf("Using image from AgentBuild: %s", image),
+		})
 
+		return image, nil
+
+	} else if agent.Spec.ImageSource.Image != nil && *agent.Spec.ImageSource.Image != "" {
+		return *agent.Spec.ImageSource.Image, nil
+	}
+
+	return "", fmt.Errorf("no image source specified: must provide either image or buildRef")
+}
 func (r *AgentReconciler) createDeploymentForAgent(ctx context.Context, agent *agentv1alpha1.Agent) (*appsv1.Deployment, error) {
 	if len(agent.Spec.PodTemplateSpec.Spec.Containers) == 0 {
 		return nil, fmt.Errorf("no containers defined in PodTemplateSpec")
@@ -398,19 +464,8 @@ func (r *AgentReconciler) createDeploymentForAgent(ctx context.Context, agent *a
 				return nil, err
 			}
 		}
-		podTemplateSpec.Spec.InitContainers = append(podTemplateSpec.Spec.InitContainers, corev1.Container{
-			Name:    "fix-permissions",
-			Image:   "busybox:1.36",
-			Command: []string{"sh", "-c", "chmod 1777 /opt"},
-			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "svid-output",
-					MountPath: "/opt",
-				},
-			},
-		})
 	}
-	r.addVolumesAndMounts(podTemplateSpec, agent)
+	r.addVolumesAndMounts(podTemplateSpec)
 	// Set the ServiceAccountName for the pod
 	if podTemplateSpec.Spec.ServiceAccountName == "" {
 		podTemplateSpec.Spec.ServiceAccountName = rbacConfig.ServiceAccountName
@@ -587,6 +642,11 @@ func (r *AgentReconciler) addClientRegistrationContainer(podTemplateSpec *corev1
 				Name:      "svid-output",
 				MountPath: "/opt",
 			},
+			{
+				// This is how client registration accesses the SVID
+				Name:      "shared-data",
+				MountPath: "/shared",
+			},
 		},
 	})
 	podTemplateSpec.Spec.Containers = containers
@@ -639,12 +699,17 @@ func (r *AgentReconciler) addSpiffyHelperContainer(podTemplateSpec *corev1.PodTe
 				Name:      "svid-output",
 				MountPath: "/opt",
 			},
+			{
+				// This is how client registration accesses the SVID
+				Name:      "shared-data",
+				MountPath: "/shared",
+			},
 		},
 	})
 	podTemplateSpec.Spec.Containers = containers
 	return nil
 }
-func (r *AgentReconciler) addVolumesAndMounts(podTemplateSpec *corev1.PodTemplateSpec, agent *agentv1alpha1.Agent) {
+func (r *AgentReconciler) addVolumesAndMounts(podTemplateSpec *corev1.PodTemplateSpec) {
 	if !hasVolumeMounts(&podTemplateSpec.Spec, "cache") {
 		if len(podTemplateSpec.Spec.Containers) > 0 {
 			podTemplateSpec.Spec.Containers[0].VolumeMounts =

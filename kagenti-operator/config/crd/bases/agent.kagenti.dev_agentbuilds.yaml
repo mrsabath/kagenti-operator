@@ -211,7 +211,6 @@ spec:
                     type: array
                 required:
                 - namespace
-                - steps
                 type: object
               source:
                 description: Source specifies the source code related configuration

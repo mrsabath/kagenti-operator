@@ -5,7 +5,7 @@ kind: Issuer
 metadata:
   labels:
     {{- include "chart.labels" . | nindent 4 }}
-  name: selfsigned-issuer
+  name: selfsigned-issuer-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
   selfSigned: {}
@@ -19,19 +19,18 @@ metadata:
     {{- if .Values.crd.keep }}
     "helm.sh/resource-policy": keep
     {{- end }}
-  name: serving-cert
+  name: serving-cert-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 spec:
   dnsNames:
-    - kagenti.{{ .Release.Namespace }}.svc
-    - kagenti.{{ .Release.Namespace }}.svc.cluster.local
-    - kagenti-webhook-service.{{ .Release.Namespace }}.svc
+    - {{ include "chart.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc
+    - {{ include "chart.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     kind: Issuer
-    name: selfsigned-issuer
-  secretName: webhook-server-cert
+    name: selfsigned-issuer-{{ .Release.Name }}
+  secretName: kagenti-operator-webhook-server-cert
 {{- end }}
 {{- if .Values.metrics.enable }}
 ---
@@ -45,16 +44,15 @@ metadata:
     {{- end }}
   labels:
     {{- include "chart.labels" . | nindent 4 }}
-  name: metrics-certs
+  name: metrics-certs-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
   dnsNames:
-    - kagenti.{{ .Release.Namespace }}.svc
-    - kagenti.{{ .Release.Namespace }}.svc.cluster.local
-    - kagenti-metrics-service.{{ .Release.Namespace }}.svc
+    - {{ include "chart.fullname" . }}-controller-manager-metrics-service.{{ .Release.Namespace }}.svc
+    - {{ include "chart.fullname" . }}-controller-manager-metrics-service.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     kind: Issuer
-    name: selfsigned-issuer
-  secretName: metrics-server-cert
+    name: selfsigned-issuer-{{ .Release.Name }}
+  secretName: kagenti-operator-metrics-server-cert
 {{- end }}
 {{- end }}

@@ -39,15 +39,6 @@ spec:
         image:  <will be replaced with imageSource.image above>
         imagePullPolicy: IfNotPresent
 
-        # Resource limits and requests
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-
         # Environment variables
         env:
         - name: PORT

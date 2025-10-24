@@ -166,7 +166,6 @@ func (pc *PipelineComposer) createPipelineTasks(steps map[string]*StepDefinition
 	tasks := make([]tektonv1.PipelineTask, 0, len(order))
 	for i, stepName := range order {
 		stepDefinition := steps[stepName]
-
 		// Create task with embedded spec using EmbeddedTask
 		task := tektonv1.PipelineTask{
 			Name: stepDefinition.Name,

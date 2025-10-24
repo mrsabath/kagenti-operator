@@ -68,7 +68,6 @@ func (b *TektonBuilder) Build(ctx context.Context, agentBuild *agentv1alpha1.Age
 		return err
 	}
 	return nil
-
 }
 func (b *TektonBuilder) Cleanup(ctx context.Context, agentBuild *agentv1alpha1.AgentBuild) error {
 	// Check if cleanup is enabled
@@ -176,7 +175,6 @@ func (b *TektonBuilder) createPipelineRun(ctx context.Context, agentBuild *agent
 	} else {
 		fmt.Println("PipelineSpec:::" + string(pp))
 	}
-
 	pipelineRun := &tektonv1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pipelineRunName,
@@ -241,6 +239,20 @@ func (b *TektonBuilder) CheckStatus(ctx context.Context, agentBuild *agentv1alph
 	}, pipelineRun)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			// Grace period for newly created PipelineRuns
+			// If PipelineRun was created recently (within last 30 seconds),
+			// don't mark as failed yet - might just be propagating through cache
+			if agentBuild.Status.LastBuildTime != nil {
+				timeSinceCreation := time.Since(agentBuild.Status.LastBuildTime.Time)
+				if timeSinceCreation < 30*time.Second {
+					b.Log.Info("PipelineRun not found yet but was just created, will retry",
+						"timeSinceCreation", timeSinceCreation.String(),
+						"pipelineRun", agentBuild.Status.PipelineRunName)
+					// Don't fail yet - just return and wait for next check
+					return nil
+				}
+			}
+
 			agentBuild.Status.Phase = agentv1alpha1.BuildPhaseFailed
 			agentBuild.Status.Message = "Pipeline run not found"
 			// Set condition for PipelineRun not found
@@ -333,6 +345,10 @@ func (b *TektonBuilder) CheckStatus(ctx context.Context, agentBuild *agentv1alph
 			Reason:             "BuildInProgress",
 			Message:            "Build is currently running",
 		})
+		if err := b.Client.Status().Update(ctx, agentBuild); err != nil {
+			b.Log.Error(err, "Failed to update in-progress status")
+			return err
+		}
 	}
 
 	return nil

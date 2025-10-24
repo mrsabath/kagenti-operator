@@ -127,7 +127,6 @@ func (r *AgentBuildReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if err != nil {
 			r.Recorder.Event(agentBuild, corev1.EventTypeWarning, "BuildFailed",
 				fmt.Sprintf("Failed to start build: %v", err))
-
 			logger.Error(err, "Failed to trigger build",
 				"agentbuild", agentBuild.Name,
 				"namespace", agentBuild.Namespace,
