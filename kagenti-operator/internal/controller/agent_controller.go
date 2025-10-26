@@ -29,7 +29,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -447,24 +446,6 @@ func (r *AgentReconciler) createDeploymentForAgent(ctx context.Context, agent *a
 		logger.Info("Using static image for Agent", "image", image)
 	}
 
-	logger.Info("Agent", "EnableClientRegistration", r.EnableClientRegistration)
-	if r.EnableClientRegistration {
-		if exists := r.containerExists(podTemplateSpec, CLIENT_REGISTRATION_NAME); !exists {
-			logger.Info("Adding client registration container")
-			err := r.addClientRegistrationContainer(podTemplateSpec, agent)
-			if err != nil {
-				logger.Error(err, "Unable to add keycloak client registration sidecar container")
-				return nil, err
-			}
-		}
-		if exists := r.containerExists(podTemplateSpec, SPIFFY_HELPER_NAME); !exists {
-			err := r.addSpiffyHelperContainer(podTemplateSpec)
-			if err != nil {
-				logger.Error(err, "Unable to add spiffy-helper sidecar container")
-				return nil, err
-			}
-		}
-	}
 	r.addVolumesAndMounts(podTemplateSpec)
 	// Set the ServiceAccountName for the pod
 	if podTemplateSpec.Spec.ServiceAccountName == "" {
@@ -547,168 +528,6 @@ func (r *AgentReconciler) volumeExists(podTemplateSpec *corev1.PodTemplateSpec, 
 	return false
 }
 
-func (r *AgentReconciler) addClientRegistrationContainer(podTemplateSpec *corev1.PodTemplateSpec, agent *agentv1alpha1.Agent) error {
-
-	containers := podTemplateSpec.Spec.Containers
-	if len(containers) == 0 {
-		return fmt.Errorf("no containers found in Agent spec")
-	}
-
-	imagePullPolicy := "IfNotPresent"
-	resources := corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("100m"),
-			corev1.ResourceMemory: resource.MustParse("128Mi"),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("50m"),
-			corev1.ResourceMemory: resource.MustParse("64Mi"),
-		},
-	}
-	clientId := agent.Namespace + "/" + agent.Name
-	containers = append(containers, corev1.Container{
-		Name:            CLIENT_REGISTRATION_NAME,
-		Image:           "ghcr.io/kagenti/kagenti/client-registration:latest",
-		ImagePullPolicy: corev1.PullPolicy(imagePullPolicy),
-		Resources:       resources,
-		// Wait until /opt/jwt_svid.token appears, then exec
-		Command: []string{
-			"/bin/sh",
-			"-c",
-			"while [ ! -f /opt/jwt_svid.token ]; do echo waiting for SVID; sleep 1; done; python client_registration.py; tail -f /dev/null",
-		},
-		Env: []corev1.EnvVar{
-			{
-				Name: "KEYCLOAK_URL",
-				ValueFrom: &corev1.EnvVarSource{
-					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "environments",
-						},
-						Key:      "KEYCLOAK_URL",
-						Optional: ptr.To(true),
-					},
-				},
-			},
-			{
-				Name: "KEYCLOAK_REALM",
-				ValueFrom: &corev1.EnvVarSource{
-					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "environments",
-						},
-						Key: "KEYCLOAK_REALM",
-					},
-				},
-			},
-			{
-				Name: "KEYCLOAK_ADMIN_USERNAME",
-				ValueFrom: &corev1.EnvVarSource{
-					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "environments",
-						},
-						Key: "KEYCLOAK_ADMIN_USERNAME",
-					},
-				},
-			},
-			{
-				Name: "KEYCLOAK_ADMIN_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "environments",
-						},
-						Key: "KEYCLOAK_ADMIN_PASSWORD",
-					},
-				},
-			},
-			{
-				Name:  "CLIENT_NAME",
-				Value: clientId,
-			},
-			{
-				Name:  "CLIENT_ID",
-				Value: "spiffe://localtest.me/sa/" + agent.Name,
-			},
-			{
-				Name:  "NAMESPACE",
-				Value: agent.Namespace,
-			},
-		},
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				// This is how client registration accesses the SVID
-				Name:      "svid-output",
-				MountPath: "/opt",
-			},
-			{
-				// This is how client registration accesses the SVID
-				Name:      "shared-data",
-				MountPath: "/shared",
-			},
-		},
-	})
-	podTemplateSpec.Spec.Containers = containers
-	return nil
-}
-func (r *AgentReconciler) addSpiffyHelperContainer(podTemplateSpec *corev1.PodTemplateSpec) error {
-
-	containers := podTemplateSpec.Spec.Containers
-	if len(containers) == 0 {
-		return fmt.Errorf("no containers found in Agent spec")
-	}
-
-	imagePullPolicy := "IfNotPresent"
-	resources := corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("100m"),
-			corev1.ResourceMemory: resource.MustParse("128Mi"),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("50m"),
-			corev1.ResourceMemory: resource.MustParse("64Mi"),
-		},
-	}
-
-	containers = append(containers, corev1.Container{
-		Name:            SPIFFY_HELPER_NAME,
-		Image:           "ghcr.io/spiffe/spiffe-helper:nightly",
-		ImagePullPolicy: corev1.PullPolicy(imagePullPolicy),
-		Resources:       resources,
-		// Wait until /opt/jwt_svid.token appears, then exec
-		Command: []string{
-			"/spiffe-helper",
-			"-config=/etc/spiffe-helper/helper.conf",
-			"run",
-		},
-
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				// This is how client registration accesses the SVID
-				Name:      "spiffe-helper-config",
-				MountPath: "/etc/spiffe-helper",
-			},
-			{
-				// This is how client registration accesses the SVID
-				Name:      "spire-agent-socket",
-				MountPath: "/spiffe-workload-api",
-			},
-			{
-				// This is how client registration accesses the SVID
-				Name:      "svid-output",
-				MountPath: "/opt",
-			},
-			{
-				// This is how client registration accesses the SVID
-				Name:      "shared-data",
-				MountPath: "/shared",
-			},
-		},
-	})
-	podTemplateSpec.Spec.Containers = containers
-	return nil
-}
 func (r *AgentReconciler) addVolumesAndMounts(podTemplateSpec *corev1.PodTemplateSpec) {
 	if !hasVolumeMounts(&podTemplateSpec.Spec, "cache") {
 		if len(podTemplateSpec.Spec.Containers) > 0 {
@@ -728,51 +547,7 @@ func (r *AgentReconciler) addVolumesAndMounts(podTemplateSpec *corev1.PodTemplat
 			},
 		})
 	}
-	if exists := r.volumeExists(podTemplateSpec, "shared-data"); !exists {
-		podTemplateSpec.Spec.Volumes =
-			append(podTemplateSpec.Spec.Volumes, corev1.Volume{
-				Name: "shared-data",
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{},
-				},
-			})
-	}
 
-	if exists := r.volumeExists(podTemplateSpec, "spire-agent-socket"); !exists {
-		podTemplateSpec.Spec.Volumes =
-			append(podTemplateSpec.Spec.Volumes, corev1.Volume{
-				Name: "spire-agent-socket",
-				VolumeSource: corev1.VolumeSource{
-					HostPath: &corev1.HostPathVolumeSource{
-						Path: "/run/spire/agent-sockets",
-					},
-				},
-			})
-	}
-
-	if exists := r.volumeExists(podTemplateSpec, "spiffe-helper-config"); !exists {
-		podTemplateSpec.Spec.Volumes =
-			append(podTemplateSpec.Spec.Volumes, corev1.Volume{
-				Name: "spiffe-helper-config",
-				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "spiffe-helper-config",
-						},
-					},
-				},
-			})
-	}
-
-	if exists := r.volumeExists(podTemplateSpec, "svid-output"); !exists {
-		podTemplateSpec.Spec.Volumes =
-			append(podTemplateSpec.Spec.Volumes, corev1.Volume{
-				Name: "svid-output",
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{},
-				},
-			})
-	}
 }
 
 func hasVolumeMounts(podSpec *corev1.PodSpec, volumeMountName string) bool {
