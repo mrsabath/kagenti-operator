@@ -508,16 +508,6 @@ func (r *AgentReconciler) createDeploymentForAgent(ctx context.Context, agent *a
 	}, nil
 }
 
-func (r *AgentReconciler) containerExists(podTemplateSpec *corev1.PodTemplateSpec, containerName string) bool {
-	for _, container := range podTemplateSpec.Spec.Containers {
-		if container.Name == containerName {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (r *AgentReconciler) volumeExists(podTemplateSpec *corev1.PodTemplateSpec, volumeName string) bool {
 
 	for _, vol := range podTemplateSpec.Spec.Volumes {
