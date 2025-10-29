@@ -171,3 +171,6 @@ rules:
   - patch
   - update
   - watch
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch", "update"]
